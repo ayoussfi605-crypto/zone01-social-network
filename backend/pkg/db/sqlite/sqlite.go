@@ -1,0 +1,6 @@
+package sqlite
+
+
+func InitDb(){
+	
+}
