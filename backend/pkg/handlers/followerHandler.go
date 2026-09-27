@@ -138,3 +138,30 @@ func (h *FollowerHandler) GetFollowersHandler(w http.ResponseWriter, r *http.Req
 		"user_id": userID,
 	})
 }
+
+// GET /api/users/{id}/following
+func (h *FollowerHandler) GetFollowingHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) < 4 {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := strconv.Atoi(parts[3])
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Call h.FollowerService.GetFollowing(userID) when implemented in Service layer
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Following list fetched",
+		"user_id": userID,
+	})
+}
