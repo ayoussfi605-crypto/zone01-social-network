@@ -11,22 +11,22 @@ frontend/
     │   ├── page.ts                    # Root redirect or landing page
     │   ├── (auth)/                    # Route Group: Authentication
     │   │   ├── login/
-    │   │   │   └── page.ts            # Login Page
+    │   │   │   └── page.tsx            # Login Page
     │   │   └── register/
-    │   │       └── page.ts            # Registration Page
+    │   │       └── page.tsx            # Registration Page
     │   ├── (dashboard)/               # Route Group: Authenticated Layout (Includes Header/Nav)
-    │   │   ├── layout.ts              # Navbar, Sidebar & Notification Bell Wrapper
+    │   │   ├── layout.tsx              # Navbar, Sidebar & Notification Bell Wrapper
     │   │   ├── feed/
-    │   │   │   └── page.ts            # Main Newsfeed Page
+    │   │   │   └── page.tsx            # Main Newsfeed Page
     │   │   ├── profile/
     │   │   │   └── [id]/
-    │   │   │       └── page.ts        # Dynamic User Profile Page
+    │   │   │       └── page.tsx        # Dynamic User Profile Page
     │   │   ├── groups/
-    │   │   │   ├── page.ts            # Group Directory Page
+    │   │   │   ├── page.tsx            # Group Directory Page
     │   │   │   └── [id]/
-    │   │   │       └── page.ts        # Group Details, Events & Feed Page
+    │   │   │       └── page.tsx        # Group Details, Events & Feed Page
     │   │   └── chat/
-    │   │       └── page.ts            # Main Direct Messaging Interface
+    │   │       └── page.tsx            # Main Direct Messaging Interface
     │   └── api/                       # Next.ts proxy/helper endpoints (optional)
     │
     ├── components/                    # UI Component Layer
