@@ -80,3 +80,34 @@ func (h *FollowerHandler) UnfollowUserHandler(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Unfollowed successfully"})
 }
+
+// POST /api/users/follow-response
+func (h *FollowerHandler) RespondToFollowRequestHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse JSON body to get followerID and the decision (accept: true/false)
+	var reqBody struct {
+		FollowerID int  `json:"follower_id"`
+		Accept     bool `json:"accept"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	targetID := 1 // Placeholder: This is the logged-in user receiving the request
+
+	err = h.FollowerService.RespondToFollowRequest(targetID, reqBody.FollowerID, reqBody.Accept)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Response recorded successfully"})
+}
