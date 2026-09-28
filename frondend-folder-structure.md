@@ -1,86 +1,86 @@
 frontend/
 ├── Dockerfile
-├── package.json
-├── next.config.js
+├── package.tson
+├── next.config.ts
 ├── public/
 │   ├── images/
 │   └── avatars/
 └── src/
-    ├── app/                           # Next.js App Router (Pages & Routes)
-    │   ├── layout.js                  # Root layout (Auth & WS Context Providers)
-    │   ├── page.js                    # Root redirect or landing page
+    ├── app/                           # Next.ts App Router (Pages & Routes)
+    │   ├── layout.ts                  # Root layout (Auth & WS Context Providers)
+    │   ├── page.ts                    # Root redirect or landing page
     │   ├── (auth)/                    # Route Group: Authentication
     │   │   ├── login/
-    │   │   │   └── page.js            # Login Page
+    │   │   │   └── page.tsx            # Login Page
     │   │   └── register/
-    │   │       └── page.js            # Registration Page
+    │   │       └── page.tsx            # Registration Page
     │   ├── (dashboard)/               # Route Group: Authenticated Layout (Includes Header/Nav)
-    │   │   ├── layout.js              # Navbar, Sidebar & Notification Bell Wrapper
+    │   │   ├── layout.tsx              # Navbar, Sidebar & Notification Bell Wrapper
     │   │   ├── feed/
-    │   │   │   └── page.js            # Main Newsfeed Page
+    │   │   │   └── page.tsx            # Main Newsfeed Page
     │   │   ├── profile/
     │   │   │   └── [id]/
-    │   │   │       └── page.js        # Dynamic User Profile Page
+    │   │   │       └── page.tsx        # Dynamic User Profile Page
     │   │   ├── groups/
-    │   │   │   ├── page.js            # Group Directory Page
+    │   │   │   ├── page.tsx            # Group Directory Page
     │   │   │   └── [id]/
-    │   │   │       └── page.js        # Group Details, Events & Feed Page
+    │   │   │       └── page.tsx        # Group Details, Events & Feed Page
     │   │   └── chat/
-    │   │       └── page.js            # Main Direct Messaging Interface
-    │   └── api/                       # Next.js proxy/helper endpoints (optional)
+    │   │       └── page.tsx            # Main Direct Messaging Interface
+    │   └── api/                       # Next.ts proxy/helper endpoints (optional)
     │
     ├── components/                    # UI Component Layer
     │   ├── layout/                    # Layout UI
-    │   │   ├── Navbar.jsx
-    │   │   ├── Sidebar.jsx
-    │   │   └── ProtectedRoute.jsx     # Client auth-check wrapper
+    │   │   ├── Navbar.tsx
+    │   │   ├── Sidebar.tsx
+    │   │   └── ProtectedRoute.tsx     # Client auth-check wrapper
     │   ├── auth/                      # Auth UI
-    │   │   ├── LoginForm.jsx
-    │   │   └── RegisterForm.jsx
+    │   │   ├── LoginForm.tsx
+    │   │   └── RegisterForm.tsx
     │   ├── profile/                   # Profile UI
-    │   │   ├── ProfileHeader.jsx
-    │   │   ├── PrivacyToggle.jsx      # Public / Private profile switch
-    │   │   └── FollowersModal.jsx     # Followers & Following list
+    │   │   ├── ProfileHeader.tsx
+    │   │   ├── PrivacyToggle.tsx      # Public / Private profile switch
+    │   │   └── FollowersModal.tsx     # Followers & Following list
     │   ├── posts/                     # Posts & Comments UI
-    │   │   ├── CreatePostModal.jsx    # Privacy selector + media dropzone
-    │   │   ├── PostCard.jsx
-    │   │   └── CommentSection.jsx
+    │   │   ├── CreatePostModal.tsx    # Privacy selector + media dropzone
+    │   │   ├── PostCard.tsx
+    │   │   └── CommentSection.tsx
     │   ├── groups/                    # Groups & Events UI
-    │   │   ├── GroupCard.jsx
-    │   │   ├── CreateGroupModal.jsx
-    │   │   ├── CreateEventModal.jsx
-    │   │   └── EventRSVPCard.jsx
+    │   │   ├── GroupCard.tsx
+    │   │   ├── CreateGroupModal.tsx
+    │   │   ├── CreateEventModal.tsx
+    │   │   └── EventRSVPCard.tsx
     │   ├── chat/                      # Real-time Messaging UI
-    │   │   ├── ChatWindow.jsx
-    │   │   ├── MessageBubble.jsx
-    │   │   └── EmojiPicker.jsx
+    │   │   ├── ChatWindow.tsx
+    │   │   ├── MessageBubble.tsx
+    │   │   └── EmojiPicker.tsx
     │   └── notifications/             # Notification UI
-    │       ├── NotificationBell.jsx
-    │       └── NotificationDropdown.jsx
+    │       ├── NotificationBell.tsx
+    │       └── NotificationDropdown.tsx
     │
     ├── services/                      # Service Layer (Backend API Communication)
-    │   ├── api.js                     # Base fetch client with `credentials: 'include'`
-    │   ├── authService.js             # Login, register, logout, getMe
-    │   ├── profileService.js          # Fetch profile, update privacy, follow actions
-    │   ├── postService.js             # Create post, comment, fetch feed
-    │   ├── groupService.js            # Groups CRUD, invite, join request, events
-    │   └── websocketService.js        # Native WS connection, reconnects, event bus
+    │   ├── api.ts                     # Base fetch client with `credentials: 'include'`
+    │   ├── authService.ts             # Login, register, logout, getMe
+    │   ├── profileService.ts          # Fetch profile, update privacy, follow actions
+    │   ├── postService.ts             # Create post, comment, fetch feed
+    │   ├── groupService.ts            # Groups CRUD, invite, join request, events
+    │   └── websocketService.ts        # Native WS connection, reconnects, event bus
     │
     ├── context/                       # Global React State Layer
-    │   ├── AuthContext.jsx            # User state & authentication session checks
-    │   ├── WebSocketContext.jsx       # Global WS connection hub state
-    │   └── NotificationContext.jsx   # Live unread notifications state
+    │   ├── AuthContext.tsx            # User state & authentication session checks
+    │   ├── WebSocketContext.tsx       # Global WS connection hub state
+    │   └── NotificationContext.tsx   # Live unread notifications state
     │
     ├── hooks/                         # Custom React Hooks
-    │   ├── useAuth.js
-    │   ├── useWebSocket.js
-    │   └── useNotifications.js
+    │   ├── useAuth.ts
+    │   ├── useWebSocket.ts
+    │   └── useNotifications.ts
     │
     ├── types/                         # Shared Models / Data Contracts
-    │   ├── user.js
-    │   ├── post.js
-    │   └── chat.js
+    │   ├── user.ts
+    │   ├── post.ts
+    │   └── chat.ts
     │
     └── utils/                         # Helper Utilities
-        ├── validators.js              # Form validation helpers
-        └── formatDate.js              # Timestamp formatters
+        ├── validators.ts              # Form validation helpers
+        └── formatDate.ts              # Timestamp formatters
