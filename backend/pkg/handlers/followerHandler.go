@@ -4,164 +4,182 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 
-	"backend/pkg/services"
+	"social/middlewares"
+	"social/pkg/services"
+	"social/utils"
 )
 
 type FollowerHandler struct {
-	FollowerService *services.FollowerService
+	followerService services.FollowerService
 }
 
-func NewFollowerHandler(s *services.FollowerService) *FollowerHandler {
-	return &FollowerHandler{FollowerService: s}
+func NewFollowerHandler(s services.FollowerService) *FollowerHandler {
+	return &FollowerHandler{followerService: s}
 }
 
-// POST /api/users/{id}/follow
-func (h *FollowerHandler) FollowUserHandler(w http.ResponseWriter, r *http.Request) {
+// POST /api/users/{id}/follow-action (Kijme3 Follow w Unfollow b7al l-leader)
+func (h *FollowerHandler) HandleFollowAction(w http.ResponseWriter, r *http.Request) {
+	middlewares.EnableCores(w, r)
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Method Not Allowed",
+		})
 		return
 	}
 
-	// Extract targetID from URL (e.g., /api/users/5/follow)
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+	// 1. Vérification dyal l-Session (Middleware)
+	if err := utils.IsValidSeesion(r); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Invalid Token",
+		})
 		return
 	}
 
-	targetID, err := strconv.Atoi(parts[3])
+	// 2. Njebdo l-ID dyal user li m-connecté
+	followerID := middlewares.GetUserId(r)
+	if followerID == 0 {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Unauthorized",
+		})
+		return
+	}
+
+	// 3. Njebdo l-ID d chakhs li ghan-followiw mn l-URL
+	targetIDStr := r.PathValue("id")
+	targetID, err := strconv.Atoi(targetIDStr)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Invalid user ID",
+		})
 		return
 	}
 
-	// TODO: Replace with actual logged-in user ID from Session/Cookie
-	followerID := 1 
+	// 4. N9raw chno kayn f l-Body (action: "folow" wla "unfolow")
+	var req struct {
+		Action string `json:"action"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Invalid payload",
+		})
+		return
+	}
 
-	err = h.FollowerService.FollowUser(followerID, targetID)
+	// 5. N-executiw l-Service 3la 7sab l-Action
+	if req.Action == "folow" {
+		err = h.followerService.FollowUser(r.Context(), followerID, targetID)
+	} else if req.Action == "unfolow" {
+		err = h.followerService.UnfollowUser(r.Context(), followerID, targetID)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Invalid action",
+		})
+		return
+	}
+
+	// 6. Gérer les erreurs w nsifto retour l-Frontend
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(utils.ResponseApi{
+			Success: false,
+			Error:   "Server error",
+		})
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Follow action successful"})
-}
-
-// POST /api/users/{id}/unfollow
-func (h *FollowerHandler) UnfollowUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
-		return
-	}
-
-	targetID, err := strconv.Atoi(parts[3])
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	followerID := 1 // Placeholder for logged-in user
-
-	err = h.FollowerService.UnfollowUser(followerID, targetID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Unfollowed successfully"})
-}
-
-// POST /api/users/follow-response
-func (h *FollowerHandler) RespondToFollowRequestHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Parse JSON body to get followerID and the decision (accept: true/false)
-	var reqBody struct {
-		FollowerID int  `json:"follower_id"`
-		Accept     bool `json:"accept"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&reqBody)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	targetID := 1 // Placeholder: This is the logged-in user receiving the request
-
-	err = h.FollowerService.RespondToFollowRequest(targetID, reqBody.FollowerID, reqBody.Accept)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Response recorded successfully"})
+	json.NewEncoder(w).Encode(utils.ResponseApi{
+		Success: true,
+		Message: "Action successful",
+	})
 }
 
 // GET /api/users/{id}/followers
-func (h *FollowerHandler) GetFollowersHandler(w http.ResponseWriter, r *http.Request) {
+func (h *FollowerHandler) HandleGetFollowers(w http.ResponseWriter, r *http.Request) {
+	middlewares.EnableCores(w, r)
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Method Not Allowed"})
 		return
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+	if err := utils.IsValidSeesion(r); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Invalid Token"})
 		return
 	}
 
-	userID, err := strconv.Atoi(parts[3])
+	targetIDStr := r.PathValue("id")
+	targetID, err := strconv.Atoi(targetIDStr)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Invalid user ID"})
 		return
 	}
 
-	// TODO: Call h.FollowerService.GetFollowers(userID) when implemented in Service layer
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Followers list fetched",
-		"user_id": userID,
+	followers, err := h.followerService.GetFollowers(r.Context(), targetID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Server error"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(utils.ResponseApi{
+		Success: true,
+		Message: followers,
 	})
 }
 
 // GET /api/users/{id}/following
-func (h *FollowerHandler) GetFollowingHandler(w http.ResponseWriter, r *http.Request) {
+func (h *FollowerHandler) HandleGetFollowing(w http.ResponseWriter, r *http.Request) {
+	middlewares.EnableCores(w, r)
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Method Not Allowed"})
 		return
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 4 {
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+	if err := utils.IsValidSeesion(r); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Invalid Token"})
 		return
 	}
 
-	userID, err := strconv.Atoi(parts[3])
+	targetIDStr := r.PathValue("id")
+	targetID, err := strconv.Atoi(targetIDStr)
 	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Invalid user ID"})
 		return
 	}
 
-	// TODO: Call h.FollowerService.GetFollowing(userID) when implemented in Service layer
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Following list fetched",
-		"user_id": userID,
+	following, err := h.followerService.GetFollowing(r.Context(), targetID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Server error"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(utils.ResponseApi{
+		Success: true,
+		Message: following,
 	})
 }
