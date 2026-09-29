@@ -1,0 +1,1 @@
+export interface User { id: number; email: string; first_name: string; last_name: string; dob: string; avatar_path: string; nickname: string; about_me: string; is_private: boolean; created_at: string; }
