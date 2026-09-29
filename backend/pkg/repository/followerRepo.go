@@ -6,6 +6,7 @@ import (
 )
 
 type FollowerRepository interface {
+	GetFollowStatus(ctx context.Context, followerID, followingID int) (string, error)
 	GetFollowers(ctx context.Context, userID int) ([]models.FollowerData, error)
 	GetFollowing(ctx context.Context, userID int) ([]models.FollowerData, error)
 	CreateFollowRequest(ctx context.Context, followerID, targetID int, status string) error
@@ -88,4 +89,20 @@ func (r *followerRepository) GetFollowing(ctx context.Context, userID int) ([]mo
 		following = append(following, user)
 	}
 	return following, nil
+}
+
+func (r *followerRepository) GetFollowStatus(ctx context.Context, followerID, followingID int) (string, error) {
+	var status string
+	query := `SELECT status FROM followers WHERE follower_id = ? AND following_id = ?`
+	
+	err := r.db.QueryRowContext(ctx, query, followerID, followingID).Scan(&status)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Ila mal9a hta ligne, kiy3ni machi follower
+			return "none", nil
+		}
+		return "", err
+	}
+	
+	return status, nil
 }
