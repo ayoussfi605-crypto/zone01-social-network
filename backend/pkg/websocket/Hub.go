@@ -1,6 +1,7 @@
-package websocket
+package ws
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -78,13 +79,41 @@ func (h *HUB) unregister(client *Client) {
 func (h *HUB) brodcast(message []byte) {
 	h.MX.Lock()
 	defer h.MX.Unlock()
-	for _, conns := range h.Clients {
-		for user := range conns {
+	for _, clients := range h.Clients {
+		for client := range clients {
 			select {
-			case user.Send <- message:
+			case client.Send <- message:
 			default:
 				// nothing to do Now
 			}
 		}
 	}
+}
+
+func (c *Client) WritePump() {
+	defer func() {
+		c.Conn.Close()
+	}()
+
+	for messages := range c.Send {
+		err := c.Conn.WriteMessage(websocket.TextMessage, messages)
+		if err != nil {
+			fmt.Println("err pump   ,", err)
+			return
+		}
+	}
+}
+
+func (c *Client) ReadPump() {
+    defer func() {
+        c.Conn.Close()
+    }()
+
+    for {
+        _, _, err := c.Conn.ReadMessage()
+        if err != nil {
+            fmt.Println("read error:", err)
+            break
+        }
+    }
 }
