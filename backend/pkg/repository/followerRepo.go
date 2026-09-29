@@ -98,7 +98,7 @@ func (r *followerRepository) GetFollowStatus(ctx context.Context, followerID, fo
 	err := r.db.QueryRowContext(ctx, query, followerID, followingID).Scan(&status)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Ila mal9a hta ligne, kiy3ni machi follower
+			// if not found any ligne, he is not fllow
 			return "none", nil
 		}
 		return "", err
