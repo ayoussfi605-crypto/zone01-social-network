@@ -20,7 +20,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Public routes (Go 1.21: plain paths, method checked inside handler)
+	// Public routes
 	mux.HandleFunc("/api/auth/register", handlers.Register)
 	mux.HandleFunc("/api/auth/login", handlers.Login)
 	mux.HandleFunc("/api/auth/logout", handlers.Logout)
