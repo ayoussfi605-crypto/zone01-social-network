@@ -29,6 +29,6 @@ func main() {
 	mux.Handle("/api/auth/me", middleware.Auth(db, http.HandlerFunc(handlers.Me)))
 	mux.Handle("/api/users/privacy", middleware.Auth(db, http.HandlerFunc(handlers.UpdatePrivacy)))
 
-	fmt.Println("backend running on :8088")
-	log.Fatal(http.ListenAndServe(":8088", middleware.Cors(mux)))
+	fmt.Println("backend running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", middleware.Cors(mux)))
 }
