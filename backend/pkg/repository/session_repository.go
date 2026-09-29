@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"social-network/pkg/models"
+	"social-network-network/pkg/models"
 )
 
 // CreateSession stores a login token with expiry time.

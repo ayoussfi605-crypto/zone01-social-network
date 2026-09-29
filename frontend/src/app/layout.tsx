@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sphere — Social Network",
+  title: "Sphere — social-network Network",
   description: "Followers, posts, groups, chat and notifications.",
 };
 

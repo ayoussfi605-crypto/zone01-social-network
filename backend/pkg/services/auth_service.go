@@ -8,9 +8,9 @@ import (
 
 	"github.com/gofrs/uuid"
 
-	"social-network/pkg/models"
-	"social-network/pkg/repository"
-	"social-network/pkg/utils"
+	"social-network-network/pkg/models"
+	"social-network-network/pkg/repository"
+	"social-network-network/pkg/utils"
 )
 
 // RegisterUser checks inputs, hashes password, saves user.

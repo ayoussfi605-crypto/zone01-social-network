@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"social-network/pkg/middleware"
-	"social-network/pkg/repository"
-	"social-network/pkg/services"
-	"social-network/pkg/utils"
+	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/repository"
+	"social-network-network/pkg/services"
+	"social-network-network/pkg/utils"
 )
 
 // DB is set once in main.go. Simple global for learning.

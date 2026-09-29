@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"social-network-network/pkg/models"
 )
 
 type FollowerRepository interface {

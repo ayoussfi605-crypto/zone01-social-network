@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"net/http"
 
-	"social-network/pkg/models"
-	"social-network/pkg/services"
+	"social-network-network/pkg/models"
+	"social-network-network/pkg/services"
 )
 
 // Key for storing user in request context. Simple string for learning.

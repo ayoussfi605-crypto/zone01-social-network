@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 
-	"social-network/pkg/models"
+	"social-network-network/pkg/models"
 )
 
 // CreateUser inserts a new user. Returns new user id.
@@ -71,4 +71,3 @@ func boolToInt(b bool) int {
 	}
 	return 0
 }
-

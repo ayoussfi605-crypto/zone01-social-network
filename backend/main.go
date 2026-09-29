@@ -5,13 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"social-network/pkg/db/sqlite"
-	"social-network/pkg/handlers"
-	"social-network/pkg/middleware"
+	"social-network-network/pkg/db/sqlite"
+	"social-network-network/pkg/handlers"
+	"social-network-network/pkg/middleware"
 )
 
 func main() {
-	db, err := sqlite.Init("./social.db")
+	db, err := sqlite.Init("./social-network.db")
 	if err != nil {
 		log.Fatal(err)
 	}
