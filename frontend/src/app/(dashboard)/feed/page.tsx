@@ -6,7 +6,6 @@ import Link from "next/link";
 import { authService } from "../../../services/authService";
 import PrivacyToggle from "../../../components/profile/PrivacyToggle";
 import type { User } from "../../../types/user";
-import { useWebSocket } from "@/src/context/WebSocketConetext";
 
 export default function FeedPage() {
   const router = useRouter();
@@ -23,8 +22,6 @@ export default function FeedPage() {
     await authService.logout();
     router.push("/login");
   }
-  const ws = useWebSocket();
-  console.log(ws);
 
   if (!user)
     return (
@@ -47,7 +44,7 @@ export default function FeedPage() {
             href="/"
             className="flex items-center gap-2 font-extrabold text-indigo-700"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-r from-indigo-600 to-violet-600 text-white">
               💬
             </span>
             Sphere
@@ -68,7 +65,7 @@ export default function FeedPage() {
 
       <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">
         <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
-          <div className="h-24 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500" />
+          <div className="h-24 bg-linear-to-r from-indigo-600 via-violet-600 to-fuchsia-500" />
           <div className="px-6 pb-6">
             <div className="-mt-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-indigo-700 shadow-lg">
               {initial}

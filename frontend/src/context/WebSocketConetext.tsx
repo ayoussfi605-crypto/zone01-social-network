@@ -26,7 +26,6 @@ export function WsProdider({
       setconected(true);
     };
     ws.onclose = () => {
-      console.log("WebSocket disconnected");
       setconected(false);
     };
 

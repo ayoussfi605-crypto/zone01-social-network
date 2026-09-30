@@ -77,6 +77,7 @@ func (h *HUB) unregister(client *Client) {
 }
 
 func (h *HUB) brodcast(message []byte) {
+	fmt.Println("message", string(message))
 	h.MX.Lock()
 	defer h.MX.Unlock()
 	for _, clients := range h.Clients {
@@ -105,15 +106,16 @@ func (c *Client) WritePump() {
 }
 
 func (c *Client) ReadPump() {
-    defer func() {
-        c.Conn.Close()
-    }()
+	defer func() {
+		c.Conn.Close()
+	}()
 
-    for {
-        _, _, err := c.Conn.ReadMessage()
-        if err != nil {
-            fmt.Println("read error:", err)
-            break
-        }
-    }
+	for {
+		_, p, err := c.Conn.ReadMessage()
+		if err != nil {
+			fmt.Println("read error:", err)
+			break
+		}
+		fmt.Println("p", string(p))
+	}
 }
