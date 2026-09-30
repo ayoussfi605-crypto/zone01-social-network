@@ -60,7 +60,7 @@ export function WsProdider({
       >
         {children}
       </WebSocketContext.Provider>
-      ;
+      
     </>
   );
 }
