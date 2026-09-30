@@ -58,4 +58,6 @@ export default function DiscussionWindow({ UserData }: any) {
       </div>
     </div>
   );
+    
+    
 }
