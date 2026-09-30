@@ -3,6 +3,7 @@
 
 import { Pencil, Search } from "lucide-react";
 import { useState } from "react";
+import DiscussionWindow from "./DiscussionWindow";
 
 const INITIAL_CONTACTS = [
   {
@@ -118,11 +119,14 @@ const INITIAL_CONTACTS = [
 
 export default function ChatWindow() {
   const [ActiveUser, setActiveUser] = useState<string>(INITIAL_CONTACTS[0].id);
+  const [UsedUser, setUsedUser] = useState(
+    INITIAL_CONTACTS.filter((el) => el.id == ActiveUser),
+  );
 
   const ActiveClass = `bg-[#F0F4F8]! border-gray-400   shadow-sm!`;
   const UnActiveClass = `hover:bg-slate-50! border-blue-100/80! `;
   return (
-    <div className="">
+    <div className=" flex">
       {/* <div className="w-screen p-3.5 flex justify-start border-b border-gray-400 ">
         <div className="flex flex-col justify-start items-start gap-1">
           <h1 className="text-[30px] font-bold ">Direct Messages</h1>
@@ -136,8 +140,8 @@ export default function ChatWindow() {
           </div>
         </div>
       </div> */}
-      <aside className="max-w-87.5 h-screen border-b border-r  border-gray-400  flex flex-col">
-        <div className="p-3.5 border-b border-gray-400   flex items-center justify-center gap-3">
+      <aside className="max-w-87.5 h-screen border-b border-r  border-slate-200/60 flex flex-col">
+        <div className="p-3.5 border-b border-slate-200/60  flex items-center justify-center gap-3">
           <div className="flex text-[#6B7280] items-center justify-start gap-0.5 bg-[#F3F4F6] rounded-xl p-1">
             <Search size={18} />
             <input
@@ -152,41 +156,44 @@ export default function ChatWindow() {
         </div>
         <ul className="h-full flex flex-col gap-1 p-3 ">
           {INITIAL_CONTACTS?.map((el) => (
-            <>
-              <div
-                onClick={() => {
-                  setActiveUser(el.id);
-                }}
-                className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${ActiveUser == el.id ? ActiveClass : UnActiveClass}`}
-              >
-                <img
-                  className="w-12.5 h-12.5 rounded-full object-cover"
-                  src={el.avatar}
-                  alt="heloo"
-                />
-                <div className="flex  flex-col flex-1  gap-1">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-[15px] text-black capitalize">
-                      {el.name}
-                    </h3>
-                    <p className="text-[12px] ">{el.time}</p>
-                  </div>
-                  <div className="flex justify-start items-center gap-5">
-                    <p className="text-[12px] text-[#6B7280]">
-                      {el.lastMessage}
-                    </p>
-                  </div>
+            <div
+              key={el.id}
+              onClick={() => {
+                setActiveUser(el.id);
+                setUsedUser(
+                  INITIAL_CONTACTS.filter((el) => el.id == ActiveUser),
+                );
+                console.log(UsedUser);
+              }}
+              className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${ActiveUser == el.id ? ActiveClass : UnActiveClass}`}
+            >
+              <img
+                className="w-12.5 h-12.5 rounded-full object-cover"
+                src={el.avatar}
+                alt="heloo"
+              />
+              <div className="flex  flex-col flex-1  gap-1">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-[15px] text-black capitalize">
+                    {el.name}
+                  </h3>
+                  <p className="text-[12px] ">{el.time}</p>
                 </div>
-                <div>
-                  <span className="text-white text-[12px] w-4.75 h-3.75 bg-black rounded-full flex justify-center items-center">
-                    3
-                  </span>
+                <div className="flex justify-start items-center gap-5">
+                  <p className="text-[12px] text-[#6B7280]">{el.lastMessage}</p>
                 </div>
               </div>
-            </>
+              <div>
+                <span className="text-white text-[12px] w-4.75 h-3.75 bg-black rounded-full flex justify-center items-center">
+                  3
+                </span>
+              </div>
+            </div>
           ))}
         </ul>
       </aside>
+
+      <DiscussionWindow UserData={UsedUser[0]} />
     </div>
   );
 }
