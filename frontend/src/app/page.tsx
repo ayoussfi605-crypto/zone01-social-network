@@ -25,7 +25,7 @@ const features = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 text-white">
+    <main className="min-h-screen bg-linear-to-br from-indigo-600 via-violet-600 to-fuchsia-500 text-white">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2 text-xl font-extrabold">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">

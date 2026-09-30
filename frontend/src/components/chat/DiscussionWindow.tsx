@@ -1,11 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
-import {
-  FaceNeutralIcon,
-  FaceSlightlySmilingIcon,
-  Icon,
-  Send,
-} from "lucide-react";
+import { FaceSlightlySmilingIcon, Send } from "lucide-react";
 
 export default function DiscussionWindow({ UserData }: any) {
   console.log("UserData:", UserData);
