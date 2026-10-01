@@ -54,6 +54,10 @@ func main() {
 		Newfollowhandlers.HandleGetFollowing(w, r)
 	})
 	
+	// posts handlers
+	mux.HandleFunc("/api/feed/posts", func(w http.ResponseWriter, r *http.Request) {
+	})
+
 	fmt.Println("backend running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", middleware.Cors(mux)))
 }
