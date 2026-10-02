@@ -37,7 +37,7 @@ func main() {
 	// Protected routes (need login cookie)
 	mux.Handle("/api/auth/me", middleware.Auth(db, http.HandlerFunc(handlers.Me)))
 	mux.Handle("/api/users/privacy", middleware.Auth(db, http.HandlerFunc(handlers.UpdatePrivacy)))
-	mux.HandleFunc("/api/chatuserlist/", handlers.HandlerUserList)
+	// mux.HandleFunc("/api/chatuserlist/", handlers.HandlerUserList)
 
 	// followers inicialization
 	followrepo := repository.NewFollowerRepo(db)
@@ -54,6 +54,16 @@ func main() {
 	mux.Handle("GET /api/users/{id}/followers", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowers)))
 	mux.Handle("GET /api/users/{id}/following", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowing)))
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
+
+	// chat routes
+
+	chatrepo := repository.NewChatRepository(db)
+	chatservices := services.NewChatServices(chatrepo)
+	chatHandler := handlers.NewChatHandler(chatservices)
+
+	fmt.Println("//beforte chat start")
+
+	mux.Handle("/api/chatuserlist/", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleChat)))
 
 	fmt.Println("backend running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", middleware.Cors(mux)))

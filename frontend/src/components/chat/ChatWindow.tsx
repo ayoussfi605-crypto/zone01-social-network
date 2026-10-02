@@ -116,10 +116,12 @@ const INITIAL_CONTACTS: ChatUsers[] = [
 //   },
 // ];
 
-export default function ChatWindow() {
-  const [ActiveUser, setActiveUser] = useState<string>(INITIAL_CONTACTS[0].id);
+export default function ChatWindow(users: {users:ChatUsers[]}) {
+  console.log("from chat window ", users.users);
+
+  const [ActiveUser, setActiveUser] = useState<string>(users.users[0]?.id);
   const [UsedUser, setUsedUser] = useState(
-    INITIAL_CONTACTS.filter((el) => el.id == ActiveUser),
+    users.users?.filter((el) => el.id == ActiveUser),
   );
 
   const ActiveClass = `bg-[#F0F4F8]! border-gray-400   shadow-sm!`;
@@ -154,13 +156,13 @@ export default function ChatWindow() {
           </div>
         </div>
         <ul className="h-full flex flex-col gap-1 p-3 ">
-          {INITIAL_CONTACTS?.map((el) => (
+          {users.users?.map((el) => (
             <div
               key={el.id}
               onClick={() => {
                 setActiveUser(el.id);
                 setUsedUser(
-                  INITIAL_CONTACTS.filter((el) => el.id == ActiveUser),
+                  users.users.filter((el) => el.id == ActiveUser),
                 );
                 console.log(UsedUser);
               }}
