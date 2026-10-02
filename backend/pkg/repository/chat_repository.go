@@ -11,15 +11,15 @@ type ChatRepository interface {
 }
 
 type ChatUsers struct {
-	Id          string
-	Name        string
-	FullName    string
-	Handle      string
-	Avatar      string
-	Time        string
-	LastMessage string
-	Unread      int
-	Online      bool
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	FullName    string `json:"fullName"`
+	Handle      string `json:"handle"`
+	Avatar      string `json:"avatar"`
+	Time        string `json:"time"`
+	LastMessage string `json:"lastMessage"`
+	Unread      int    `json:"Unread"`
+	Online      bool   `json:"Online"`
 }
 
 type chatRepository struct {
@@ -39,9 +39,9 @@ SELECT
     users.avatar_path
 FROM users
 INNER JOIN followers
-    ON users.id = followers.follower_id
+    ON users.id = followers.followed_id
 WHERE followers.status = 'accepted'
-  AND followers.followed_id = 3;
+  AND followers.follower_id = ?;
 
 `
 	rows, err := r.db.Query(query, userId)

@@ -6,68 +6,68 @@ import { useState } from "react";
 import DiscussionWindow from "./DiscussionWindow";
 import { ChatUsers } from "@/src/types/chat";
 
-const INITIAL_CONTACTS: ChatUsers[] = [
-  {
-    id: "1",
-    name: "Anatoly P...",
-    fullName: "Anatoly Prokopenko",
-    handle: "@anatoly_pr",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-    time: "1:50 pm",
-    lastMessage: "Hi everyone, today I was on most mountain in the world!",
-    unread: 5,
-    online: true,
-  },
-  {
-    id: "2",
-    name: "Lolita Earns",
-    fullName: "Lolita Earns",
-    handle: "@lolita_e",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250",
-    time: "13 pm",
-    lastMessage: "What's your classics playlist looking like today?",
-    unread: 4,
-    online: true,
-  },
-  {
-    id: "3",
-    name: "George Lobko",
-    fullName: "George Lobko",
-    handle: "@george_l",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
-    time: "12 pm",
-    lastMessage: "Check out these photo samples from the hike!",
-    unread: 2,
-    online: false,
-  },
-  {
-    id: "4",
-    name: "Nick Shelburne",
-    fullName: "Nick Shelburne",
-    handle: "@nickshel",
-    avatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250",
-    time: "18 pm",
-    lastMessage: "Are we still meeting for coffee tomorrow afternoon?",
-    unread: 3,
-    online: true,
-  },
-  {
-    id: "5",
-    name: "Silena Davis",
-    fullName: "Silena Davis",
-    handle: "@silenad",
-    avatar:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=250",
-    time: "23 pm",
-    lastMessage: "Last message will show here when updated...",
-    unread: 0,
-    online: false,
-  },
-];
+// const INITIAL_CONTACTS: ChatUsers[] = [
+//   {
+//     id: "1",
+//     name: "Anatoly P...",
+//     fullName: "Anatoly Prokopenko",
+//     handle: "@anatoly_pr",
+//     avatar:
+//       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
+//     time: "1:50 pm",
+//     lastMessage: "Hi everyone, today I was on most mountain in the world!",
+//     unread: 5,
+//     online: true,
+//   },
+//   {
+//     id: "2",
+//     name: "Lolita Earns",
+//     fullName: "Lolita Earns",
+//     handle: "@lolita_e",
+//     avatar:
+//       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250",
+//     time: "13 pm",
+//     lastMessage: "What's your classics playlist looking like today?",
+//     unread: 4,
+//     online: true,
+//   },
+//   {
+//     id: "3",
+//     name: "George Lobko",
+//     fullName: "George Lobko",
+//     handle: "@george_l",
+//     avatar:
+//       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
+//     time: "12 pm",
+//     lastMessage: "Check out these photo samples from the hike!",
+//     unread: 2,
+//     online: false,
+//   },
+//   {
+//     id: "4",
+//     name: "Nick Shelburne",
+//     fullName: "Nick Shelburne",
+//     handle: "@nickshel",
+//     avatar:
+//       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250",
+//     time: "18 pm",
+//     lastMessage: "Are we still meeting for coffee tomorrow afternoon?",
+//     unread: 3,
+//     online: true,
+//   },
+//   {
+//     id: "5",
+//     name: "Silena Davis",
+//     fullName: "Silena Davis",
+//     handle: "@silenad",
+//     avatar:
+//       "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=250",
+//     time: "23 pm",
+//     lastMessage: "Last message will show here when updated...",
+//     unread: 0,
+//     online: false,
+//   },
+// ];
 
 // const INITIAL_MESSAGES = [
 //   {
@@ -116,10 +116,12 @@ const INITIAL_CONTACTS: ChatUsers[] = [
 //   },
 // ];
 
-export default function ChatWindow(users: {users:ChatUsers[]}) {
+export default function ChatWindow(users: { users: ChatUsers[] }) {
   console.log("from chat window ", users.users);
 
-  const [ActiveUser, setActiveUser] = useState<string>(users.users[0]?.id);
+  const [ActiveUser, setActiveUser] = useState<string | null>(
+    users.users[0]?.id,
+  );
   const [UsedUser, setUsedUser] = useState(
     users.users?.filter((el) => el.id == ActiveUser),
   );
@@ -161,9 +163,7 @@ export default function ChatWindow(users: {users:ChatUsers[]}) {
               key={el.id}
               onClick={() => {
                 setActiveUser(el.id);
-                setUsedUser(
-                  users.users.filter((el) => el.id == ActiveUser),
-                );
+                setUsedUser(users.users.filter((el) => el.id == ActiveUser));
                 console.log(UsedUser);
               }}
               className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${ActiveUser == el.id ? ActiveClass : UnActiveClass}`}
