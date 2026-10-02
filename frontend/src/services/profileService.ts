@@ -17,12 +17,25 @@ async function profileApi<T>(path: string, options: RequestInit = {}): Promise<T
   } catch {
     // Keep plain-text backend errors readable.
   }
+
+  if (typeof payload === "object" && payload !== null && "success" in payload) {
+    const envelope = payload as { success?: boolean; data?: unknown; error?: string; message?: string };
+    if (envelope.success === false && (!response.ok || envelope.error)) {
+      throw new Error(envelope.error || envelope.message || `Profile request failed (HTTP ${response.status})`);
+    }
+    if ("data" in envelope && response.ok) {
+      payload = envelope.data;
+    }
+  }
+
   if (!response.ok) {
     const message = typeof payload === "string"
       ? payload
       : typeof payload === "object" && payload !== null && "error" in payload
         ? String(payload.error)
-        : "Profile request failed";
+        : typeof payload === "object" && payload !== null && "message" in payload
+          ? String(payload.message)
+          : `Profile request failed (HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ""})`;
     throw new Error(message);
   }
   return payload as T;
