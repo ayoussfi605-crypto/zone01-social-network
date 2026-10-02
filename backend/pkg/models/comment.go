@@ -1,13 +1,10 @@
 package models
 
-type Post struct {
+type Comment struct {
 	ID        int    `json:"id"`
+	PostID    int    `json:"post_id"`
 	UserID    int    `json:"user_id"`
-	Title     string `json:"title"`
 	Content   string `json:"content"`
 	ImagePath string `json:"image_path"`
-	Privacy   string `json:"privacy"`
 	CreatedAt string `json:"created_at"`
 }
-
-type Postdata = Post

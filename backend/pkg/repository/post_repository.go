@@ -37,7 +37,6 @@ func (r *postRepository) CreatePost(ctx context.Context, userID int, post models
 	return result.LastInsertId()
 }
 
-
 func (r *postRepository) AddPostPermissions(ctx context.Context, postID int, userIDs []int) error {
 	if len(userIDs) == 0 {
 		return nil
@@ -66,7 +65,6 @@ func (r *postRepository) AddPostPermissions(ctx context.Context, postID int, use
 	return tx.Commit()
 }
 
-
 func (r *postRepository) GetPostByID(ctx context.Context, postID int) (*models.Postdata, error) {
 	post := &models.Postdata{}
 	err := r.db.QueryRowContext(ctx, `
@@ -74,13 +72,13 @@ func (r *postRepository) GetPostByID(ctx context.Context, postID int) (*models.P
 		FROM posts
 		WHERE id = ?
 	`, postID).Scan(
-		&post.Id,
-		&post.User_Id,
+		&post.ID,
+		&post.UserID,
 		&post.Title,
 		&post.Content,
-		&post.Image_path,
+		&post.ImagePath,
 		&post.Privacy,
-		&post.Created_At,
+		&post.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -143,13 +141,13 @@ func scanPosts(rows *sql.Rows) ([]models.Postdata, error) {
 	for rows.Next() {
 		var post models.Postdata
 		if err := rows.Scan(
-			&post.Id,
-			&post.User_Id,
+			&post.ID,
+			&post.UserID,
 			&post.Title,
 			&post.Content,
-			&post.Image_path,
+			&post.ImagePath,
 			&post.Privacy,
-			&post.Created_At,
+			&post.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
