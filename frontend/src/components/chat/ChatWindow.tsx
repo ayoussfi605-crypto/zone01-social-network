@@ -4,8 +4,9 @@
 import { Pencil, Search } from "lucide-react";
 import { useState } from "react";
 import DiscussionWindow from "./DiscussionWindow";
+import { ChatUsers } from "@/src/types/chat";
 
-const INITIAL_CONTACTS = [
+const INITIAL_CONTACTS: ChatUsers[] = [
   {
     id: "1",
     name: "Anatoly P...",
@@ -17,8 +18,6 @@ const INITIAL_CONTACTS = [
     lastMessage: "Hi everyone, today I was on most mountain in the world!",
     unread: 5,
     online: true,
-    coverPhoto:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=600",
   },
   {
     id: "2",

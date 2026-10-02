@@ -26,22 +26,23 @@ func main() {
 	go ws.ManageHub(ws.GlobalHub)
 
 	mux := http.NewServeMux()
-	
+
 	// Public routes
 	mux.HandleFunc("/api/auth/register", handlers.Register)
 	mux.HandleFunc("/api/auth/login", handlers.Login)
 	mux.HandleFunc("/api/auth/logout", handlers.Logout)
 	mux.HandleFunc("/api/ws", handlers.WebsocketHandler)
-	
+
 	// Protected routes (need login cookie)
 	mux.Handle("/api/auth/me", middleware.Auth(db, http.HandlerFunc(handlers.Me)))
 	mux.Handle("/api/users/privacy", middleware.Auth(db, http.HandlerFunc(handlers.UpdatePrivacy)))
-	
+	mux.HandleFunc("/api/chatuserlist/", handlers.HandlerUserList)
+
 	// followers inicialization
 	followrepo := repository.NewFollowerRepo(db)
-	Newfollowerserveses := services.NewFollowerService((followrepo))
+	Newfollowerserveses := services.NewFollowerService(followrepo)
 	Newfollowhandlers := handlers.NewFollowerHandler(Newfollowerserveses)
-	
+
 	// followers routes
 	mux.HandleFunc("/api/follow-action", func(w http.ResponseWriter, r *http.Request) {
 		Newfollowhandlers.HandleFollowAction(w, r)
@@ -49,11 +50,11 @@ func main() {
 	mux.HandleFunc("/api/followers", func(w http.ResponseWriter, r *http.Request) {
 		Newfollowhandlers.HandleGetFollowers(w, r)
 	})
-	
+
 	mux.HandleFunc("/api/following", func(w http.ResponseWriter, r *http.Request) {
 		Newfollowhandlers.HandleGetFollowing(w, r)
 	})
-	
+
 	fmt.Println("backend running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", middleware.Cors(mux)))
 }
