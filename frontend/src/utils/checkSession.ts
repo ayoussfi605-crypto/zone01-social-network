@@ -1,3 +1,5 @@
+"use server";
+
 import { cookies } from "next/headers";
 
 export async function checkSession() {
@@ -17,7 +19,6 @@ export async function checkSession() {
   });
 
   if (!response.ok) {
-    cookieStore.delete("session_token");
     return false;
   }
 
