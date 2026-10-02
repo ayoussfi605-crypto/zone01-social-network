@@ -1,15 +1,9 @@
-
-
-import { api, GetSessionToken } from "./api";
+import { api } from "./api";
 
 export const ChatService = {
   getChatUserList: async () => {
-    api("/api/chatuserlist/", {
+    return api("/api/chatuserlist/", {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${await GetSessionToken()}`,
-        "Content-Type": "application/json",
-      },
     });
   },
 };
