@@ -1,10 +1,32 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"social-network-network/pkg/models"
 )
+
+type ProfileUserRepository interface {
+	GetProfileUser(ctx context.Context, userID int) (*models.User, error)
+}
+
+type profileUserRepository struct {
+	db *sql.DB
+}
+
+func NewProfileUserRepository(db *sql.DB) ProfileUserRepository {
+	return &profileUserRepository{db: db}
+}
+
+func (r *profileUserRepository) GetProfileUser(ctx context.Context, userID int) (*models.User, error) {
+	row := r.db.QueryRowContext(ctx,
+		`SELECT id, email, password_hash, first_name, last_name, dob,
+		        COALESCE(avatar_path,''), COALESCE(nickname,''), COALESCE(about_me,''),
+		        is_private, created_at
+		 FROM users WHERE id = ?`, userID)
+	return scanUser(row)
+}
 
 // CreateUser inserts a new user. Returns new user id.
 func CreateUser(db *sql.DB, u models.User) (int64, error) {
