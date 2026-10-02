@@ -8,6 +8,7 @@ import (
 
 	"social-network-network/pkg/middleware"
 	"social-network-network/pkg/services"
+	"social-network-network/pkg/utils"
 )
 
 type ProfileHandler struct {
@@ -21,18 +22,18 @@ func NewProfileHandler(s services.ProfileService) *ProfileHandler {
 func (h *ProfileHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
 	targetID, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || targetID <= 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ResposAPI{Eroor: "invalid user id"})
 		return
 	}
 	viewer := middleware.GetUser(r)
 	profile, err := h.profileService.GetUserProfile(r.Context(), viewer.Id, targetID)
 	if errors.Is(err, sql.ErrNoRows) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "user not found"})
+		utils.WriteJSON(w, http.StatusNotFound, utils.ResposAPI{Eroor: "user not found"})
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not load profile"})
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.ResposAPI{Eroor: "could not load profile"})
 		return
 	}
-	writeJSON(w, http.StatusOK, profile)
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: profile})
 }
