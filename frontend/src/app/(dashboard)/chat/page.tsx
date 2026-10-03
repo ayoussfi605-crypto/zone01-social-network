@@ -17,7 +17,7 @@ export default async function ChatPage() {
   }
   console.log("res ,", res?.data);
 
-  const users: ChatUsers[] = res?.data;
+  const users: ChatUsers[] = res?.data ? res.data : [];
 
   console.log(users, "dddd");
 
