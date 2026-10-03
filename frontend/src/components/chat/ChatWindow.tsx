@@ -70,28 +70,11 @@ import { ChatUsers } from "@/src/types/chat";
 
 export default function ChatWindow(users: { users: ChatUsers[] }) {
   console.log("from chat window ", users.users);
-  const chatUsers = [
-    ...users?.users,
-
-    {
-      id: "1",
-      name: "Anatoly P...",
-      fullName: "Anatoly Prokopenko",
-      handle: "@anatoly_pr",
-      avatar:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
-      time: "1:50 pm",
-      lastMessage: "Hi everyone, today I was on most mountain in the world!",
-      unread: 5,
-      online: true,
-    },
-  ];
+  const chatUsers = [...users?.users];
   console.log("Chat Users", chatUsers.length);
 
-  const [ActiveUser, setActiveUser] = useState<string | null>(chatUsers[0]?.id);
-  const [UsedUser, setUsedUser] = useState(
-    chatUsers?.filter((el) => el.id == ActiveUser),
-  );
+  // const [ActiveUserId, setActiveUserId] = useState<string | null>(null);
+  const [UsedUser, setUsedUser] = useState<ChatUsers | null>(null);
 
   const ActiveClass = `bg-[#F0F4F8]! border-gray-400   shadow-sm!`;
   const UnActiveClass = `hover:bg-slate-50! border-blue-100/80! `;
@@ -131,15 +114,17 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                 <div
                   key={el.id}
                   onClick={() => {
-                    setActiveUser(el.id);
-                    setUsedUser(chatUsers.filter((el) => el.id == ActiveUser));
-                    console.log(UsedUser);
+                    // setActiveUserId(el.id);
+                    setUsedUser(
+                      el
+                    );
+                    console.log(UsedUser  ,);
                   }}
-                  className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${ActiveUser == el.id ? ActiveClass : UnActiveClass}`}
+                  className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${UsedUser?.id == el.id ? ActiveClass : UnActiveClass}`}
                 >
                   <img
                     className="w-12.5 h-12.5 rounded-full object-cover"
-                    src={el.avatar}
+                    src={"http://localhost:8080"+el.avatar}
                     alt="heloo"
                   />
                   <div className="flex  flex-col flex-1  gap-1">
@@ -172,9 +157,10 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
       </aside>
 
       <>
-        {UsedUser.length ? (
+        {UsedUser ? (
           <>
-            <DiscussionWindow UserData={UsedUser[0]} />
+            {console.log(UsedUser)}
+            <DiscussionWindow UserData={UsedUser} />
           </>
         ) : (
           <>
