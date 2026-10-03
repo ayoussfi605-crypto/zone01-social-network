@@ -11,3 +11,11 @@ type Post struct {
 }
 
 type Postdata = Post
+
+type CreatePostDTO struct {
+	Title            string
+	Content          string
+	Privacy          string
+	Image            *multipart.FileHeader
+	PermittedUserIDs []int
+}
