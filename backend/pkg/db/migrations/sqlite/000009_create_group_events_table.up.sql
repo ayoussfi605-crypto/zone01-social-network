@@ -1,4 +1,4 @@
-CREATE TABLE group_events (
+CREATE TABLE IF NOT EXISTS group_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     group_id INTEGER NOT NULL,
     creator_id INTEGER NOT NULL,

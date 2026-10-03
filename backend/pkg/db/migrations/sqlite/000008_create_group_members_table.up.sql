@@ -1,4 +1,4 @@
-CREATE TABLE group_members (
+CREATE TABLE IF NOT EXISTS group_members (
     group_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     status TEXT NOT NULL CHECK (

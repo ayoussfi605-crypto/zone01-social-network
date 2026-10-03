@@ -1,4 +1,4 @@
-CREATE TABLE event_responses (
+CREATE TABLE IF NOT EXISTS event_responses (
     event_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     response TEXT NOT NULL CHECK (
