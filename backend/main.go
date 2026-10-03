@@ -61,9 +61,8 @@ func main() {
 	chatservices := services.NewChatServices(chatrepo)
 	chatHandler := handlers.NewChatHandler(chatservices)
 
-	fmt.Println("//beforte chat start")
-
 	mux.Handle("/api/chatuserlist/", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleChat)))
+	fmt.Println("//beforte chat start")
 
 	fmt.Println("backend running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", middleware.Cors(mux)))

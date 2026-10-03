@@ -18,18 +18,24 @@ func NewChatHandler(chatservices services.ChatServices) *ChatHandler {
 }
 
 func (h *ChatHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Heloo", r, w)
+	if r.Method != http.MethodGet {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, utils.ResposAPI{
+			Success: false,
+			Eroor:   "method not allowed",
+		})
+		return
+	}
+
 	User := middleware.GetUser(r)
 
 	users, err := h.ChatServices.GetChatUsers(r.Context(), User.Id)
 	if err != nil {
 		utils.WriteJSON(w, http.StatusInternalServerError, utils.ResposAPI{
 			Success: false,
-			Message: err.Error(),
 			Eroor:   err.Error(),
 		})
 	}
-	fmt.Println("users" ,users)
+	fmt.Println("users", users)
 
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{
 		Success: true,
