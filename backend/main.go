@@ -37,7 +37,7 @@ func main() {
 	// Protected routes (need login cookie)
 	mux.Handle("/api/auth/me", middleware.Auth(db, http.HandlerFunc(handlers.Me)))
 	mux.Handle("/api/users/privacy", middleware.Auth(db, http.HandlerFunc(handlers.UpdatePrivacy)))
-	// mux.HandleFunc("/api/chatuserlist/", handlers.HandlerUserList)
+	
 
 	// followers inicialization
 	followrepo := repository.NewFollowerRepo(db)
