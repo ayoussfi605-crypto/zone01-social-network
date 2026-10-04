@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { api } from "../../services/api";
+import { profileService } from "../../services/profileService";
 import type { User } from "../../types/user";
 
 // Toggle button to switch profile privacy between public and private.
@@ -12,13 +12,10 @@ export default function PrivacyToggle({ user, onChange }: { user: User; onChange
     setLoading(true);
     setError("");
     try {
-      const updated = await api("/api/users/privacy", {
-        method: "PUT",
-        body: JSON.stringify({ is_private: !user.is_private }),
-      });
+      const updated = await profileService.updatePrivacy(!user.is_private);
       onChange(updated);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not update privacy settings");
     } finally {
       setLoading(false);
     }

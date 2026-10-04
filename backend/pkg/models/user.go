@@ -20,8 +20,14 @@ type User struct {
 // FollowerData is Dev 2's DTO for follower/following lists.
 // Kept from the merged branch so dev2's repository code keeps compiling.
 type FollowerData struct {
-	ID        int    `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	AvatarUrl string `json:"avatar_url"`
+	ID         int    `json:"id"`
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	AvatarPath string `json:"avatar_path"`
+}
+
+type UserProfile struct {
+	User         *User  `json:"user"`
+	Restricted   bool   `json:"restricted"`
+	FollowStatus string `json:"follow_status"`
 }

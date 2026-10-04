@@ -1,75 +1,39 @@
 package handlers
 
-// import (
-// 	"encoding/json"
-// 	"net/http"
-// 	"social-network/middlewares"
-// 	"social-network/utils"
-// 	"strconv"
+import (
+	"database/sql"
+	"errors"
+	"net/http"
+	"strconv"
 
-// 	"social-network-network/pkg/services"
-// )
+	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/services"
+	"social-network-network/pkg/utils"
+)
 
-// type ProfileHandler struct {
-// 	profileService services.ProfileService
-// }
+type ProfileHandler struct {
+	profileService services.ProfileService
+}
 
-// func NewProfileHandler(s services.ProfileService) *ProfileHandler {
-// 	return &ProfileHandler{profileService: s}
-// }
+func NewProfileHandler(s services.ProfileService) *ProfileHandler {
+	return &ProfileHandler{profileService: s}
+}
 
-// // GET /api/users/{id}/profile
-// func (h *ProfileHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
-// 	middlewares.EnableCores(w, r)
-// 	w.Header().Set("Content-Type", "application/json")
-
-// 	if r.Method != http.MethodGet {
-// 		w.WriteHeader(http.StatusMethodNotAllowed)
-// 		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Method Not Allowed"})
-// 		return
-// 	}
-
-// 	if err := utils.IsValidSeesion(r); err != nil {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Invalid Token"})
-// 		return
-// 	}
-
-// 	viewerID := middlewares.GetUserId(r)
-// 	if viewerID == 0 {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Unauthorized"})
-// 		return
-// 	}
-
-// 	targetIDStr := r.PathValue("id")
-// 	targetID, err := strconv.Atoi(targetIDStr)
-// 	if err != nil {
-// 		w.WriteHeader(http.StatusBadRequest)
-// 		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Invalid user ID"})
-// 		return
-// 	}
-
-// 	profile, err := h.profileService.GetUserProfile(r.Context(), viewerID, targetID)
-
-// 	// Handle restricted private profiles
-// 	if err != nil && err.Error() == "private profile" {
-// 		json.NewEncoder(w).Encode(utils.ResponseApi{
-// 			Success: true,
-// 			Message: profile, // Restricted profile (only basic info)
-// 			Error:   "Profile is private",
-// 		})
-// 		return
-// 	}
-
-// 	if err != nil {
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		json.NewEncoder(w).Encode(utils.ResponseApi{Success: false, Error: "Server error"})
-// 		return
-// 	}
-
-// 	json.NewEncoder(w).Encode(utils.ResponseApi{
-// 		Success: true,
-// 		Message: profile,
-// 	})
-// }
+func (h *ProfileHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
+	targetID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || targetID <= 0 {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ResposAPI{Eroor: "invalid user id"})
+		return
+	}
+	viewer := middleware.GetUser(r)
+	profile, err := h.profileService.GetUserProfile(r.Context(), viewer.Id, targetID)
+	if errors.Is(err, sql.ErrNoRows) {
+		utils.WriteJSON(w, http.StatusNotFound, utils.ResposAPI{Eroor: "user not found"})
+		return
+	}
+	if err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.ResposAPI{Eroor: "could not load profile"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: profile})
+}

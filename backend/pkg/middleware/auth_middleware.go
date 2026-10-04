@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"social-network-network/pkg/models"
@@ -18,14 +19,19 @@ const UserKey ctxKey = "user"
 // If OK -> puts user in context and calls next handler.
 // If not -> returns 401.
 func Auth(db *sql.DB, next http.Handler) http.Handler {
+	fmt.Println("Helooo 1")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("2", w, r)
 		cookie, err := r.Cookie("session_token")
 		if err != nil {
+			fmt.Println("Heloo err1", err)
 			http.Error(w, "not logged in", http.StatusUnauthorized)
 			return
 		}
 		user, err := services.ValidateSession(db, cookie.Value)
 		if err != nil {
+			fmt.Println("Heloo err2", err)
+
 			http.Error(w, "not logged in", http.StatusUnauthorized)
 			return
 		}

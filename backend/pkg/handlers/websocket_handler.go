@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("hna")
+	
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("err1", err)
@@ -26,7 +26,7 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("conn", conn)
+	fmt.Println("connected")
 	// get userId helper
 
 	client := ws.Client{

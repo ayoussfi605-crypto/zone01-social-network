@@ -3,7 +3,7 @@
 import { FaceSlightlySmilingIcon, Send } from "lucide-react";
 
 export default function DiscussionWindow({ UserData }: any) {
-  console.log("UserData:", UserData);
+  console.log("UserData: DIccc", UserData);
 
   return (
     <div className="flex flex-col flex-1">
@@ -11,7 +11,7 @@ export default function DiscussionWindow({ UserData }: any) {
         <div className="image">
           <img
             className="h-12 w-12 rounded-full object-cover"
-            src={UserData?.avatar}
+            src={"http://localhost:8080"+UserData?.avatar}
             alt={UserData?.fullName || "User avatar"}
           />
         </div>

@@ -1,54 +1,53 @@
 package services
 
-// import (
-// 	"context"
-// 	"errors"
-	
-// 	"social-network/pkg/models"
-// 	"social-network/pkg/repository"
-// )
+import (
+	"context"
 
-// type ProfileService interface {
-// 	GetUserProfile(ctx context.Context, viewerID, targetID int) (*models.User, error)
-// }
+	"social-network-network/pkg/models"
+	"social-network-network/pkg/repository"
+)
 
-// type profileService struct {
-// 	userRepo     repository.UserRepository
-// 	followerRepo repository.FollowerRepository
-// }
+type ProfileService interface {
+	GetUserProfile(ctx context.Context, viewerID, targetID int) (*models.UserProfile, error)
+}
 
-// func NewProfileService(uRepo repository.UserRepository, fRepo repository.FollowerRepository) ProfileService {
-// 	return &profileService{userRepo: uRepo, followerRepo: fRepo}
-// }
+type profileService struct {
+	userRepo     repository.ProfileUserRepository
+	followerRepo repository.FollowerRepository
+}
 
-// func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID int) (*models.User, error) {
-// 	// Fetch user profile from database
-// 	user, err := s.userRepo.GetUserByID(ctx, targetID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func NewProfileService(userRepo repository.ProfileUserRepository, followerRepo repository.FollowerRepository) ProfileService {
+	return &profileService{userRepo: userRepo, followerRepo: followerRepo}
+}
 
-// 	// If viewer is viewing their own profile, return all data
-// 	if viewerID == targetID {
-// 		return user, nil
-// 	}
+func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID int) (*models.UserProfile, error) {
+	user, err := s.userRepo.GetProfileUser(ctx, targetID)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// Check privacy rules
-// 	if user.Is_Public == "0" { // Assuming "0" means private
-// 		// Check if viewer is an accepted follower
-// 		status, err := s.followerRepo.GetFollowStatus(ctx, viewerID, targetID)
-// 		if err != nil || status != "accepted" {
-// 			// Restrict data for non-followers
-// 			restrictedUser := &models.User{
-// 				ID:         user.ID,
-// 				First_Name: user.First_Name,
-// 				Last_Name:  user.Last_Name,
-// 				Avatar_Url: user.Avatar_Url,
-// 				Is_Public:  user.Is_Public,
-// 			}
-// 			return restrictedUser, errors.New("private profile") // Handler will use this to show restricted view
-// 		}
-// 	}
+	status := "none"
+	if viewerID > 0 && viewerID != targetID {
+		status, err = s.followerRepo.GetFollowStatus(ctx, viewerID, targetID)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-// 	return user, nil
-// }
+	restricted := viewerID != targetID && user.IsPrivate && status != "accepted"
+	if restricted {
+		user = &models.User{
+			Id:         user.Id,
+			FirstName:  user.FirstName,
+			LastName:   user.LastName,
+			AvatarPath: user.AvatarPath,
+			IsPrivate:  user.IsPrivate,
+		}
+	}
+
+	return &models.UserProfile{
+		User:         user,
+		Restricted:   restricted,
+		FollowStatus: status,
+	}, nil
+}
