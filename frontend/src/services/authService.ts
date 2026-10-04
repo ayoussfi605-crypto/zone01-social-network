@@ -1,5 +1,5 @@
 import { api } from "./api";
-import { setCookies } from "../utils/setCookies";
+import { clearSessionCookie, setCookies } from "../utils/setCookies";
 import type { User } from "../types/user";
 
 type APIResponse<T> = {
@@ -68,7 +68,14 @@ export const authService = {
     }) as Promise<APIResponse<User>>;
   },
 
-  logout: () =>
-    api("/api/auth/logout", { method: "POST" }) as Promise<APIResponse<null>>,
+  logout: async () => {
+    try {
+      return (await api("/api/auth/logout", {
+        method: "POST",
+      })) as APIResponse<null>;
+    } finally {
+      await clearSessionCookie();
+    }
+  },
   me: () => api("/api/auth/me") as Promise<APIResponse<User>>,
 };

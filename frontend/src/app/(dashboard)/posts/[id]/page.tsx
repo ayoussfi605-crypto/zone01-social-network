@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Heart, MapPin, Send } from "lucide-react";
 import { useEffect, useState } from "react";
+import { profileService } from "@/src/services/profileService";
 import {
+  canViewSocialPost,
   newSocialID,
   loadSocialPosts,
   saveSocialPosts,
@@ -13,6 +15,7 @@ import {
   subscribeToSocialPosts,
 } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
+import type { User } from "@/src/types/user";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -23,13 +26,32 @@ export default function PostDetailsPage() {
   const params = useParams<{ id: string }>();
   const [post, setPost] = useState<SocialPost | null>(null);
   const [comment, setComment] = useState("");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [checkingAccess, setCheckingAccess] = useState(true);
 
   useEffect(() => {
-    const refresh = () => {
-      setPost(loadSocialPosts().find((item) => item.id === params.id) ?? null);
+    let active = true;
+    const refresh = async () => {
+      setCheckingAccess(true);
+      try {
+        const user = await profileService.getCurrentUser();
+        const following = await profileService.getFollowing(user.id);
+        const candidate = loadSocialPosts().find((item) => item.id === params.id) ?? null;
+        if (!active) return;
+        setCurrentUser(user);
+        setPost(candidate && canViewSocialPost(candidate, user.id, following.map((person) => person.id)) ? candidate : null);
+      } catch {
+        if (active) setPost(null);
+      } finally {
+        if (active) setCheckingAccess(false);
+      }
     };
-    refresh();
-    return subscribeToSocialPosts(refresh);
+    void refresh();
+    const unsubscribe = subscribeToSocialPosts(() => void refresh());
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [params.id]);
 
   function toggleLike() {
@@ -51,7 +73,14 @@ export default function PostDetailsPage() {
     if (!post || !comment.trim()) return;
     const newComment = {
       id: newSocialID("comment"),
-      author: SELF,
+      author: currentUser
+        ? {
+            id: currentUser.id,
+            name: `${currentUser.first_name} ${currentUser.last_name}`,
+            handle: `@${currentUser.nickname || `${currentUser.first_name}${currentUser.last_name}`.replace(/\s+/g, "").toLowerCase()}`,
+            avatar: currentUser.avatar_path ? profileService.avatarURL(currentUser.avatar_path) : SELF.avatar,
+          }
+        : SELF,
       text: comment.trim(),
       createdAt: new Date().toISOString(),
     };
@@ -62,6 +91,14 @@ export default function PostDetailsPage() {
     );
     saveSocialPosts(updated);
     setComment("");
+  }
+
+  if (checkingAccess) {
+    return (
+      <main className="min-h-screen bg-white px-5 py-8 text-zinc-900">
+        <p className="mx-auto mt-16 max-w-sm text-center text-sm text-zinc-500">Checking post access…</p>
+      </main>
+    );
   }
 
   if (!post) {

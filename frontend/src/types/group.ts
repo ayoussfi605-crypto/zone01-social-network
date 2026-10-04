@@ -76,3 +76,13 @@ export type GroupEvent = {
   not_going_count: number;
   my_response: "" | "going" | "not_going";
 };
+
+export type GroupChatMessage = {
+  id?: number;
+  type?: "message_group";
+  group_id: number;
+  sender_id: number;
+  sender_name: string;
+  message: string;
+  timestamp: string;
+};

@@ -9,3 +9,12 @@ type ChatMessage struct {
 	Message    string        `json:"message"`
 	Timestamp  string        `json:"timestamp"`
 }
+
+type GroupChatMessage struct {
+	ID         int    `json:"id"`
+	GroupID    int    `json:"group_id"`
+	SenderID   int    `json:"sender_id"`
+	SenderName string `json:"sender_name"`
+	Message    string `json:"message"`
+	Timestamp  string `json:"timestamp"`
+}

@@ -13,6 +13,11 @@ type ChatRepository interface {
 	GetChatUsers(userID int) ([]ChatUsers, error)
 	SaveMessage(senderID int, receiverID int, message string) error
 	GetMessages(senderID int, receiverID int) ([]models.ChatMessage, error)
+	CanMessage(senderID, receiverID int) (bool, error)
+	IsGroupMember(groupID, userID int) (bool, error)
+	SaveGroupMessage(senderID, groupID int, message string) error
+	GetGroupMessages(groupID int) ([]models.GroupChatMessage, error)
+	GetGroupMemberIDs(groupID int) ([]int, error)
 }
 
 type ChatUsers struct {
@@ -185,4 +190,92 @@ ORDER BY created_at ASC;
 	}
 
 	return messages, nil
+}
+
+func (r *chatRepository) CanMessage(senderID, receiverID int) (bool, error) {
+	var allowed bool
+	err := r.db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 FROM followers
+			WHERE status = 'accepted' AND (
+				(follower_id = ? AND followed_id = ?) OR
+				(follower_id = ? AND followed_id = ?)
+			)
+			UNION ALL
+			SELECT 1 FROM users WHERE id = ? AND COALESCE(is_private, 0) = 0
+		)
+	`, senderID, receiverID, receiverID, senderID, receiverID).Scan(&allowed)
+	return allowed, err
+}
+
+func (r *chatRepository) IsGroupMember(groupID, userID int) (bool, error) {
+	var member bool
+	err := r.db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1 FROM groups WHERE id = ? AND creator_id = ?
+			UNION ALL
+			SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ? AND status = 'member'
+		)
+	`, groupID, userID, groupID, userID).Scan(&member)
+	return member, err
+}
+
+func (r *chatRepository) SaveGroupMessage(senderID, groupID int, message string) error {
+	_, err := r.db.Exec(`
+		INSERT INTO messages (sender_id, group_id, content) VALUES (?, ?, ?)
+	`, senderID, groupID, message)
+	return err
+}
+
+func (r *chatRepository) GetGroupMessages(groupID int) ([]models.GroupChatMessage, error) {
+	rows, err := r.db.Query(`
+		SELECT m.id, m.group_id, m.sender_id,
+		       TRIM(u.first_name || ' ' || u.last_name), m.content, m.created_at
+		FROM messages m JOIN users u ON u.id = m.sender_id
+		WHERE m.group_id = ?
+		ORDER BY m.created_at ASC, m.id ASC
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	messages := make([]models.GroupChatMessage, 0)
+	for rows.Next() {
+		var message models.GroupChatMessage
+		if err := rows.Scan(
+			&message.ID,
+			&message.GroupID,
+			&message.SenderID,
+			&message.SenderName,
+			&message.Message,
+			&message.Timestamp,
+		); err != nil {
+			return nil, err
+		}
+		messages = append(messages, message)
+	}
+	return messages, rows.Err()
+}
+
+func (r *chatRepository) GetGroupMemberIDs(groupID int) ([]int, error) {
+	rows, err := r.db.Query(`
+		SELECT creator_id FROM groups WHERE id = ?
+		UNION
+		SELECT user_id FROM group_members WHERE group_id = ? AND status = 'member'
+	`, groupID, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	userIDs := make([]int, 0)
+	for rows.Next() {
+		var userID int
+		if err := rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+	return userIDs, rows.Err()
 }

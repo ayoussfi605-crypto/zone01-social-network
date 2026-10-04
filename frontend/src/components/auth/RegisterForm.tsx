@@ -19,6 +19,7 @@ export default function RegisterForm() {
   });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [avatar, setAvatar] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function RegisterForm() {
     }
     setLoading(true);
     try {
-      await authService.register({ ...form, email: form.email.trim() });
+      await authService.register({ ...form, email: form.email.trim(), avatar });
       router.push("/login");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -130,6 +131,37 @@ export default function RegisterForm() {
           className={inputCls}
         />
       </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm font-semibold text-[#111827]">
+          Nickname <span className="font-normal text-[#6B7280]">Optional</span>
+          <input
+            value={form.nickname}
+            onChange={(event) => set("nickname", event.target.value)}
+            placeholder="@yourname"
+            className={`${inputCls} mt-1`}
+          />
+        </label>
+        <label className="block text-sm font-semibold text-[#111827]">
+          About Me <span className="font-normal text-[#6B7280]">Optional</span>
+          <input
+            value={form.about_me}
+            onChange={(event) => set("about_me", event.target.value)}
+            placeholder="A little about you"
+            maxLength={280}
+            className={`${inputCls} mt-1`}
+          />
+        </label>
+      </div>
+      <label className="block text-sm font-semibold text-[#111827]">
+        Avatar / Image <span className="font-normal text-[#6B7280]">Optional</span>
+        <input
+          type="file"
+          accept="image/*,.gif"
+          onChange={(event) => setAvatar(event.target.files?.[0] ?? null)}
+          className="mt-1 block w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#6B7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#E5E7EB] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#111827]"
+        />
+        {avatar && <span className="mt-1 block truncate text-xs font-normal text-[#6B7280]">{avatar.name}</span>}
+      </label>
       <label className="flex items-start gap-2 text-xs leading-5 text-[#262626]">
         <input
           type="checkbox"

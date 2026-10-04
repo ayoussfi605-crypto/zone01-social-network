@@ -25,6 +25,8 @@ const STARTER_POSTS: SocialPost[] = [
       "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=90",
     ],
     location: "Lake Bled, Slovenia",
+    privacy: "public",
+    audienceIDs: [],
     createdAt: "2026-10-04T09:20:00.000Z",
     likes: 248,
     liked: false,
@@ -63,6 +65,8 @@ const STARTER_POSTS: SocialPost[] = [
       "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=90",
     ],
     location: "Brooklyn, New York",
+    privacy: "public",
+    audienceIDs: [],
     createdAt: "2026-10-03T18:05:00.000Z",
     likes: 96,
     liked: true,
@@ -82,6 +86,8 @@ const STARTER_POSTS: SocialPost[] = [
       "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1200&q=90",
     ],
     location: "Big Sur, California",
+    privacy: "public",
+    audienceIDs: [],
     createdAt: "2026-10-02T16:42:00.000Z",
     likes: 412,
     liked: false,
@@ -104,6 +110,18 @@ export function loadSocialPosts(): SocialPost[] {
 export function saveSocialPosts(posts: SocialPost[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
   window.dispatchEvent(new Event("vibe-social-posts-updated"));
+}
+
+export function canViewSocialPost(
+  post: SocialPost,
+  viewerID: number,
+  followingIDs: number[],
+) {
+  if (post.author.id === viewerID || post.privacy === "public") return true;
+  if (post.privacy === "almost_private") {
+    return followingIDs.includes(post.author.id);
+  }
+  return post.audienceIDs.includes(viewerID);
 }
 
 export function subscribeToSocialPosts(onUpdate: () => void) {

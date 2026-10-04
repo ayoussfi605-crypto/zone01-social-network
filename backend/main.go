@@ -86,6 +86,7 @@ func main() {
 	mux.Handle("/api/ws", middleware.Auth(db, http.HandlerFunc(wsHandler.WebsocketHandler)))
 	mux.Handle("/api/chatuserlist/", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleChat)))
 	mux.Handle("/api/messages/{id}", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleGetMessages)))
+	mux.Handle("/api/groups/{id}/messages", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleGetGroupMessages)))
 	fmt.Println("//beforte chat start")
 
 	fmt.Println("backend running on :8080")

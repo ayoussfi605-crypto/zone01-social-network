@@ -1,6 +1,7 @@
 import { API_URL } from "./profileService";
 import type {
   GroupComment,
+  GroupChatMessage,
   GroupDiscovery,
   GroupEvent,
   GroupInvite,
@@ -82,6 +83,8 @@ export const groupService = {
     }),
   getEvents: (groupID: number) =>
     groupApi<GroupEvent[]>(`/api/groups/${groupID}/events`),
+  getGroupMessages: (groupID: number) =>
+    groupApi<GroupChatMessage[]>(`/api/groups/${groupID}/messages`),
   createEvent: (
     groupID: number,
     event: { title: string; description: string; event_time: string },

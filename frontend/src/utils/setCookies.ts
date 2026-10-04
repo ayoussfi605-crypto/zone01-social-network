@@ -10,3 +10,8 @@ export async function setCookies(token: string) {
     path: "/",
   });
 }
+
+export async function clearSessionCookie() {
+  const cookie = await cookies();
+  cookie.delete("session_token");
+}

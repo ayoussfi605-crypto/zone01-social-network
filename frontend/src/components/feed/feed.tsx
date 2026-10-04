@@ -14,15 +14,17 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MobileBottomNav from "../navigation/MobileBottomNav";
 import {
+  canViewSocialPost,
   loadSocialPosts,
   saveSocialPosts,
   SELF,
   subscribeToSocialPosts,
 } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
+import { profileService } from "@/src/services/profileService";
 
 const stories = [
   SELF,
@@ -60,15 +62,33 @@ function timeLabel(value: string) {
 export default function FeedPage() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewerID, setViewerID] = useState(SELF.id);
+  const [followingIDs, setFollowingIDs] = useState<number[]>([]);
 
   useEffect(() => {
+    let active = true;
     const refresh = () => {
       setPosts(loadSocialPosts());
       setLoading(false);
     };
     refresh();
-    return subscribeToSocialPosts(refresh);
+    const unsubscribe = subscribeToSocialPosts(refresh);
+    profileService.getCurrentUser().then(async (user) => {
+      const following = await profileService.getFollowing(user.id);
+      if (!active) return;
+      setViewerID(user.id);
+      setFollowingIDs(following.map((person) => person.id));
+    }).catch(() => undefined);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
+
+  const visiblePosts = useMemo(
+    () => posts.filter((post) => canViewSocialPost(post, viewerID, followingIDs)),
+    [followingIDs, posts, viewerID],
+  );
 
   function toggleLike(postID: string) {
     const updated = posts.map((post) =>
@@ -258,7 +278,7 @@ export default function FeedPage() {
               </p>
             ) : (
               <ul className="space-y-4 px-3">
-                {posts.map((post) => (
+                {visiblePosts.map((post) => (
                   <li
                     key={post.id}
                     className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"

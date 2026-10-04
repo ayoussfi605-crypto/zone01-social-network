@@ -8,6 +8,7 @@ import {
   Check,
   CirclePlus,
   MessageCircle,
+  Smile,
   Send,
   Users,
   X,
@@ -15,12 +16,16 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { groupService } from "@/src/services/groupService";
 import type {
+  GroupChatMessage,
   GroupDiscovery,
   GroupEvent,
   GroupJoinRequest,
   GroupMember,
   GroupPost,
 } from "@/src/types/group";
+import { useWebSocket } from "@/src/context/WebSocketConetext";
+import { profileService } from "@/src/services/profileService";
+import type { User } from "@/src/types/user";
 
 function initials(firstName: string, lastName: string) {
   return `${firstName[0] ?? "?"}${lastName[0] ?? ""}`.toUpperCase();
@@ -34,12 +39,17 @@ function formatDate(value: string) {
 export default function GroupDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { sendMessage, receiveMessage, conected } = useWebSocket();
   const groupID = Number(params.id);
   const [group, setGroup] = useState<GroupDiscovery | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [joinRequests, setJoinRequests] = useState<GroupJoinRequest[]>([]);
   const [posts, setPosts] = useState<GroupPost[]>([]);
   const [events, setEvents] = useState<GroupEvent[]>([]);
+  const [groupMessages, setGroupMessages] = useState<GroupChatMessage[]>([]);
+  const [groupMessageDraft, setGroupMessageDraft] = useState("");
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
@@ -87,7 +97,7 @@ export default function GroupDetailPage() {
           return;
         }
 
-        const [currentMembers, currentPosts, currentEvents, requests] =
+        const [currentMembers, currentPosts, currentEvents, requests, messages, user] =
           await Promise.all([
             groupService.getMembers(groupID),
             groupService.getPosts(groupID),
@@ -95,12 +105,16 @@ export default function GroupDetailPage() {
             currentGroup.is_creator
               ? groupService.getJoinRequests(groupID)
               : Promise.resolve([]),
+            groupService.getGroupMessages(groupID),
+            profileService.getCurrentUser(),
           ]);
         if (!active) return;
         setMembers(currentMembers);
         setPosts(currentPosts);
         setEvents(currentEvents);
         setJoinRequests(requests);
+        setGroupMessages(messages);
+        setCurrentUser(user);
       } catch (reason: unknown) {
         if (active)
           setError(
@@ -115,6 +129,33 @@ export default function GroupDetailPage() {
       active = false;
     };
   }, [groupID, refreshKey]);
+
+  useEffect(
+    () =>
+      receiveMessage((event) => {
+        if (
+          event.type !== "message_group" ||
+          !("group_id" in event) ||
+          Number(event.group_id) !== groupID ||
+          !("message" in event) ||
+          !("sender_id" in event)
+        ) {
+          return;
+        }
+        setGroupMessages((current) => [
+          ...current,
+          {
+            type: "message_group",
+            group_id: groupID,
+            sender_id: Number(event.sender_id),
+            sender_name: event.sender_name ?? "Group member",
+            message: event.message,
+            timestamp: event.timestamp ?? new Date().toISOString(),
+          },
+        ]);
+      }),
+    [groupID, receiveMessage],
+  );
 
   const visibleCandidates = useMemo(() => {
     const normalized = candidateSearch.trim().toLowerCase();
@@ -324,6 +365,20 @@ export default function GroupDetailPage() {
     }
   }
 
+  function sendGroupMessage(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const message = groupMessageDraft.trim();
+    if (!message || !currentUser || !conected) return;
+    sendMessage(JSON.stringify({
+      type: "message_group",
+      group_id: groupID,
+      message,
+      sender_name: `${currentUser.first_name} ${currentUser.last_name}`,
+    }));
+    setGroupMessageDraft("");
+    setShowEmojiPicker(false);
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-zinc-100 px-4 py-12 text-center text-sm text-zinc-500">
@@ -432,6 +487,53 @@ export default function GroupDetailPage() {
         ) : (
           <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div className="space-y-6">
+              <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+                <header className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle size={18} />
+                    <div>
+                      <h2 className="text-sm font-bold">Group chat</h2>
+                      <p className="text-[11px] text-zinc-500">Members only</p>
+                    </div>
+                  </div>
+                  <span className="flex items-center gap-1.5 text-[10px] font-semibold text-zinc-500">
+                    <span className={`h-2 w-2 rounded-full ${conected ? "bg-[#4ADE80]" : "bg-[#E5E7EB]"}`} />
+                    {conected ? "LIVE" : "CONNECTING"}
+                  </span>
+                </header>
+                <div className="flex max-h-72 min-h-36 flex-col gap-3 overflow-y-auto bg-[#F3F4F6] p-4">
+                  {groupMessages.length === 0 ? (
+                    <p className="m-auto text-center text-xs text-zinc-500">Start the conversation with your group.</p>
+                  ) : groupMessages.map((message, index) => {
+                    const ownMessage = Number(message.sender_id) === currentUser?.id;
+                    return (
+                      <div key={message.id ?? `${message.timestamp}-${index}`} className={`flex flex-col ${ownMessage ? "items-end" : "items-start"}`}>
+                        <span className="mb-1 text-[10px] font-semibold text-zinc-500">{ownMessage ? "You" : message.sender_name}</span>
+                        <p className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${ownMessage ? "bg-[#E5E7EB] text-[#262626]" : "bg-[#C2DCFB] text-[#111827]"}`}>
+                          {message.message}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <form onSubmit={sendGroupMessage} className="relative flex items-center gap-2 border-t border-zinc-200 p-3">
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-16 left-3 z-10 flex gap-1 rounded-xl border border-zinc-200 bg-white p-2">
+                      {["😊", "😂", "❤️", "👏", "✨"].map((emoji) => (
+                        <button key={emoji} type="button" onClick={() => setGroupMessageDraft((current) => current + emoji)} className="rounded-lg p-1.5 text-lg hover:bg-[#E5E7EB]">{emoji}</button>
+                      ))}
+                    </div>
+                  )}
+                  <button type="button" aria-label="Choose emoji" onClick={() => setShowEmojiPicker((current) => !current)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-600">
+                    <Smile size={18} />
+                  </button>
+                  <input value={groupMessageDraft} onChange={(event) => setGroupMessageDraft(event.target.value)} placeholder="Message the group…" className="min-w-0 flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm outline-none placeholder:text-[#6B7280]" />
+                  <button type="submit" aria-label="Send group message" disabled={!conected || !groupMessageDraft.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]">
+                    <Send size={16} />
+                  </button>
+                </form>
+              </section>
+
               <section className="rounded-2xl border border-zinc-200 bg-white p-5">
                 <h2 className="mb-3 font-bold">Share with the group</h2>
                 <form

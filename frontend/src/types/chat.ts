@@ -2,8 +2,10 @@ export type ChatMessage = {
   type: string;
   message: string;
   sender_id: number | string;
-  receiver_id: number | string;
+  receiver_id?: number | string;
   sender_name?: string;
+  group_id?: number;
+  timestamp?: string;
 };
 
 export type ChatPresenceEvent = {
