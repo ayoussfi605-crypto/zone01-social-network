@@ -7,10 +7,21 @@ import { AtSign, Bell, Heart, MessageCircle, Users } from "lucide-react";
 import MobileBottomNav from "@/src/components/navigation/MobileBottomNav";
 import { groupService } from "@/src/services/groupService";
 import { profileService } from "@/src/services/profileService";
-import type { GroupInvite } from "@/src/types/group";
+import type {
+  GroupDiscovery,
+  GroupEvent,
+  GroupInvite,
+  GroupJoinRequest,
+} from "@/src/types/group";
 import type { FollowerSummary } from "@/src/types/profile";
 
 type NotificationFilter = "All" | "Mentions" | "Verified";
+type GroupRequestNotification = {
+  groupID: number;
+  groupTitle: string;
+  request: GroupJoinRequest;
+};
+type GroupEventNotification = { groupTitle: string; event: GroupEvent };
 
 const activityNotifications = [
   {
@@ -64,6 +75,12 @@ function initials(firstName: string, lastName: string) {
 export default function NotificationsPage() {
   const [followRequests, setFollowRequests] = useState<FollowerSummary[]>([]);
   const [groupInvites, setGroupInvites] = useState<GroupInvite[]>([]);
+  const [groupJoinRequests, setGroupJoinRequests] = useState<
+    GroupRequestNotification[]
+  >([]);
+  const [groupEventNotifications, setGroupEventNotifications] = useState<
+    GroupEventNotification[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState("");
@@ -74,14 +91,58 @@ export default function NotificationsPage() {
     Promise.all([
       profileService.getPendingRequests(),
       groupService.getPendingInvites(),
+      groupService.browseGroups(),
     ])
-      .then(([requests, invites]) => {
+      .then(async ([requests, invites, groups]) => {
         if (!active) return;
-        if (!Array.isArray(requests) || !Array.isArray(invites)) {
+        if (
+          !Array.isArray(requests) ||
+          !Array.isArray(invites) ||
+          !Array.isArray(groups)
+        ) {
           throw new Error("Invalid notifications response");
         }
+        const ownedGroups = groups.filter(
+          (group: GroupDiscovery) => group.is_creator,
+        );
+        const memberGroups = groups.filter(
+          (group: GroupDiscovery) => group.membership_status === "member",
+        );
+        const [joinRequestLists, eventLists] = await Promise.all([
+          Promise.all(
+            ownedGroups.map((group) => groupService.getJoinRequests(group.id)),
+          ),
+          Promise.all(
+            memberGroups.map((group) => groupService.getEvents(group.id)),
+          ),
+        ]);
+        if (!active) return;
         setFollowRequests(requests);
         setGroupInvites(invites);
+        setGroupJoinRequests(
+          ownedGroups.flatMap((group, index) =>
+            joinRequestLists[index].map((request) => ({
+              groupID: group.id,
+              groupTitle: group.title,
+              request,
+            })),
+          ),
+        );
+        setGroupEventNotifications(
+          memberGroups
+            .flatMap((group, index) =>
+              eventLists[index].map((event) => ({
+                groupTitle: group.title,
+                event,
+              })),
+            )
+            .sort(
+              (first, second) =>
+                Date.parse(second.event.created_at) -
+                Date.parse(first.event.created_at),
+            )
+            .slice(0, 8),
+        );
       })
       .catch((reason: unknown) => {
         if (active) {
@@ -141,7 +202,37 @@ export default function NotificationsPage() {
     }
   }
 
-  const notificationCount = followRequests.length + groupInvites.length;
+  async function respondToGroupJoinRequest(
+    groupID: number,
+    userID: number,
+    accept: boolean,
+  ) {
+    const actionID = `join-${groupID}-${userID}`;
+    setBusyAction(actionID);
+    setError("");
+    try {
+      await groupService.respondToJoinRequest(groupID, userID, accept);
+      setGroupJoinRequests((current) =>
+        current.filter(
+          (item) => item.groupID !== groupID || item.request.user_id !== userID,
+        ),
+      );
+    } catch (reason: unknown) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not respond to group request",
+      );
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  const notificationCount =
+    followRequests.length +
+    groupInvites.length +
+    groupJoinRequests.length +
+    groupEventNotifications.length;
   const visibleActivities = useMemo(() => {
     if (filter === "Mentions")
       return activityNotifications.filter((item) => item.kind === "mention");
@@ -185,7 +276,9 @@ export default function NotificationsPage() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-3 py-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-5">
         <div className="space-y-5">
-          {(followRequests.length > 0 || groupInvites.length > 0) && (
+          {(followRequests.length > 0 ||
+            groupInvites.length > 0 ||
+            groupJoinRequests.length > 0) && (
             <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-bold">Needs your response</h2>
@@ -294,8 +387,90 @@ export default function NotificationsPage() {
                       </div>
                     );
                   })}
+                  {groupJoinRequests.map(({ groupID, groupTitle, request }) => {
+                    const actionID = `join-${groupID}-${request.user_id}`;
+                    return (
+                      <div
+                        key={actionID}
+                        className="flex flex-wrap items-center gap-3 py-3"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#C2DCFB] text-sm font-bold text-[#111827]">
+                          {initials(request.first_name, request.last_name)}
+                        </span>
+                        <span className="min-w-0 flex-1 text-sm">
+                          <b>
+                            {request.first_name} {request.last_name}
+                          </b>{" "}
+                          requested to join <b>{groupTitle}</b>
+                        </span>
+                        <button
+                          type="button"
+                          disabled={busyAction === actionID}
+                          onClick={() =>
+                            void respondToGroupJoinRequest(
+                              groupID,
+                              request.user_id,
+                              true,
+                            )
+                          }
+                          className="rounded-full bg-black px-3 py-2 text-xs font-bold text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyAction === actionID}
+                          onClick={() =>
+                            void respondToGroupJoinRequest(
+                              groupID,
+                              request.user_id,
+                              false,
+                            )
+                          }
+                          className="rounded-full border border-zinc-200 px-3 py-2 text-xs font-bold text-[#262626]"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+            </section>
+          )}
+
+          {groupEventNotifications.length > 0 && (
+            <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="font-bold">New group events</h2>
+                <span className="text-xs text-[#6B7280]">
+                  {groupEventNotifications.length}
+                </span>
+              </div>
+              <ul className="divide-y divide-zinc-200">
+                {groupEventNotifications.map(({ groupTitle, event }) => (
+                  <li
+                    key={event.id}
+                    className="flex items-center justify-between gap-3 py-3"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">
+                        {event.title}
+                      </span>
+                      <span className="block truncate text-xs text-[#6B7280]">
+                        {groupTitle} ·{" "}
+                        {new Date(event.event_time).toLocaleString()}
+                      </span>
+                    </span>
+                    <Link
+                      href={`/groups/${event.group_id}`}
+                      className="shrink-0 rounded-full bg-[#C2DCFB] px-3 py-2 text-xs font-bold text-[#111827]"
+                    >
+                      View event
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 

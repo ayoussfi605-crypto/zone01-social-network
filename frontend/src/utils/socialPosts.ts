@@ -101,7 +101,14 @@ export function loadSocialPosts(): SocialPost[] {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return STARTER_POSTS;
     const parsed: unknown = JSON.parse(stored);
-    return Array.isArray(parsed) ? (parsed as SocialPost[]) : STARTER_POSTS;
+    if (!Array.isArray(parsed)) return STARTER_POSTS;
+    return (parsed as Partial<SocialPost>[]).map((post) => ({
+      ...post,
+      privacy: post.privacy ?? "public",
+      audienceIDs: Array.isArray(post.audienceIDs) ? post.audienceIDs : [],
+      comments: Array.isArray(post.comments) ? post.comments : [],
+      images: Array.isArray(post.images) ? post.images : [],
+    })) as SocialPost[];
   } catch {
     return STARTER_POSTS;
   }

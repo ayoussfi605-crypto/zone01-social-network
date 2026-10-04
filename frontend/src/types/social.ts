@@ -9,6 +9,7 @@ export type SocialComment = {
   id: string;
   author: SocialPerson;
   text: string;
+  image?: string;
   createdAt: string;
 };
 

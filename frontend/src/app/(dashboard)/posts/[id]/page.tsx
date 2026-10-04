@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Heart, MapPin, Send } from "lucide-react";
+import { ArrowLeft, Heart, ImagePlus, MapPin, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { profileService } from "@/src/services/profileService";
 import {
@@ -26,6 +26,7 @@ export default function PostDetailsPage() {
   const params = useParams<{ id: string }>();
   const [post, setPost] = useState<SocialPost | null>(null);
   const [comment, setComment] = useState("");
+  const [commentImage, setCommentImage] = useState("");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
 
@@ -80,7 +81,7 @@ export default function PostDetailsPage() {
 
   function addComment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!post || !comment.trim()) return;
+    if (!post || (!comment.trim() && !commentImage)) return;
     const newComment = {
       id: newSocialID("comment"),
       author: currentUser
@@ -94,6 +95,7 @@ export default function PostDetailsPage() {
           }
         : SELF,
       text: comment.trim(),
+      image: commentImage || undefined,
       createdAt: new Date().toISOString(),
     };
     const updated = loadSocialPosts().map((item) =>
@@ -103,6 +105,7 @@ export default function PostDetailsPage() {
     );
     saveSocialPosts(updated);
     setComment("");
+    setCommentImage("");
   }
 
   if (checkingAccess) {
@@ -228,6 +231,13 @@ export default function PostDetailsPage() {
                     <p className="mt-1 text-[11px] text-zinc-500">
                       {formatDate(item.createdAt)}
                     </p>
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt="Comment attachment"
+                        className="mt-2 max-h-48 rounded-xl object-cover"
+                      />
+                    )}
                   </div>
                 </li>
               ))}
@@ -240,6 +250,23 @@ export default function PostDetailsPage() {
         onSubmit={addComment}
         className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[max(env(safe-area-inset-bottom),8px)]"
       >
+        {commentImage && (
+          <div className="mx-auto flex max-w-xl items-center gap-2 px-4 pt-2">
+            <img
+              src={commentImage}
+              alt="Comment attachment preview"
+              className="h-12 w-12 rounded-lg object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => setCommentImage("")}
+              aria-label="Remove attachment"
+              className="text-[#6B7280]"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
         <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">
           <img
             src={SELF.avatar}
@@ -253,9 +280,35 @@ export default function PostDetailsPage() {
             maxLength={1000}
             className="min-w-0 flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm outline-none placeholder:text-zinc-500"
           />
+          <label
+            aria-label="Attach image or GIF"
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-[#6B7280]"
+          >
+            <ImagePlus size={18} />
+            <input
+              type="file"
+              accept="image/*,.gif"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                if (file.size > 700_000) {
+                  event.target.value = "";
+                  return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (typeof reader.result === "string")
+                    setCommentImage(reader.result);
+                };
+                reader.readAsDataURL(file);
+                event.target.value = "";
+              }}
+            />
+          </label>
           <button
             type="submit"
-            disabled={!comment.trim()}
+            disabled={!comment.trim() && !commentImage}
             aria-label="Send comment"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
           >

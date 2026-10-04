@@ -72,14 +72,21 @@ export default function MyProfilePage() {
     };
   }, [router]);
 
+  const ownPosts = useMemo(
+    () => posts.filter((post) => user && post.author.id === user.id),
+    [posts, user],
+  );
+
   const visiblePosts = useMemo(() => {
-    if (activeTab === "LIKES") return posts.filter((post) => post.liked);
+    if (activeTab === "LIKES") return ownPosts.filter((post) => post.liked);
     if (activeTab === "TAGGED")
-      return posts.filter((post) => post.caption.toLowerCase().includes("@"));
+      return ownPosts.filter((post) =>
+        post.caption.toLowerCase().includes("@"),
+      );
     if (activeTab === "MEDIA")
-      return posts.filter((post) => post.images.length > 0);
-    return posts;
-  }, [activeTab, posts]);
+      return ownPosts.filter((post) => post.images.length > 0);
+    return ownPosts;
+  }, [activeTab, ownPosts]);
 
   const firstName = user?.first_name || "Jordan";
   const lastName = user?.last_name || "Carter";
@@ -89,7 +96,7 @@ export default function MyProfilePage() {
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
     : SELF.avatar;
-  const postCount = posts.length || 12;
+  const postCount = ownPosts.length || 12;
   const likesCount = 15400;
 
   return (

@@ -44,7 +44,7 @@ func (r *chatRepository) GetUserById(userId int) (*ChatUsers, error) {
 	query := `
 SELECT
 	users.id,
-	users.nickname
+	COALESCE(users.nickname, '')
 FROM users
 WHERE users.id = ?;
 `

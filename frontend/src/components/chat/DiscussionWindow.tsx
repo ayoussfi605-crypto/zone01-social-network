@@ -3,7 +3,7 @@
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { authService } from "@/src/services/authService";
 import { ChatEvent, ChatMessage } from "@/src/types/chat";
-import { ArrowLeft, ImagePlus, Paperclip, Send } from "lucide-react";
+import { ArrowLeft, ImagePlus, Paperclip, Send, Smile } from "lucide-react";
 import { useState, useEffect, useRef, SetStateAction } from "react";
 type User = {
   id: number | string;
@@ -32,6 +32,7 @@ export default function DiscussionWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const [attachmentName, setAttachmentName] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -180,6 +181,20 @@ export default function DiscussionWindow({
         </div>
 
         <div className="shrink-0 border-t border-slate-200 bg-white p-3 sm:p-4">
+          {showEmojiPicker && (
+            <div className="mx-auto mb-2 flex max-w-3xl gap-1 rounded-xl border border-zinc-200 bg-white p-2">
+              {["😊", "😂", "❤️", "👏", "✨"].map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => setMessage((current) => `${current}${emoji}`)}
+                  className="rounded-lg p-1.5 text-lg hover:bg-[#E5E7EB]"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
           {attachmentName && (
             <p className="mx-auto mb-2 max-w-3xl text-xs text-[#6B7280]">
               Attached: {attachmentName}
@@ -201,6 +216,14 @@ export default function DiscussionWindow({
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6B7280]"
             >
               <ImagePlus size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker((current) => !current)}
+              aria-label="Choose emoji"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6B7280]"
+            >
+              <Smile size={18} />
             </button>
             <input
               ref={attachmentInputRef}

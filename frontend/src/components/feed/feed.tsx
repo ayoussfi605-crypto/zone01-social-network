@@ -109,9 +109,9 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F3F4F6] pb-24 text-zinc-900 md:pb-0">
-      <div className="mx-auto min-h-screen max-w-360 md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,680px)_300px]">
-        <aside className="sticky top-0 hidden h-screen flex-col border-r border-zinc-200 bg-white px-5 py-7 md:flex">
+    <main className="min-h-screen flex bg-[#F3F4F6] pb-24 text-zinc-900 md:pb-0">
+      <div className=" min-h-screen flex! w-screen  md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,680px)_300px]">
+        <aside className="sticky  w-75 top-0 hidden h-screen flex-col border-r border-zinc-200 bg-white px-5 py-7 md:flex">
           <Link
             href="/"
             className="mb-9 text-2xl font-black tracking-[0.2em] text-[#111827]"
@@ -182,7 +182,7 @@ export default function FeedPage() {
           </Link>
         </aside>
 
-        <section className="min-w-0 bg-white md:border-r md:border-zinc-200">
+        <section className="min-w-0 flex-1 bg-white md:border-r md:border-zinc-200">
           <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
             <div className="mx-auto flex h-16 max-w-xl items-center justify-between px-4 md:justify-center">
               <Link
@@ -215,41 +215,7 @@ export default function FeedPage() {
             </div>
           </header>
 
-          <div className="mx-auto max-w-xl">
-            <section className="border-b border-zinc-200 bg-white px-4 py-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-bold">Your circle</h2>
-                <Link
-                  href="/followers"
-                  className="text-xs font-semibold text-zinc-600"
-                >
-                  See people
-                </Link>
-              </div>
-              <div className="flex gap-4 overflow-x-auto pb-1">
-                {stories.map((person, index) => (
-                  <Link
-                    key={person.id}
-                    href={index === 0 ? "/profile" : `/profile/${person.id}`}
-                    className="flex w-14 shrink-0 flex-col items-center gap-1.5"
-                  >
-                    <span
-                      className={`h-14 w-14 rounded-full p-0.5 ${index === 0 ? "bg-[#E5E7EB]" : "bg-[#C2DCFB]"}`}
-                    >
-                      <img
-                        src={person.avatar}
-                        alt=""
-                        className="h-full w-full rounded-full border-2 border-white object-cover"
-                      />
-                    </span>
-                    <span className="w-full truncate text-center text-[10px] font-medium text-zinc-600">
-                      {index === 0 ? "Your story" : person.name.split(" ")[0]}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
+          <div className="mx-auto max-w-3xl">
             <section className="border-b border-zinc-200 bg-white px-4 py-3">
               <Link href="/create-post" className="flex items-center gap-3">
                 <img
@@ -385,7 +351,7 @@ export default function FeedPage() {
           </div>
         </section>
 
-        <aside className="sticky top-0 hidden h-screen flex-col gap-5 bg-[#F3F4F6] px-5 py-6 xl:flex">
+        <aside className="sticky w-75 top-0 hidden h-screen flex-col gap-5 bg-[#F3F4F6] px-5 py-6 xl:flex">
           <label className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-3 text-[#6B7280]">
             <Compass size={17} />
             <input

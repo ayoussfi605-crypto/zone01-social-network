@@ -117,7 +117,7 @@ export default function FollowersPage() {
       }));
       if (result.status === "accepted") {
         setFollowing((current) =>
-          current.some((item) => item.id === person.id)
+          current?.some((item) => item.id === person.id)
             ? current
             : [...current, person],
         );
@@ -174,7 +174,7 @@ export default function FollowersPage() {
               >
                 {tab}{" "}
                 <span className="ml-1 text-xs">
-                  {tab === "followers" ? followers.length : following.length}
+                  {tab === "followers" ? followers.length : following?.length}
                 </span>
               </button>
             ))}
@@ -195,7 +195,7 @@ export default function FollowersPage() {
           <p className="py-12 text-center text-sm text-zinc-500">
             Loading people…
           </p>
-        ) : visiblePeople.length === 0 ? (
+        ) : visiblePeople?.length === 0 ? (
           <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-12 text-center">
             <Users size={25} className="mx-auto text-zinc-500" />
             <p className="mt-3 text-sm font-semibold">
@@ -205,7 +205,7 @@ export default function FollowersPage() {
           </div>
         ) : (
           <ul className="divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white px-4">
-            {visiblePeople.map((person) => {
+            {visiblePeople?.map((person) => {
               const status = followStatuses[person.id] ?? "none";
               return (
                 <li key={person.id} className="flex items-center gap-3 py-4">
