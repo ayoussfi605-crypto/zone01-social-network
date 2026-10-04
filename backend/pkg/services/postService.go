@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,7 @@ import (
 const postImageDirectory = "./media/posts"
 
 type PostService interface {
-	CreateNewPost(ctx context.Context, authorID int, dto CreatePostDTO) (*models.Post, error)
+	CreateNewPost(ctx context.Context, authorID int, dto models.CreatePostDTO) (*models.Post, error)
 	GetFeedForUser(ctx context.Context, userID int) ([]models.Post, error)
 	GetUserPosts(ctx context.Context, userID int) ([]models.Post, error)
 }
@@ -31,9 +30,7 @@ func NewPostService(postRepo repository.PostRepository, followerRepo repository.
 	return &postService{postRepo: postRepo, followerRepo: followerRepo}
 }
 
-// CreateNewPost validates the input and image, then stores the post. For
-// private posts, every selected recipient must be an accepted follower.
-func (s *postService) CreateNewPost(ctx context.Context, authorID int, dto CreatePostDTO) (*models.Post, error) {
+func (s *postService) CreateNewPost(ctx context.Context, authorID int, dto models.CreatePostDTO) (*models.Post, error) {
 	if authorID <= 0 {
 		return nil, errors.New("invalid post author")
 	}

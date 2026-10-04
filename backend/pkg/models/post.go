@@ -1,5 +1,7 @@
 package models
 
+import "mime/multipart"
+
 type Post struct {
 	ID        int    `json:"id"`
 	UserID    int    `json:"user_id"`
