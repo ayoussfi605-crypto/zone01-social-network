@@ -79,7 +79,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
   function HandleGetMessages(id: string) {
     ChatService.getMessages(id).then((res) => {
       console.log("res.data", res);
-      setChatMessages(res.data);
+      setChatMessages([...res?.data]);
     });
   }
 
