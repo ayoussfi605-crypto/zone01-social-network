@@ -355,7 +355,7 @@ export default function GroupDetailPage() {
 
   return (
     <main className="min-h-screen bg-zinc-100 px-4 py-8 text-zinc-900">
-      <div className="mx-auto max-w-6xl">
+      <div className="w-full">
         <Link
           href="/groups"
           className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-zinc-600 hover:text-zinc-900"
@@ -378,7 +378,7 @@ export default function GroupDetailPage() {
             {group.member_count === 1 ? "member" : "members"}
           </div>
           <h1 className="text-3xl font-bold">{group.title}</h1>
-          <p className="mt-2 max-w-3xl whitespace-pre-wrap text-sm leading-6 text-zinc-600">
+          <p className="mt-2 w-full whitespace-pre-wrap text-sm leading-6 text-zinc-600">
             {group.description}
           </p>
           {group.is_creator && (
@@ -491,7 +491,7 @@ export default function GroupDetailPage() {
                             </p>
                           </div>
                         </div>
-                        <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-[#262626]">
+                        <p className="mt-4 w-full whitespace-pre-wrap wrap-break-word text-sm leading-6 text-[#262626]">
                           {post.content}
                         </p>
 

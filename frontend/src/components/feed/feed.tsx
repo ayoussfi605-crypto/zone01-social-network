@@ -4,10 +4,15 @@
 import Link from "next/link";
 import {
   Bookmark,
+  Bell,
+  Compass,
+  House,
   Heart,
   MessageCircle,
   MoreHorizontal,
   Plus,
+  UserRound,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import MobileBottomNav from "../navigation/MobileBottomNav";
@@ -80,197 +85,360 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-100 pb-28 text-zinc-900">
-      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-xl items-center justify-between px-4">
+    <main className="min-h-screen bg-[#F3F4F6] pb-24 text-zinc-900 md:pb-0">
+      <div className="mx-auto min-h-screen max-w-360 md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,680px)_300px]">
+        <aside className="sticky top-0 hidden h-screen flex-col border-r border-zinc-200 bg-white px-5 py-7 md:flex">
           <Link
-            href="/profile"
-            aria-label="Open profile"
-            className="h-10 w-10 overflow-hidden rounded-full border-2 border-[#C2DCFB]"
+            href="/"
+            className="mb-9 text-2xl font-black tracking-[0.2em] text-[#111827]"
           >
-            <img
-              src={SELF.avatar}
-              alt="Maya Chen"
-              className="h-full w-full object-cover"
-            />
+            VIBE
           </Link>
-          <div className="text-center leading-tight">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-              A little more you
-            </p>
-            <h1 className="text-xl font-black tracking-[0.16em] text-[#111827]">
-              VIBE
-            </h1>
-          </div>
-          <Link
-            href="/notifications"
-            aria-label="Notifications"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-900"
-          >
-            <Bookmark size={18} />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#4ADE80]" />
-          </Link>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-xl">
-        <section className="border-b border-zinc-200 bg-white px-4 py-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold">Your circle</h2>
-            <Link
-              href="/followers"
-              className="text-xs font-semibold text-zinc-600"
-            >
-              See people
-            </Link>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-1">
-            {stories.map((person, index) => (
+          <nav aria-label="Main navigation" className="space-y-1">
+            {[
+              { href: "/", label: "Home", Icon: House, active: true },
+              {
+                href: "/followers",
+                label: "Explore",
+                Icon: Compass,
+                active: false,
+              },
+              {
+                href: "/chat",
+                label: "Messages",
+                Icon: MessageCircle,
+                active: false,
+              },
+              {
+                href: "/notifications",
+                label: "Notifications",
+                Icon: Bell,
+                active: false,
+              },
+              {
+                href: "/profile",
+                label: "Profile",
+                Icon: UserRound,
+                active: false,
+              },
+            ].map(({ href, label, Icon, active }) => (
               <Link
-                key={person.id}
-                href={index === 0 ? "/profile" : `/profile/${person.id}`}
-                className="flex w-14 shrink-0 flex-col items-center gap-1.5"
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-[#F3F4F6] text-black" : "text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"}`}
               >
-                <span
-                  className={`h-14 w-14 rounded-full p-[2px] ${index === 0 ? "bg-[#E5E7EB]" : "bg-[#C2DCFB]"}`}
-                >
-                  <img
-                    src={person.avatar}
-                    alt=""
-                    className="h-full w-full rounded-full border-2 border-white object-cover"
-                  />
-                </span>
-                <span className="w-full truncate text-center text-[10px] font-medium text-zinc-600">
-                  {index === 0 ? "Your story" : person.name.split(" ")[0]}
-                </span>
+                <Icon size={19} strokeWidth={active ? 2.4 : 1.8} /> {label}
               </Link>
             ))}
-          </div>
-        </section>
-
-        <section className="border-b border-zinc-200 bg-white px-4 py-3">
-          <Link href="/create-post" className="flex items-center gap-3">
+          </nav>
+          <Link
+            href="/create-post"
+            className="mt-7 flex h-11 items-center justify-center gap-2 rounded-xl bg-black text-sm font-bold text-white"
+          >
+            <Plus size={17} /> Create Post
+          </Link>
+          <Link
+            href="/profile"
+            className="mt-auto flex items-center gap-3 border-t border-zinc-200 pt-5"
+          >
             <img
               src={SELF.avatar}
               alt=""
               className="h-10 w-10 rounded-full object-cover"
             />
-            <span className="flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm text-zinc-500">
-              Share a moment, Jordan…
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
-              <Plus size={20} />
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold text-[#111827]">
+                Jordan Carter
+              </span>
+              <span className="block truncate text-xs text-[#6B7280]">
+                @jordan_vibe
+              </span>
             </span>
           </Link>
+        </aside>
+
+        <section className="min-w-0 bg-white md:border-r md:border-zinc-200">
+          <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
+            <div className="mx-auto flex h-16 max-w-xl items-center justify-between px-4 md:justify-center">
+              <Link
+                href="/profile"
+                aria-label="Open profile"
+                className="h-10 w-10 overflow-hidden rounded-full border-2 border-[#C2DCFB] md:hidden"
+              >
+                <img
+                  src={SELF.avatar}
+                  alt="Maya Chen"
+                  className="h-full w-full object-cover"
+                />
+              </Link>
+              <div className="text-center leading-tight">
+                <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 md:block">
+                  A little more you
+                </p>
+                <h1 className="text-xl font-black tracking-[0.16em] text-[#111827]">
+                  VIBE
+                </h1>
+              </div>
+              <Link
+                href="/notifications"
+                aria-label="Notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-900 md:hidden"
+              >
+                <Bookmark size={18} />
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#4ADE80]" />
+              </Link>
+            </div>
+          </header>
+
+          <div className="mx-auto max-w-xl">
+            <section className="border-b border-zinc-200 bg-white px-4 py-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-bold">Your circle</h2>
+                <Link
+                  href="/followers"
+                  className="text-xs font-semibold text-zinc-600"
+                >
+                  See people
+                </Link>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-1">
+                {stories.map((person, index) => (
+                  <Link
+                    key={person.id}
+                    href={index === 0 ? "/profile" : `/profile/${person.id}`}
+                    className="flex w-14 shrink-0 flex-col items-center gap-1.5"
+                  >
+                    <span
+                      className={`h-14 w-14 rounded-full p-0.5 ${index === 0 ? "bg-[#E5E7EB]" : "bg-[#C2DCFB]"}`}
+                    >
+                      <img
+                        src={person.avatar}
+                        alt=""
+                        className="h-full w-full rounded-full border-2 border-white object-cover"
+                      />
+                    </span>
+                    <span className="w-full truncate text-center text-[10px] font-medium text-zinc-600">
+                      {index === 0 ? "Your story" : person.name.split(" ")[0]}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            <section className="border-b border-zinc-200 bg-white px-4 py-3">
+              <Link href="/create-post" className="flex items-center gap-3">
+                <img
+                  src={SELF.avatar}
+                  alt=""
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <span className="flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm text-zinc-500">
+                  Share a moment, Jordan…
+                </span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
+                  <Plus size={20} />
+                </span>
+              </Link>
+            </section>
+
+            <div className="flex items-center justify-between px-4 py-4">
+              <h2 className="text-base font-bold">For you</h2>
+              <button
+                type="button"
+                className="rounded-full bg-[#F3F4F6] px-3 py-1.5 text-xs font-semibold text-[#262626]"
+              >
+                Latest
+              </button>
+            </div>
+
+            {loading ? (
+              <p className="px-4 py-12 text-center text-sm text-zinc-500">
+                Loading your feed…
+              </p>
+            ) : (
+              <ul className="space-y-4 px-3">
+                {posts.map((post) => (
+                  <li
+                    key={post.id}
+                    className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+                  >
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <Link
+                        href={`/profile/${post.author.id}`}
+                        className="h-10 w-10 overflow-hidden rounded-full bg-[#C2DCFB]"
+                      >
+                        <img
+                          src={post.author.avatar}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/profile/${post.author.id}`}
+                          className="block truncate text-sm font-bold"
+                        >
+                          {post.author.name}
+                        </Link>
+                        <p className="truncate text-xs text-zinc-500">
+                          {post.location || post.author.handle} ·{" "}
+                          {timeLabel(post.createdAt)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label="More post options"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-600"
+                      >
+                        <MoreHorizontal size={20} />
+                      </button>
+                    </div>
+                    <Link
+                      href={`/posts/${post.id}`}
+                      className="block bg-[#E5E7EB]"
+                    >
+                      <img
+                        src={post.images[0]}
+                        alt={post.caption}
+                        className="aspect-[4/4.4] w-full object-cover"
+                      />
+                    </Link>
+                    <div className="px-4 pb-4 pt-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => toggleLike(post.id)}
+                            aria-label={
+                              post.liked ? "Unlike post" : "Like post"
+                            }
+                            className={
+                              post.liked ? "text-black" : "text-[#262626]"
+                            }
+                          >
+                            <Heart
+                              size={22}
+                              fill={post.liked ? "#000000" : "none"}
+                            />
+                          </button>
+                          <Link
+                            href={`/posts/${post.id}#comments`}
+                            aria-label="View comments"
+                            className="text-[#262626]"
+                          >
+                            <MessageCircle size={22} />
+                          </Link>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Save post"
+                          className="text-[#262626]"
+                        >
+                          <Bookmark size={21} />
+                        </button>
+                      </div>
+                      <p className="mt-2 text-sm font-bold">
+                        {post.likes.toLocaleString()} likes
+                      </p>
+                      <p className="mt-1 text-sm leading-5 text-[#262626]">
+                        <span className="mr-1 font-bold">
+                          {post.author.handle}
+                        </span>
+                        {post.caption}
+                      </p>
+                      <Link
+                        href={`/posts/${post.id}#comments`}
+                        className="mt-2 block text-sm text-zinc-500"
+                      >
+                        View all {post.comments.length} comments
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
 
-        <div className="flex items-center justify-between px-4 py-4">
-          <h2 className="text-base font-bold">For you</h2>
-          <button
-            type="button"
-            className="rounded-full bg-[#F3F4F6] px-3 py-1.5 text-xs font-semibold text-[#262626]"
-          >
-            Latest
-          </button>
-        </div>
-
-        {loading ? (
-          <p className="px-4 py-12 text-center text-sm text-zinc-500">
-            Loading your feed…
-          </p>
-        ) : (
-          <ul className="space-y-4 px-3">
-            {posts.map((post) => (
-              <li
-                key={post.id}
-                className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
+        <aside className="sticky top-0 hidden h-screen flex-col gap-5 bg-[#F3F4F6] px-5 py-6 xl:flex">
+          <label className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-3 text-[#6B7280]">
+            <Compass size={17} />
+            <input
+              aria-label="Search VIBE"
+              placeholder="Search VIBE"
+              className="min-w-0 flex-1 bg-transparent text-sm text-[#262626] outline-none placeholder:text-[#6B7280]"
+            />
+          </label>
+          <section className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold">People to know</h2>
+              <Link
+                href="/followers"
+                className="text-xs font-semibold text-[#6B7280]"
               >
-                <div className="flex items-center gap-3 px-4 py-3">
+                More
+              </Link>
+            </div>
+            <ul className="mt-4 space-y-4">
+              {stories.slice(1).map((person) => (
+                <li key={person.id} className="flex items-center gap-3">
                   <Link
-                    href={`/profile/${post.author.id}`}
-                    className="h-10 w-10 overflow-hidden rounded-full bg-[#C2DCFB]"
+                    href={`/profile/${person.id}`}
+                    className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#C2DCFB]"
                   >
                     <img
-                      src={post.author.avatar}
+                      src={person.avatar}
                       alt=""
                       className="h-full w-full object-cover"
                     />
                   </Link>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/profile/${post.author.id}`}
-                      className="block truncate text-sm font-bold"
-                    >
-                      {post.author.name}
-                    </Link>
-                    <p className="truncate text-xs text-zinc-500">
-                      {post.location || post.author.handle} ·{" "}
-                      {timeLabel(post.createdAt)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="More post options"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-600"
-                  >
-                    <MoreHorizontal size={20} />
-                  </button>
-                </div>
-                <Link href={`/posts/${post.id}`} className="block bg-[#E5E7EB]">
-                  <img
-                    src={post.images[0]}
-                    alt={post.caption}
-                    className="aspect-[4/4.4] w-full object-cover"
-                  />
-                </Link>
-                <div className="px-4 pb-4 pt-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() => toggleLike(post.id)}
-                        aria-label={post.liked ? "Unlike post" : "Like post"}
-                        className={post.liked ? "text-black" : "text-[#262626]"}
-                      >
-                        <Heart
-                          size={22}
-                          fill={post.liked ? "#000000" : "none"}
-                        />
-                      </button>
-                      <Link
-                        href={`/posts/${post.id}#comments`}
-                        aria-label="View comments"
-                        className="text-[#262626]"
-                      >
-                        <MessageCircle size={22} />
-                      </Link>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label="Save post"
-                      className="text-[#262626]"
-                    >
-                      <Bookmark size={21} />
-                    </button>
-                  </div>
-                  <p className="mt-2 text-sm font-bold">
-                    {post.likes.toLocaleString()} likes
-                  </p>
-                  <p className="mt-1 text-sm leading-5 text-[#262626]">
-                    <span className="mr-1 font-bold">{post.author.handle}</span>
-                    {post.caption}
-                  </p>
                   <Link
-                    href={`/posts/${post.id}#comments`}
-                    className="mt-2 block text-sm text-zinc-500"
+                    href={`/profile/${person.id}`}
+                    className="min-w-0 flex-1"
                   >
-                    View all {post.comments.length} comments
+                    <span className="block truncate text-xs font-bold text-[#111827]">
+                      {person.name}
+                    </span>
+                    <span className="block truncate text-[10px] text-[#6B7280]">
+                      {person.handle}
+                    </span>
                   </Link>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <Link
+                    href="/followers"
+                    aria-label={`Follow ${person.name}`}
+                    className="text-xs font-bold text-black"
+                  >
+                    Follow
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="rounded-2xl border border-zinc-200 bg-white p-4">
+            <h2 className="text-sm font-bold">Your spaces</h2>
+            <Link
+              href="/groups"
+              className="mt-3 flex items-center gap-2 text-sm text-[#262626]"
+            >
+              <Users size={16} /> Discover groups
+            </Link>
+            <Link
+              href="/notifications"
+              className="mt-3 flex items-center justify-between text-sm text-[#262626]"
+            >
+              <span className="flex items-center gap-2">
+                <Bell size={16} /> Notifications
+              </span>
+              <span className="rounded-full bg-[#E5E7EB] px-2 py-0.5 text-[10px] font-bold">
+                New
+              </span>
+            </Link>
+          </section>
+          <p className="mt-auto text-[10px] leading-5 text-[#6B7280]">
+            About · Community guidelines · Privacy · © 2026 VIBE
+          </p>
+        </aside>
       </div>
 
       <Link
