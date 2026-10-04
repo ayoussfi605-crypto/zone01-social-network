@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"social-network-network/pkg/db/sqlite"
 	"social-network-network/pkg/handlers"
@@ -14,7 +15,11 @@ import (
 )
 
 func main() {
-	db, err := sqlite.Init("./social-network.db")
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./social-network.db"
+	}
+	db, err := sqlite.Init(dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,10 +44,19 @@ func main() {
 	mux.Handle("/api/auth/me", middleware.Auth(db, http.HandlerFunc(handlers.Me)))
 	mux.Handle("/api/users/privacy", middleware.Auth(db, http.HandlerFunc(handlers.UpdatePrivacy)))
 
+	// notifications
+	notificationRepo := repository.NewNotificationRepository(db)
+	notificationService := services.NewNotificationService(notificationRepo)
+	notificationHandler := handlers.NewNotificationHandler(notificationService)
+	mux.Handle("GET /api/notifications", middleware.Auth(db, http.HandlerFunc(notificationHandler.HandleList)))
+	mux.Handle("GET /api/notifications/unread-count", middleware.Auth(db, http.HandlerFunc(notificationHandler.HandleUnreadCount)))
+	mux.Handle("POST /api/notifications/read-all", middleware.Auth(db, http.HandlerFunc(notificationHandler.HandleMarkAllRead)))
+	mux.Handle("POST /api/notifications/{id}/read", middleware.Auth(db, http.HandlerFunc(notificationHandler.HandleMarkRead)))
+
 	// followers inicialization
 	followrepo := repository.NewFollowerRepo(db)
 	followerService := services.NewFollowerService(followrepo)
-	followerHandler := handlers.NewFollowerHandler(followerService)
+	followerHandler := handlers.NewFollowerHandler(followerService, notificationService)
 	profileService := services.NewProfileService(repository.NewProfileUserRepository(db), followrepo)
 	profileHandler := handlers.NewProfileHandler(profileService)
 
@@ -58,7 +72,7 @@ func main() {
 	// group routes
 	groupRepo := repository.NewGroupRepository(db)
 	groupService := services.NewGroupService(groupRepo)
-	groupHandler := handlers.NewGroupHandler(groupService)
+	groupHandler := handlers.NewGroupHandler(groupService, notificationService)
 	mux.Handle("POST /api/groups", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreateGroup)))
 	mux.Handle("GET /api/groups", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetGroups)))
 	mux.Handle("GET /api/groups/invites", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetPendingInvites)))
@@ -76,6 +90,18 @@ func main() {
 	mux.Handle("GET /api/groups/{id}/events", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetEvents)))
 	mux.Handle("POST /api/groups/{id}/events", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreateEvent)))
 	mux.Handle("POST /api/groups/{id}/events/{eventID}/response", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleRespondToEvent)))
+
+	// post routes
+	postRepo := repository.NewPostRepository(db)
+	postService := services.NewPostService(postRepo)
+	postHandler := handlers.NewPostHandler(postService)
+	mux.Handle("GET /api/posts", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetFeed)))
+	mux.Handle("POST /api/posts", middleware.Auth(db, http.HandlerFunc(postHandler.HandleCreatePost)))
+	mux.Handle("GET /api/posts/{postID}", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetPost)))
+	mux.Handle("DELETE /api/posts/{postID}", middleware.Auth(db, http.HandlerFunc(postHandler.HandleDeletePost)))
+	mux.Handle("GET /api/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetComments)))
+	mux.Handle("POST /api/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(postHandler.HandleCreateComment)))
+	mux.Handle("GET /api/users/{id}/posts", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetUserPosts)))
 
 	// chat routes
 	chatrepo := repository.NewChatRepository(db)

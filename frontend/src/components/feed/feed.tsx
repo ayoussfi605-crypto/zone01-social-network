@@ -6,25 +6,18 @@ import {
   Bookmark,
   Bell,
   Compass,
-  House,
   Heart,
   MessageCircle,
   MoreHorizontal,
   Plus,
-  UserRound,
   Users,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import MobileBottomNav from "../navigation/MobileBottomNav";
-import {
-  canViewSocialPost,
-  loadSocialPosts,
-  saveSocialPosts,
-  SELF,
-  subscribeToSocialPosts,
-} from "@/src/utils/socialPosts";
+import DashboardSidebar from "@/src/components/navigation/DashboardSidebar";
+import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
-import { profileService } from "@/src/services/profileService";
+import { postService } from "@/src/services/postService";
 
 const stories = [
   SELF,
@@ -62,125 +55,41 @@ function timeLabel(value: string) {
 export default function FeedPage() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewerID, setViewerID] = useState(SELF.id);
-  const [followingIDs, setFollowingIDs] = useState<number[]>([]);
 
   useEffect(() => {
     let active = true;
-    const refresh = () => {
-      setPosts(loadSocialPosts());
-      setLoading(false);
-    };
-    refresh();
-    const unsubscribe = subscribeToSocialPosts(refresh);
-    profileService
-      .getCurrentUser()
-      .then(async (user) => {
-        const following = await profileService.getFollowing(user.id);
-        if (!active) return;
-        setViewerID(user.id);
-        setFollowingIDs(following.map((person) => person.id));
+    postService
+      .getFeed()
+      .then((feed) => {
+        if (active) setPosts(feed);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
-      unsubscribe();
     };
   }, []);
 
-  const visiblePosts = useMemo(
-    () =>
-      posts.filter((post) => canViewSocialPost(post, viewerID, followingIDs)),
-    [followingIDs, posts, viewerID],
-  );
-
   function toggleLike(postID: string) {
-    const updated = posts.map((post) =>
-      post.id === postID
-        ? {
-            ...post,
-            liked: !post.liked,
-            likes: post.likes + (post.liked ? -1 : 1),
-          }
-        : post,
+    setPosts((current) =>
+      current.map((post) =>
+        post.id === postID
+          ? {
+              ...post,
+              liked: !post.liked,
+              likes: post.likes + (post.liked ? -1 : 1),
+            }
+          : post,
+      ),
     );
-    setPosts(updated);
-    saveSocialPosts(updated);
   }
 
   return (
-    <main className="min-h-screen flex bg-[#F3F4F6] pb-24 text-zinc-900 md:pb-0">
-      <div className=" min-h-screen flex! w-screen  md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,680px)_300px]">
-        <aside className="sticky  w-75 top-0 hidden h-screen flex-col border-r border-zinc-200 bg-white px-5 py-7 md:flex">
-          <Link
-            href="/"
-            className="mb-9 text-2xl font-black tracking-[0.2em] text-[#111827]"
-          >
-            VIBE
-          </Link>
-          <nav aria-label="Main navigation" className="space-y-1">
-            {[
-              { href: "/", label: "Home", Icon: House, active: true },
-              {
-                href: "/followers",
-                label: "Explore",
-                Icon: Compass,
-                active: false,
-              },
-              {
-                href: "/chat",
-                label: "Messages",
-                Icon: MessageCircle,
-                active: false,
-              },
-              {
-                href: "/notifications",
-                label: "Notifications",
-                Icon: Bell,
-                active: false,
-              },
-              {
-                href: "/profile",
-                label: "Profile",
-                Icon: UserRound,
-                active: false,
-              },
-            ].map(({ href, label, Icon, active }) => (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${active ? "bg-[#F3F4F6] text-black" : "text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"}`}
-              >
-                <Icon size={19} strokeWidth={active ? 2.4 : 1.8} /> {label}
-              </Link>
-            ))}
-          </nav>
-          <Link
-            href="/create-post"
-            className="mt-7 flex h-11 items-center justify-center gap-2 rounded-xl bg-black text-sm font-bold text-white"
-          >
-            <Plus size={17} /> Create Post
-          </Link>
-          <Link
-            href="/profile"
-            className="mt-auto flex items-center gap-3 border-t border-zinc-200 pt-5"
-          >
-            <img
-              src={SELF.avatar}
-              alt=""
-              className="h-10 w-10 rounded-full object-cover"
-            />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-bold text-[#111827]">
-                Jordan Carter
-              </span>
-              <span className="block truncate text-xs text-[#6B7280]">
-                @jordan_vibe
-              </span>
-            </span>
-          </Link>
-        </aside>
+    <main className="min-h-screen flex bg-white pb-24 text-zinc-900 md:pb-0">
+      <div className="min-h-screen min-w-0 flex-1 md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,680px)_300px]">
+        <DashboardSidebar />
 
         <section className="min-w-0 flex-1 bg-white md:border-r md:border-zinc-200">
           <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
@@ -248,7 +157,7 @@ export default function FeedPage() {
               </p>
             ) : (
               <ul className="space-y-4 px-3">
-                {visiblePosts.map((post) => (
+                {posts.map((post) => (
                   <li
                     key={post.id}
                     className="overflow-hidden rounded-2xl border border-zinc-200 bg-white"
@@ -284,16 +193,18 @@ export default function FeedPage() {
                         <MoreHorizontal size={20} />
                       </button>
                     </div>
-                    <Link
-                      href={`/posts/${post.id}`}
-                      className="block bg-[#E5E7EB]"
-                    >
-                      <img
-                        src={post.images[0]}
-                        alt={post.caption}
-                        className="aspect-[4/4.4] w-full object-cover"
-                      />
-                    </Link>
+                    {post.images[0] && (
+                      <Link
+                        href={`/posts/${post.id}`}
+                        className="block bg-[#E5E7EB]"
+                      >
+                        <img
+                          src={post.images[0]}
+                          alt={post.caption}
+                          className="aspect-[4/4.4] w-full object-cover"
+                        />
+                      </Link>
+                    )}
                     <div className="px-4 pb-4 pt-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -346,6 +257,11 @@ export default function FeedPage() {
                     </div>
                   </li>
                 ))}
+                {posts.length === 0 && (
+                  <li className="px-4 pb-8 text-center text-sm text-zinc-500">
+                    No posts yet. Follow people or share your first vibe.
+                  </li>
+                )}
               </ul>
             )}
           </div>

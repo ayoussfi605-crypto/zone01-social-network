@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Compass, House, MessageCircle, UserRound } from "lucide-react";
 
 type MobileBottomNavProps = {
-  active: "feed" | "messages" | "people" | "notifications" | "profile";
+  active?: "feed" | "messages" | "people" | "notifications" | "profile";
 };
 
 const items = [
@@ -15,7 +16,24 @@ const items = [
   { id: "profile", href: "/profile", label: "Profile", Icon: UserRound },
 ] as const;
 
-export default function MobileBottomNav({ active }: MobileBottomNavProps) {
+export default function MobileBottomNav({
+  active: activeOverride,
+}: MobileBottomNavProps) {
+  const pathname = usePathname();
+  const active =
+    activeOverride ??
+    (pathname.startsWith("/chat")
+      ? "messages"
+      : pathname.startsWith("/notifications")
+        ? "notifications"
+        : pathname.startsWith("/profile")
+          ? "profile"
+          : pathname.startsWith("/followers") || pathname.startsWith("/groups")
+            ? "people"
+            : "feed");
+
+  if (pathname.startsWith("/chat")) return null;
+
   return (
     <nav
       aria-label="Main navigation"

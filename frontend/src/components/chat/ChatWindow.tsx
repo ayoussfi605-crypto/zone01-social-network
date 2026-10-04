@@ -9,7 +9,6 @@ import { ChatMessage, ChatUsers } from "@/src/types/chat";
 import { ChatService } from "@/src/services/chatService";
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { groupService } from "@/src/services/groupService";
-import MobileBottomNav from "@/src/components/navigation/MobileBottomNav";
 
 type ChatFilter = "all" | "users" | "groups";
 
@@ -547,7 +546,6 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
           </div>
         )}
       </div>
-      {!UsedUser && <MobileBottomNav active="messages" />}
     </main>
   );
 }

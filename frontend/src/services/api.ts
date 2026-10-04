@@ -3,7 +3,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const API_URL = "http://localhost:8080";
+// Server-side (container-to-container) base URL. The browser uses
+// NEXT_PUBLIC_API_URL instead, which is read inside the client services.
+const API_URL = process.env.API_URL ?? "http://localhost:8080";
 
 export async function api(path: string, options: RequestInit = {}) {
   const cookieStore = await cookies();

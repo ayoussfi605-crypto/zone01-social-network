@@ -1,0 +1,6 @@
+social-network.db
+social-network.db-shm
+social-network.db-wal
+media/
+test-users.txt
+*.log

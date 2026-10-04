@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { authService } from "@/src/services/authService";
+import NotificationBell from "./NotificationBell";
 
 export default function GlobalSessionActions() {
   const router = useRouter();
@@ -26,14 +26,7 @@ export default function GlobalSessionActions() {
 
   return (
     <div className="fixed right-3 top-3 z-50 flex items-center gap-2 md:right-5 md:top-4">
-      <Link
-        href="/notifications"
-        aria-label="Notifications"
-        title="Notifications"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-[#111827]"
-      >
-        <Bell size={18} />
-      </Link>
+      <NotificationBell />
       <button
         type="button"
         onClick={() => void logout()}

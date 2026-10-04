@@ -16,10 +16,11 @@ import (
 
 type GroupHandler struct {
 	groupService services.GroupService
+	notifier     services.NotificationService
 }
 
-func NewGroupHandler(s services.GroupService) *GroupHandler {
-	return &GroupHandler{groupService: s}
+func NewGroupHandler(s services.GroupService, notifier services.NotificationService) *GroupHandler {
+	return &GroupHandler{groupService: s, notifier: notifier}
 }
 
 func (h *GroupHandler) HandleCreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -208,6 +209,13 @@ func (h *GroupHandler) HandleCreateEvent(w http.ResponseWriter, r *http.Request)
 		writeGroupServiceError(w, err)
 		return
 	}
+	if h.notifier != nil {
+		if notifications, notifyErr := h.notifier.NotifyGroupEvent(r.Context(), groupID, event.ID, event.Title, viewer); notifyErr == nil {
+			for i := range notifications {
+				pushNotification(&notifications[i])
+			}
+		}
+	}
 	utils.WriteJSON(w, http.StatusCreated, utils.ResposAPI{Success: true, Data: event})
 }
 
@@ -267,6 +275,13 @@ func (h *GroupHandler) HandleInviteMembers(w http.ResponseWriter, r *http.Reques
 		writeGroupServiceError(w, err)
 		return
 	}
+	if h.notifier != nil {
+		for _, userID := range payload.UserIDs {
+			if notification, notifyErr := h.notifier.NotifyGroupInvite(r.Context(), userID, groupID, viewer); notifyErr == nil {
+				pushNotification(notification)
+			}
+		}
+	}
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Message: "invitations sent"})
 }
 
@@ -279,6 +294,11 @@ func (h *GroupHandler) HandleRequestToJoin(w http.ResponseWriter, r *http.Reques
 	if err := h.groupService.RequestToJoin(r.Context(), viewer.Id, groupID); err != nil {
 		writeGroupServiceError(w, err)
 		return
+	}
+	if h.notifier != nil {
+		if notification, notifyErr := h.notifier.NotifyJoinRequest(r.Context(), groupID, viewer); notifyErr == nil {
+			pushNotification(notification)
+		}
 	}
 	utils.WriteJSON(w, http.StatusCreated, utils.ResposAPI{Success: true, Data: map[string]string{"status": "pending_request"}})
 }

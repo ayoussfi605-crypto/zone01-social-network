@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import MobileBottomNav from "@/src/components/navigation/MobileBottomNav";
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { profileService } from "@/src/services/profileService";
 import type { FollowStatus, FollowerSummary } from "@/src/types/profile";
@@ -138,7 +137,7 @@ export default function FollowersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-100 pb-24 text-zinc-900">
+    <main className="min-h-screen bg-white pb-24 text-zinc-900">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-xl px-4 pb-3 pt-4">
           <div className="mb-4 flex items-center justify-between">
@@ -269,7 +268,6 @@ export default function FollowersPage() {
           </ul>
         )}
       </div>
-      <MobileBottomNav active="people" />
     </main>
   );
 }

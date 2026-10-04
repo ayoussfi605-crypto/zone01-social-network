@@ -6,14 +6,8 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Heart, ImagePlus, MapPin, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { profileService } from "@/src/services/profileService";
-import {
-  canViewSocialPost,
-  newSocialID,
-  loadSocialPosts,
-  saveSocialPosts,
-  SELF,
-  subscribeToSocialPosts,
-} from "@/src/utils/socialPosts";
+import { postService } from "@/src/services/postService";
+import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
@@ -26,86 +20,67 @@ export default function PostDetailsPage() {
   const params = useParams<{ id: string }>();
   const [post, setPost] = useState<SocialPost | null>(null);
   const [comment, setComment] = useState("");
-  const [commentImage, setCommentImage] = useState("");
+  const [commentFile, setCommentFile] = useState<File | null>(null);
+  const [commentPreview, setCommentPreview] = useState("");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
+  const [commentError, setCommentError] = useState("");
 
   useEffect(() => {
     let active = true;
-    const refresh = async () => {
+    async function load() {
       setCheckingAccess(true);
       try {
-        const user = await profileService.getCurrentUser();
-        const following = await profileService.getFollowing(user.id);
-        const candidate =
-          loadSocialPosts().find((item) => item.id === params.id) ?? null;
+        const [user, candidate] = await Promise.all([
+          profileService.getCurrentUser().catch(() => null),
+          postService.getPost(params.id),
+        ]);
         if (!active) return;
         setCurrentUser(user);
-        setPost(
-          candidate &&
-            canViewSocialPost(
-              candidate,
-              user.id,
-              following.map((person) => person.id),
-            )
-            ? candidate
-            : null,
-        );
+        setPost(candidate);
       } catch {
         if (active) setPost(null);
       } finally {
         if (active) setCheckingAccess(false);
       }
-    };
-    void refresh();
-    const unsubscribe = subscribeToSocialPosts(() => void refresh());
+    }
+    void load();
     return () => {
       active = false;
-      unsubscribe();
     };
   }, [params.id]);
 
   function toggleLike() {
-    if (!post) return;
-    const updated = loadSocialPosts().map((item) =>
-      item.id === post.id
+    setPost((current) =>
+      current
         ? {
-            ...item,
-            liked: !item.liked,
-            likes: item.likes + (item.liked ? -1 : 1),
+            ...current,
+            liked: !current.liked,
+            likes: current.likes + (current.liked ? -1 : 1),
           }
-        : item,
+        : current,
     );
-    saveSocialPosts(updated);
   }
 
-  function addComment(event: React.FormEvent<HTMLFormElement>) {
+  async function addComment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!post || (!comment.trim() && !commentImage)) return;
-    const newComment = {
-      id: newSocialID("comment"),
-      author: currentUser
-        ? {
-            id: currentUser.id,
-            name: `${currentUser.first_name} ${currentUser.last_name}`,
-            handle: `@${currentUser.nickname || `${currentUser.first_name}${currentUser.last_name}`.replace(/\s+/g, "").toLowerCase()}`,
-            avatar: currentUser.avatar_path
-              ? profileService.avatarURL(currentUser.avatar_path)
-              : SELF.avatar,
-          }
-        : SELF,
-      text: comment.trim(),
-      image: commentImage || undefined,
-      createdAt: new Date().toISOString(),
-    };
-    const updated = loadSocialPosts().map((item) =>
-      item.id === post.id
-        ? { ...item, comments: [...item.comments, newComment] }
-        : item,
-    );
-    saveSocialPosts(updated);
-    setComment("");
-    setCommentImage("");
+    if (!post || (!comment.trim() && !commentFile)) return;
+    setCommentError("");
+    try {
+      await postService.createComment(post.id, {
+        content: comment.trim(),
+        image: commentFile,
+      });
+      const refreshed = await postService.getPost(post.id);
+      if (refreshed) setPost(refreshed);
+      setComment("");
+      setCommentFile(null);
+      setCommentPreview("");
+    } catch (reason: unknown) {
+      setCommentError(
+        reason instanceof Error ? reason.message : "Could not post comment",
+      );
+    }
   }
 
   if (checkingAccess) {
@@ -247,19 +222,27 @@ export default function PostDetailsPage() {
       </article>
 
       <form
-        onSubmit={addComment}
+        onSubmit={(event) => void addComment(event)}
         className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[max(env(safe-area-inset-bottom),8px)]"
       >
-        {commentImage && (
+        {commentError && (
+          <p className="mx-auto max-w-xl px-4 pt-2 text-xs text-red-700">
+            {commentError}
+          </p>
+        )}
+        {commentPreview && (
           <div className="mx-auto flex max-w-xl items-center gap-2 px-4 pt-2">
             <img
-              src={commentImage}
+              src={commentPreview}
               alt="Comment attachment preview"
               className="h-12 w-12 rounded-lg object-cover"
             />
             <button
               type="button"
-              onClick={() => setCommentImage("")}
+              onClick={() => {
+                setCommentFile(null);
+                setCommentPreview("");
+              }}
               aria-label="Remove attachment"
               className="text-[#6B7280]"
             >
@@ -269,7 +252,11 @@ export default function PostDetailsPage() {
         )}
         <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">
           <img
-            src={SELF.avatar}
+            src={
+              currentUser?.avatar_path
+                ? profileService.avatarURL(currentUser.avatar_path)
+                : SELF.avatar
+            }
             alt=""
             className="h-9 w-9 rounded-full object-cover"
           />
@@ -292,23 +279,20 @@ export default function PostDetailsPage() {
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (!file) return;
-                if (file.size > 700_000) {
+                if (file.size > 5_000_000) {
+                  setCommentError("Choose an image under 5MB.");
                   event.target.value = "";
                   return;
                 }
-                const reader = new FileReader();
-                reader.onload = () => {
-                  if (typeof reader.result === "string")
-                    setCommentImage(reader.result);
-                };
-                reader.readAsDataURL(file);
+                setCommentFile(file);
+                setCommentPreview(URL.createObjectURL(file));
                 event.target.value = "";
               }}
             />
           </label>
           <button
             type="submit"
-            disabled={!comment.trim() && !commentImage}
+            disabled={!comment.trim() && !commentFile}
             aria-label="Send comment"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
           >
