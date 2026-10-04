@@ -32,12 +32,10 @@ func main() {
 	mux.HandleFunc("/api/auth/register", handlers.Register)
 	mux.HandleFunc("/api/auth/login", handlers.Login)
 	mux.HandleFunc("/api/auth/logout", handlers.Logout)
-	mux.HandleFunc("/api/ws", handlers.WebsocketHandler)
 
 	// Protected routes (need login cookie)
 	mux.Handle("/api/auth/me", middleware.Auth(db, http.HandlerFunc(handlers.Me)))
 	mux.Handle("/api/users/privacy", middleware.Auth(db, http.HandlerFunc(handlers.UpdatePrivacy)))
-	
 
 	// followers inicialization
 	followrepo := repository.NewFollowerRepo(db)
@@ -56,6 +54,7 @@ func main() {
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
 
 	// chat routes
+	mux.Handle("/api/ws", middleware.Auth(db, http.HandlerFunc(handlers.WebsocketHandler)))
 
 	chatrepo := repository.NewChatRepository(db)
 	chatservices := services.NewChatServices(chatrepo)

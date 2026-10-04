@@ -1,7 +1,9 @@
 package ws
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -91,6 +93,30 @@ func (h *HUB) brodcast(message []byte) {
 	}
 }
 
+func (h *HUB) sendToUser(message []byte, userId int) {
+	fmt.Println("message", string(message))
+
+	h.MX.Lock()
+	defer h.MX.Unlock()
+	fmt.Println("clients", h.Clients)
+	clients, exists := h.Clients[userId]
+	if !exists {
+		return
+	}
+	for client := range clients {
+		select {
+		case client.Send <- message:
+			h.saveMessageToDB(message, userId)
+		default:
+			// nothing to do Now
+		}
+	}
+}
+
+func (h *HUB) saveMessageToDB(message []byte, userId int) {
+	// Save the message to the database using your repository
+}
+
 func (c *Client) WritePump() {
 	defer func() {
 		c.Conn.Close()
@@ -109,13 +135,35 @@ func (c *Client) ReadPump() {
 	defer func() {
 		c.Conn.Close()
 	}()
-
+	type message struct {
+		Type        string `json:"type"`
+		Message     string `json:"content"`
+		Receiver_id string `json:"receiver_id"`
+		Sender_name string `json:"sender_name"`
+	}
 	for {
-		_, p, err := c.Conn.ReadMessage()
+		var message message
+		_, payload, err := c.Conn.ReadMessage()
+		fmt.Println("payload", string(payload))
 		if err != nil {
 			fmt.Println("read error:", err)
 			break
 		}
-		fmt.Println("p", string(p))
+
+		err = json.Unmarshal([]byte(payload), &message)
+		if err != nil {
+			fmt.Println("unmarshal error:", err)
+			break
+		}
+
+		if message.Type == "message" {
+			recipientId, err := strconv.Atoi(message.Receiver_id)
+			if err != nil {
+				fmt.Println("error converting recipient ID:", err)
+				break
+			}
+			GlobalHub.sendToUser(payload, recipientId)
+		}
+
 	}
 }

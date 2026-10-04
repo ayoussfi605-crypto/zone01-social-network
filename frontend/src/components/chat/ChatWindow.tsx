@@ -107,7 +107,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
             <Pencil size={20} />
           </div>
         </div>
-        <ul className="h-full flex flex-col gap-1 p-3 ">
+        <ul className="h-full flex flex-col gap-1 p-3 overflow-y-scroll ">
           {chatUsers.length ? (
             <>
               {chatUsers?.map((el) => (
@@ -155,6 +155,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
           )}
         </ul>
       </aside>
+      
 
       <>
         {UsedUser ? (

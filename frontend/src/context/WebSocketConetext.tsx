@@ -4,7 +4,8 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 type WebSocketContextType = {
   conected: boolean;
-  snedMessage: (message: string) => void;
+  sendMessage: (message: string) => void;
+  receiveMessage: (callback: (message: any) => void) => void;
 };
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -38,7 +39,7 @@ export function WsProdider({
     };
   }, []);
 
-  function snedMessage(message: string) {
+  function sendMessage(message: string) {
     const ws = socketRef.current;
 
     if (!ws) {
@@ -50,17 +51,40 @@ export function WsProdider({
     ws.send(message);
   }
 
+  function receiveMessage(callback: (message: any) => void) {
+    console.log("receiveMessage called");
+    const ws = socketRef.current;
+
+    if (!ws) {
+      return;
+    }
+    if (ws.readyState !== ws.OPEN) {
+      return;
+    }
+    console.log("receiveMessage called and ws is open");
+    ws.onmessage = (event) => {
+      console.log(
+        "receiveMessage called and ws is open and message received",
+        event.data,
+      );
+      const data = JSON.parse(event.data);
+
+      console.log("Received message:", data);
+      callback(data);
+    };
+  }
+
   return (
     <>
       <WebSocketContext.Provider
         value={{
           conected,
-          snedMessage,
+          sendMessage,
+          receiveMessage,
         }}
       >
         {children}
       </WebSocketContext.Provider>
-      
     </>
   );
 }
