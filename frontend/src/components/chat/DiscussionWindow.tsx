@@ -82,14 +82,22 @@ export default function DiscussionWindow({
 
   useEffect(() => {
     ws.receiveMessage((data: ChatMessage) => {
-      if (data.type === "message_private") {
-        setChatMessages((prevMessages) => [...prevMessages, data]);
-      }
+      if (data.type !== "message_private") return;
+
+      const isMyConversation =
+        (Number(data.sender_id) === Number(Me?.id) &&
+          Number(data.receiver_id) === Number(UserData.id)) ||
+        (Number(data.sender_id) === Number(UserData.id) &&
+          Number(data.receiver_id) === Number(Me?.id));
+
+      if (!isMyConversation) return;
+
+      setChatMessages((prevMessages) => [...prevMessages, data]);
     });
-  }, [ws, setChatMessages]);
+  }, [ws, Me?.id, UserData.id, setChatMessages]);
 
   return (
-    <div className="flex flex-col h-screen h-dvh w-full overflow-hidden bg-white">
+    <div className="flex flex-col h-dvh w-full overflow-hidden bg-white">
       <div className="flex items-center justify-start p-3.5 border-b border-slate-200/60 shrink-0 h-16">
         <div className="image">
           <img
@@ -122,6 +130,8 @@ export default function DiscussionWindow({
         <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
           {DiscussionMessages?.map((msg, index) => {
             const isMe = Number(Me?.id) === msg.sender_id;
+
+            console.log("msg  ", msg);
 
             return (
               <div

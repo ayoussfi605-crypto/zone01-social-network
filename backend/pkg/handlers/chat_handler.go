@@ -36,7 +36,6 @@ func (h *ChatHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 			Eroor:   err.Error(),
 		})
 	}
-	fmt.Println("users", users)
 
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{
 		Success: true,
@@ -73,7 +72,7 @@ func (h *ChatHandler) HandleGetMessages(w http.ResponseWriter, r *http.Request) 
 		})
 		return
 	}
-	fmt.Println("messages", messages)
+
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{
 		Success: true,
 		Data:    messages,

@@ -143,7 +143,7 @@ func (c *Client) ReadPump() {
 	}()
 	type message struct {
 		Type        string `json:"type"`
-		Message     string `json:"content"`
+		Message     string `json:"message"`
 		Sender_id   int    `json:"sender_id"`
 		Receiver_id string `json:"receiver_id"`
 		Sender_name string `json:"sender_name"`
@@ -151,22 +151,25 @@ func (c *Client) ReadPump() {
 	for {
 
 		_, payload, err := c.Conn.ReadMessage()
+		fmt.Println("payloas", string(payload))
 		if err != nil {
 			fmt.Println("read error:", err)
 			break
 		}
+
 		var msg message
 		err = json.Unmarshal(payload, &msg)
 		if err != nil {
 			fmt.Println("unmarshal error:", err)
 			break
 		}
+		fmt.Println("sende Id", msg.Sender_id, "reciver ID", msg.Receiver_id, "Message", msg.Message, "<<")
 		recipientId, err := strconv.Atoi(msg.Receiver_id)
 		if err != nil {
 			fmt.Println("error converting recipient ID:", err)
 			break
 		}
-		fmt.Println("Pump Saving message from user", c.UserId, "to user", recipientId, "with content:", msg.Message)
+
 		err = c.ChatServices.SaveMessage(c.UserId, recipientId, msg.Message)
 		if err != nil {
 			fmt.Println("unmarshal error:", err)

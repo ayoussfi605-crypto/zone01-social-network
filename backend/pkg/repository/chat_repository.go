@@ -151,6 +151,7 @@ ORDER BY created_at ASC;
 		); err != nil {
 			return nil, err
 		}
+		fmt.Println("Retrieved message:", m.Message, "<")
 
 		messages = append(messages, m)
 	}
