@@ -36,10 +36,20 @@ export default function PostDetailsPage() {
       try {
         const user = await profileService.getCurrentUser();
         const following = await profileService.getFollowing(user.id);
-        const candidate = loadSocialPosts().find((item) => item.id === params.id) ?? null;
+        const candidate =
+          loadSocialPosts().find((item) => item.id === params.id) ?? null;
         if (!active) return;
         setCurrentUser(user);
-        setPost(candidate && canViewSocialPost(candidate, user.id, following.map((person) => person.id)) ? candidate : null);
+        setPost(
+          candidate &&
+            canViewSocialPost(
+              candidate,
+              user.id,
+              following.map((person) => person.id),
+            )
+            ? candidate
+            : null,
+        );
       } catch {
         if (active) setPost(null);
       } finally {
@@ -78,7 +88,9 @@ export default function PostDetailsPage() {
             id: currentUser.id,
             name: `${currentUser.first_name} ${currentUser.last_name}`,
             handle: `@${currentUser.nickname || `${currentUser.first_name}${currentUser.last_name}`.replace(/\s+/g, "").toLowerCase()}`,
-            avatar: currentUser.avatar_path ? profileService.avatarURL(currentUser.avatar_path) : SELF.avatar,
+            avatar: currentUser.avatar_path
+              ? profileService.avatarURL(currentUser.avatar_path)
+              : SELF.avatar,
           }
         : SELF,
       text: comment.trim(),
@@ -96,7 +108,9 @@ export default function PostDetailsPage() {
   if (checkingAccess) {
     return (
       <main className="min-h-screen bg-white px-5 py-8 text-zinc-900">
-        <p className="mx-auto mt-16 max-w-sm text-center text-sm text-zinc-500">Checking post access…</p>
+        <p className="mx-auto mt-16 max-w-sm text-center text-sm text-zinc-500">
+          Checking post access…
+        </p>
       </main>
     );
   }

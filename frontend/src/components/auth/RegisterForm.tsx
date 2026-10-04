@@ -153,14 +153,19 @@ export default function RegisterForm() {
         </label>
       </div>
       <label className="block text-sm font-semibold text-[#111827]">
-        Avatar / Image <span className="font-normal text-[#6B7280]">Optional</span>
+        Avatar / Image{" "}
+        <span className="font-normal text-[#6B7280]">Optional</span>
         <input
           type="file"
           accept="image/*,.gif"
           onChange={(event) => setAvatar(event.target.files?.[0] ?? null)}
           className="mt-1 block w-full rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#6B7280] file:mr-3 file:rounded-lg file:border-0 file:bg-[#E5E7EB] file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#111827]"
         />
-        {avatar && <span className="mt-1 block truncate text-xs font-normal text-[#6B7280]">{avatar.name}</span>}
+        {avatar && (
+          <span className="mt-1 block truncate text-xs font-normal text-[#6B7280]">
+            {avatar.name}
+          </span>
+        )}
       </label>
       <label className="flex items-start gap-2 text-xs leading-5 text-[#262626]">
         <input

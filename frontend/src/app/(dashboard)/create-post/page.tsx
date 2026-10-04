@@ -54,7 +54,9 @@ export default function CreatePostPage() {
           id: currentUser.id,
           name: `${currentUser.first_name} ${currentUser.last_name}`,
           handle: `@${currentUser.nickname || `${currentUser.first_name}${currentUser.last_name}`.replace(/\s+/g, "").toLowerCase()}`,
-          avatar: currentUser.avatar_path ? profileService.avatarURL(currentUser.avatar_path) : SELF.avatar,
+          avatar: currentUser.avatar_path
+            ? profileService.avatarURL(currentUser.avatar_path)
+            : SELF.avatar,
         });
       } catch {
         // The composer remains usable with the local preview identity.
@@ -97,7 +99,11 @@ export default function CreatePostPage() {
 
   function publishPost(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if ((!caption.trim() && images.length === 0) || (privacy === "private" && selectedAudience.length === 0)) return;
+    if (
+      (!caption.trim() && images.length === 0) ||
+      (privacy === "private" && selectedAudience.length === 0)
+    )
+      return;
     setPublishing(true);
     const post: SocialPost = {
       id: newSocialID("post"),
@@ -136,7 +142,11 @@ export default function CreatePostPage() {
           <button
             type="submit"
             form="create-post-form"
-            disabled={publishing || (!caption.trim() && images.length === 0) || (privacy === "private" && selectedAudience.length === 0)}
+            disabled={
+              publishing ||
+              (!caption.trim() && images.length === 0) ||
+              (privacy === "private" && selectedAudience.length === 0)
+            }
             className="rounded-full bg-[#C2DCFB] px-4 py-2 text-sm font-bold text-[#111827] disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
           >
             {publishing ? "Posting…" : "Post"}
@@ -173,13 +183,25 @@ export default function CreatePostPage() {
           </label>
 
           <fieldset className="rounded-2xl border border-zinc-200 p-3">
-            <legend className="px-1 text-sm font-bold text-[#111827]">Who can see this?</legend>
+            <legend className="px-1 text-sm font-bold text-[#111827]">
+              Who can see this?
+            </legend>
             <div className="mt-1 grid gap-2 sm:grid-cols-3">
-              {([
-                { id: "public", label: "Public", detail: "Everyone" },
-                { id: "almost_private", label: "Followers", detail: "People who follow you" },
-                { id: "private", label: "Selected", detail: "Choose followers" },
-              ] as const).map((option) => (
+              {(
+                [
+                  { id: "public", label: "Public", detail: "Everyone" },
+                  {
+                    id: "almost_private",
+                    label: "Followers",
+                    detail: "People who follow you",
+                  },
+                  {
+                    id: "private",
+                    label: "Selected",
+                    detail: "Choose followers",
+                  },
+                ] as const
+              ).map((option) => (
                 <button
                   key={option.id}
                   type="button"
@@ -187,26 +209,43 @@ export default function CreatePostPage() {
                   onClick={() => setPrivacy(option.id)}
                   className={`rounded-xl border px-3 py-2 text-left ${privacy === option.id ? "border-black bg-[#C2DCFB]" : "border-zinc-200 bg-white"}`}
                 >
-                  <span className="block text-xs font-bold text-[#111827]">{option.label}</span>
-                  <span className="mt-0.5 block text-[10px] text-[#6B7280]">{option.detail}</span>
+                  <span className="block text-xs font-bold text-[#111827]">
+                    {option.label}
+                  </span>
+                  <span className="mt-0.5 block text-[10px] text-[#6B7280]">
+                    {option.detail}
+                  </span>
                 </button>
               ))}
             </div>
             {privacy === "private" && (
               <div className="mt-3 max-h-36 space-y-2 overflow-y-auto border-t border-zinc-200 pt-3">
                 {followers.length === 0 ? (
-                  <p className="text-xs text-[#6B7280]">No followers are available to select yet.</p>
-                ) : followers.map((follower) => (
-                  <label key={follower.id} className="flex items-center gap-2 text-sm text-[#262626]">
-                    <input
-                      type="checkbox"
-                      checked={selectedAudience.includes(follower.id)}
-                      onChange={() => setSelectedAudience((current) => current.includes(follower.id) ? current.filter((id) => id !== follower.id) : [...current, follower.id])}
-                      className="accent-black"
-                    />
-                    {follower.first_name} {follower.last_name}
-                  </label>
-                ))}
+                  <p className="text-xs text-[#6B7280]">
+                    No followers are available to select yet.
+                  </p>
+                ) : (
+                  followers.map((follower) => (
+                    <label
+                      key={follower.id}
+                      className="flex items-center gap-2 text-sm text-[#262626]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedAudience.includes(follower.id)}
+                        onChange={() =>
+                          setSelectedAudience((current) =>
+                            current.includes(follower.id)
+                              ? current.filter((id) => id !== follower.id)
+                              : [...current, follower.id],
+                          )
+                        }
+                        className="accent-black"
+                      />
+                      {follower.first_name} {follower.last_name}
+                    </label>
+                  ))
+                )}
               </div>
             )}
           </fieldset>

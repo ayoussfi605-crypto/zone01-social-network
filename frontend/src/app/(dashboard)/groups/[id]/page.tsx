@@ -97,17 +97,23 @@ export default function GroupDetailPage() {
           return;
         }
 
-        const [currentMembers, currentPosts, currentEvents, requests, messages, user] =
-          await Promise.all([
-            groupService.getMembers(groupID),
-            groupService.getPosts(groupID),
-            groupService.getEvents(groupID),
-            currentGroup.is_creator
-              ? groupService.getJoinRequests(groupID)
-              : Promise.resolve([]),
-            groupService.getGroupMessages(groupID),
-            profileService.getCurrentUser(),
-          ]);
+        const [
+          currentMembers,
+          currentPosts,
+          currentEvents,
+          requests,
+          messages,
+          user,
+        ] = await Promise.all([
+          groupService.getMembers(groupID),
+          groupService.getPosts(groupID),
+          groupService.getEvents(groupID),
+          currentGroup.is_creator
+            ? groupService.getJoinRequests(groupID)
+            : Promise.resolve([]),
+          groupService.getGroupMessages(groupID),
+          profileService.getCurrentUser(),
+        ]);
         if (!active) return;
         setMembers(currentMembers);
         setPosts(currentPosts);
@@ -369,12 +375,14 @@ export default function GroupDetailPage() {
     event.preventDefault();
     const message = groupMessageDraft.trim();
     if (!message || !currentUser || !conected) return;
-    sendMessage(JSON.stringify({
-      type: "message_group",
-      group_id: groupID,
-      message,
-      sender_name: `${currentUser.first_name} ${currentUser.last_name}`,
-    }));
+    sendMessage(
+      JSON.stringify({
+        type: "message_group",
+        group_id: groupID,
+        message,
+        sender_name: `${currentUser.first_name} ${currentUser.last_name}`,
+      }),
+    );
     setGroupMessageDraft("");
     setShowEmojiPicker(false);
   }
@@ -497,38 +505,81 @@ export default function GroupDetailPage() {
                     </div>
                   </div>
                   <span className="flex items-center gap-1.5 text-[10px] font-semibold text-zinc-500">
-                    <span className={`h-2 w-2 rounded-full ${conected ? "bg-[#4ADE80]" : "bg-[#E5E7EB]"}`} />
+                    <span
+                      className={`h-2 w-2 rounded-full ${conected ? "bg-[#4ADE80]" : "bg-[#E5E7EB]"}`}
+                    />
                     {conected ? "LIVE" : "CONNECTING"}
                   </span>
                 </header>
                 <div className="flex max-h-72 min-h-36 flex-col gap-3 overflow-y-auto bg-[#F3F4F6] p-4">
                   {groupMessages.length === 0 ? (
-                    <p className="m-auto text-center text-xs text-zinc-500">Start the conversation with your group.</p>
-                  ) : groupMessages.map((message, index) => {
-                    const ownMessage = Number(message.sender_id) === currentUser?.id;
-                    return (
-                      <div key={message.id ?? `${message.timestamp}-${index}`} className={`flex flex-col ${ownMessage ? "items-end" : "items-start"}`}>
-                        <span className="mb-1 text-[10px] font-semibold text-zinc-500">{ownMessage ? "You" : message.sender_name}</span>
-                        <p className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${ownMessage ? "bg-[#E5E7EB] text-[#262626]" : "bg-[#C2DCFB] text-[#111827]"}`}>
-                          {message.message}
-                        </p>
-                      </div>
-                    );
-                  })}
+                    <p className="m-auto text-center text-xs text-zinc-500">
+                      Start the conversation with your group.
+                    </p>
+                  ) : (
+                    groupMessages.map((message, index) => {
+                      const ownMessage =
+                        Number(message.sender_id) === currentUser?.id;
+                      return (
+                        <div
+                          key={message.id ?? `${message.timestamp}-${index}`}
+                          className={`flex flex-col ${ownMessage ? "items-end" : "items-start"}`}
+                        >
+                          <span className="mb-1 text-[10px] font-semibold text-zinc-500">
+                            {ownMessage ? "You" : message.sender_name}
+                          </span>
+                          <p
+                            className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${ownMessage ? "bg-[#E5E7EB] text-[#262626]" : "bg-[#C2DCFB] text-[#111827]"}`}
+                          >
+                            {message.message}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
-                <form onSubmit={sendGroupMessage} className="relative flex items-center gap-2 border-t border-zinc-200 p-3">
+                <form
+                  onSubmit={sendGroupMessage}
+                  className="relative flex items-center gap-2 border-t border-zinc-200 p-3"
+                >
                   {showEmojiPicker && (
                     <div className="absolute bottom-16 left-3 z-10 flex gap-1 rounded-xl border border-zinc-200 bg-white p-2">
                       {["😊", "😂", "❤️", "👏", "✨"].map((emoji) => (
-                        <button key={emoji} type="button" onClick={() => setGroupMessageDraft((current) => current + emoji)} className="rounded-lg p-1.5 text-lg hover:bg-[#E5E7EB]">{emoji}</button>
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() =>
+                            setGroupMessageDraft((current) => current + emoji)
+                          }
+                          className="rounded-lg p-1.5 text-lg hover:bg-[#E5E7EB]"
+                        >
+                          {emoji}
+                        </button>
                       ))}
                     </div>
                   )}
-                  <button type="button" aria-label="Choose emoji" onClick={() => setShowEmojiPicker((current) => !current)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-600">
+                  <button
+                    type="button"
+                    aria-label="Choose emoji"
+                    onClick={() => setShowEmojiPicker((current) => !current)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-zinc-600"
+                  >
                     <Smile size={18} />
                   </button>
-                  <input value={groupMessageDraft} onChange={(event) => setGroupMessageDraft(event.target.value)} placeholder="Message the group…" className="min-w-0 flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm outline-none placeholder:text-[#6B7280]" />
-                  <button type="submit" aria-label="Send group message" disabled={!conected || !groupMessageDraft.trim()} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]">
+                  <input
+                    value={groupMessageDraft}
+                    onChange={(event) =>
+                      setGroupMessageDraft(event.target.value)
+                    }
+                    placeholder="Message the group…"
+                    className="min-w-0 flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm outline-none placeholder:text-[#6B7280]"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Send group message"
+                    disabled={!conected || !groupMessageDraft.trim()}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
+                  >
                     <Send size={16} />
                   </button>
                 </form>

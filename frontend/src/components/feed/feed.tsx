@@ -73,12 +73,15 @@ export default function FeedPage() {
     };
     refresh();
     const unsubscribe = subscribeToSocialPosts(refresh);
-    profileService.getCurrentUser().then(async (user) => {
-      const following = await profileService.getFollowing(user.id);
-      if (!active) return;
-      setViewerID(user.id);
-      setFollowingIDs(following.map((person) => person.id));
-    }).catch(() => undefined);
+    profileService
+      .getCurrentUser()
+      .then(async (user) => {
+        const following = await profileService.getFollowing(user.id);
+        if (!active) return;
+        setViewerID(user.id);
+        setFollowingIDs(following.map((person) => person.id));
+      })
+      .catch(() => undefined);
     return () => {
       active = false;
       unsubscribe();
@@ -86,7 +89,8 @@ export default function FeedPage() {
   }, []);
 
   const visiblePosts = useMemo(
-    () => posts.filter((post) => canViewSocialPost(post, viewerID, followingIDs)),
+    () =>
+      posts.filter((post) => canViewSocialPost(post, viewerID, followingIDs)),
     [followingIDs, posts, viewerID],
   );
 

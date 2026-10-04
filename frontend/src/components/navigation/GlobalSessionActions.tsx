@@ -43,7 +43,9 @@ export default function GlobalSessionActions() {
         className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-[#111827] disabled:bg-[#E5E7EB] disabled:text-[#6B7280] md:w-auto md:gap-2 md:px-3"
       >
         <LogOut size={17} />
-        <span className="hidden text-xs font-semibold md:inline">{busy ? "Signing out" : "Log out"}</span>
+        <span className="hidden text-xs font-semibold md:inline">
+          {busy ? "Signing out" : "Log out"}
+        </span>
       </button>
     </div>
   );
