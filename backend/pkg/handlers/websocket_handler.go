@@ -49,5 +49,5 @@ func (h *WSHandler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	ws.GlobalHub.Register <- &client
 
 	go client.WritePump()
-	go client.ReadPump(r.Context())
+	go client.ReadPump()
 }

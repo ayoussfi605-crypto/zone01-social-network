@@ -2,25 +2,30 @@
 
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { authService } from "@/src/services/authService";
+import { ChatMessage } from "@/src/types/chat";
 import { FaceSlightlySmilingIcon, Send } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, SetStateAction } from "react";
 type User = {
   id: number | string;
   fullName?: string;
   avatar?: string;
   online?: boolean;
 };
-type ChatMessage = {
-  type: string;
-  content: string;
-  sender_id: number | string;
-  receiver_id: number | string;
-  sender_name?: string;
-};
 
-export default function DiscussionWindow({ UserData }: { UserData: User }) {
+interface DiscussionWindowProps {
+  UserData: User;
+  DiscussionMessages: ChatMessage[];
+  setChatMessages: (value: SetStateAction<ChatMessage[]>) => void;
+}
+
+export default function DiscussionWindow({
+  UserData,
+  DiscussionMessages,
+  setChatMessages,
+}: DiscussionWindowProps) {
+  console.log("DiscussionMessages", DiscussionMessages);
   const [message, setMessage] = useState<string>("");
-  const [chatmessages, setChatMessages] = useState<ChatMessage[]>([]);
+
   const [Me, setMe] = useState<User | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +43,7 @@ export default function DiscussionWindow({ UserData }: { UserData: User }) {
     const GetMe = async () => {
       await authService
         .me()
-        .then((user ) => {
+        .then((user) => {
           if (user) {
             setMe(user.data);
           }
@@ -48,14 +53,14 @@ export default function DiscussionWindow({ UserData }: { UserData: User }) {
         });
     };
     GetMe();
-  }, [chatmessages]);
+  }, [DiscussionMessages]);
 
   const handleSend = () => {
     if (!message.trim() || !Me) return;
 
     const payload = {
       type: "message_private",
-      content: message,
+      message: message,
       receiver_id: UserData?.id,
       sender_id: Me?.id,
       sender_name: Me?.fullName,
@@ -66,7 +71,7 @@ export default function DiscussionWindow({ UserData }: { UserData: User }) {
       ...prevMessages,
       {
         type: "message_private",
-        content: message,
+        message: message,
         receiver_id: UserData?.id,
         sender_id: Me?.id,
         sender_name: Me?.fullName,
@@ -77,12 +82,11 @@ export default function DiscussionWindow({ UserData }: { UserData: User }) {
 
   useEffect(() => {
     ws.receiveMessage((data: ChatMessage) => {
-      console.log("Received message:", data);
       if (data.type === "message_private") {
         setChatMessages((prevMessages) => [...prevMessages, data]);
       }
     });
-  }, [ws]);
+  }, [ws, setChatMessages]);
 
   return (
     <div className="flex flex-col h-screen h-dvh w-full overflow-hidden bg-white">
@@ -116,22 +120,8 @@ export default function DiscussionWindow({ UserData }: { UserData: User }) {
 
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
-          {chatmessages.map((msg, index) => {
-            console.log("Rendering message:", msg);
-            console.log(
-              "Current user ID SELECTED:",
-              UserData,
-              "And received message receiver ID:",
-              msg.receiver_id,
-            );
-
+          {DiscussionMessages?.map((msg, index) => {
             const isMe = Number(Me?.id) === msg.sender_id;
-            console.log(
-              "Is the message from me?",
-              isMe,
-              "Message content:",
-              msg.content,
-            );
 
             return (
               <div
@@ -151,7 +141,7 @@ export default function DiscussionWindow({ UserData }: { UserData: User }) {
                       : "bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-xs"
                   }`}
                 >
-                  {msg.content}
+                  {msg.message}
                 </div>
               </div>
             );

@@ -4,12 +4,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"social-network-network/pkg/models"
 )
 
 type ChatRepository interface {
 	GetUserById(userId int) (*ChatUsers, error)
 	GetChatUsers(userID int) ([]ChatUsers, error)
 	SaveMessage(senderID int, receiverID int, message string) error
+	GetMessages(senderID int, receiverID int) ([]models.ChatMessage, error)
 }
 
 type ChatUsers struct {
@@ -113,4 +116,48 @@ VALUES (?, ?, ?);
 	}
 	fmt.Println("Message saved successfully")
 	return nil
+}
+
+func (r *chatRepository) GetMessages(senderID int, receiverID int) ([]models.ChatMessage, error) {
+	query := `
+SELECT
+	sender_id,
+	recipient_id AS receiver_id,
+	group_id,
+	content,
+	created_at AS timestamp
+FROM messages
+WHERE (sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)
+ORDER BY created_at ASC;
+`
+
+	rows, err := r.db.Query(query, senderID, receiverID, receiverID, senderID)
+	if err != nil || rows.Err() != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []models.ChatMessage
+
+	for rows.Next() {
+		var m models.ChatMessage
+
+		if err := rows.Scan(
+			&m.SenderId,
+			&m.ReceiverId,
+			&m.GroupId,
+			&m.Message,
+			&m.Timestamp,
+		); err != nil {
+			return nil, err
+		}
+
+		messages = append(messages, m)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }

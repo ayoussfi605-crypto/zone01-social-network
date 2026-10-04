@@ -4,7 +4,8 @@
 import { Pencil, Search } from "lucide-react";
 import { useState } from "react";
 import DiscussionWindow from "./DiscussionWindow";
-import { ChatUsers } from "@/src/types/chat";
+import { ChatMessage, ChatUsers } from "@/src/types/chat";
+import { ChatService } from "@/src/services/chatService";
 
 // const INITIAL_CONTACTS: ChatUsers[] = [
 //   {
@@ -69,12 +70,17 @@ import { ChatUsers } from "@/src/types/chat";
 // ];
 
 export default function ChatWindow(users: { users: ChatUsers[] }) {
-  console.log("from chat window ", users.users);
   const chatUsers = [...users?.users];
-  console.log("Chat Users", chatUsers.length);
 
   // const [ActiveUserId, setActiveUserId] = useState<string | null>(null);
   const [UsedUser, setUsedUser] = useState<ChatUsers | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+  function HandleGetMessages(id: string) {
+    ChatService.getMessages(id).then((res) => {
+      setChatMessages(res.data);
+    });
+  }
 
   const ActiveClass = `bg-[#F0F4F8]! border-gray-400   shadow-sm!`;
   const UnActiveClass = `hover:bg-slate-50! border-blue-100/80! `;
@@ -114,9 +120,9 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                 <div
                   key={el.id}
                   onClick={() => {
-                    // setActiveUserId(el.id);
+                    HandleGetMessages(el.id);
+
                     setUsedUser(el);
-                    console.log(UsedUser);
                   }}
                   className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${UsedUser?.id == el.id ? ActiveClass : UnActiveClass}`}
                 >
@@ -157,8 +163,11 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
       <>
         {UsedUser ? (
           <>
-            {console.log(UsedUser)}
-            <DiscussionWindow UserData={UsedUser} />
+            <DiscussionWindow
+              UserData={UsedUser}
+              setChatMessages={setChatMessages}
+              DiscussionMessages={chatMessages}
+            />
           </>
         ) : (
           <>

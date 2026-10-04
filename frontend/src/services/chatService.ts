@@ -6,4 +6,9 @@ export const ChatService = {
       method: "GET",
     });
   },
+  getMessages: async (id: string) => {
+    return await api(`/api/messages/${id}`, {
+      method: "GET",
+    });
+  },
 };

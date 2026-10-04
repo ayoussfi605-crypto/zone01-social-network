@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -145,7 +144,7 @@ func (c *Client) ReadPump() {
 	type message struct {
 		Type        string `json:"type"`
 		Message     string `json:"content"`
-		Sender_id   int `json:"sender_id"`
+		Sender_id   int    `json:"sender_id"`
 		Receiver_id string `json:"receiver_id"`
 		Sender_name string `json:"sender_name"`
 	}

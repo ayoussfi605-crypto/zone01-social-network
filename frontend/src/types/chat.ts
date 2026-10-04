@@ -1,10 +1,10 @@
-export interface ChatMessage {
-  id: string;
-  sender: string;
-  content: string;
-  timestamp: Date;
-  type: "text" | "notification";
-}
+export type ChatMessage = {
+  type: string;
+  message: string;
+  sender_id: number | string;
+  receiver_id: number | string;
+  sender_name?: string;
+};
 
 export interface ChatUsers {
   id: string;
