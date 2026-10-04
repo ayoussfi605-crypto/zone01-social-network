@@ -1,5 +1,3 @@
-
-
 import { authService } from "@/src/services/authService";
 import Link from "next/link";
 import PrivacyToggle from "../profile/PrivacyToggle";
@@ -10,13 +8,13 @@ export default async function FeedPage() {
   return (
     <>
       <main className="min-h-screen bg-zinc-100">
-        <nav className="sticky top-0 z-10 border-b bg-white/80 backdrop-blur">
+        <nav className="sticky top-0 z-10 border-b bg-white">
           <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
             <Link
               href="/"
               className="flex items-center gap-2 font-extrabold text-indigo-700"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-r from-indigo-600 to-violet-600 text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-black text-white">
                 💬
               </span>
               Sphere
@@ -25,10 +23,7 @@ export default async function FeedPage() {
               <span className="hidden text-sm text-zinc-500 sm:block">
                 {user.email}
               </span>
-              <button
-                
-                className="rounded-xl bg-zinc-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-zinc-700"
-              >
+              <button className="rounded-xl bg-zinc-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-zinc-700">
                 Logout
               </button>
             </div>
@@ -36,10 +31,10 @@ export default async function FeedPage() {
         </nav>
 
         <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">
-          <section className="overflow-hidden rounded-3xl bg-white shadow-sm">
-            <div className="h-24 bg-linear-to-r from-indigo-600 via-violet-600 to-fuchsia-500" />
+          <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white">
+            <div className="h-24 bg-[#C4B5FD]" />
             <div className="px-6 pb-6">
-              <div className="-mt-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-indigo-700 shadow-lg">
+              <div className="-mt-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl font-extrabold text-indigo-700">
                 {/* {initial} */}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -70,7 +65,7 @@ export default async function FeedPage() {
               <Link
                 key={c.t}
                 href={c.href}
-                className="rounded-3xl bg-white p-5 shadow-sm transition hover:shadow-md"
+                className="rounded-3xl border border-zinc-200 bg-white p-5 transition"
               >
                 <div className="text-2xl">{c.icon}</div>
                 <div className="mt-1 font-bold">{c.t}</div>
@@ -79,7 +74,7 @@ export default async function FeedPage() {
             ))}
           </section>
 
-          <section className="rounded-3xl border-2 border-dashed border-zinc-200 bg-white/60 p-10 text-center">
+          <section className="rounded-3xl border-2 border-dashed border-zinc-200 bg-white p-10 text-center">
             <div className="text-4xl">📝</div>
             <h2 className="mt-2 font-bold">Your feed is ready</h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-zinc-500">

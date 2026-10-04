@@ -55,8 +55,16 @@ func main() {
 	mux.Handle("GET /api/users/{id}/following", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowing)))
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
 
-	// chat routes
+	// group routes
+	groupRepo := repository.NewGroupRepository(db)
+	groupService := services.NewGroupService(groupRepo)
+	groupHandler := handlers.NewGroupHandler(groupService)
+	mux.Handle("POST /api/groups", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreateGroup)))
+	mux.Handle("GET /api/groups", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetGroups)))
+	mux.Handle("GET /api/groups/invites", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetPendingInvites)))
+	mux.Handle("POST /api/groups/{id}/invite-response", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleRespondToInvite)))
 
+	// chat routes
 	chatrepo := repository.NewChatRepository(db)
 	chatservices := services.NewChatServices(chatrepo)
 	chatHandler := handlers.NewChatHandler(chatservices)

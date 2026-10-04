@@ -11,10 +11,10 @@ export default async function LoginPage() {
     redirect("/");
   }
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-8 pb-6 pt-8 text-white">
-          <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-2xl">
+    <main className="flex min-h-screen items-center justify-center bg-white p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-3xl border border-zinc-200 bg-white">
+        <div className="bg-black px-8 pb-6 pt-8 text-white">
+          <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C4B5FD] text-2xl">
             💬
           </div>
           <h1 className="text-2xl font-bold">Welcome back</h1>

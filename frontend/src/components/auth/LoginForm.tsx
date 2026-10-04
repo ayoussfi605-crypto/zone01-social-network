@@ -3,7 +3,6 @@ import { useState } from "react";
 import { authService } from "../../services/authService";
 import { useRouter } from "next/navigation";
 
-
 const inputCls =
   "w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100";
 
@@ -80,7 +79,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:opacity-90 disabled:opacity-50"
+        className="w-full rounded-xl bg-black py-2.5 text-sm font-bold text-white transition disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
       >
         {loading ? "Logging in..." : "Log in →"}
       </button>

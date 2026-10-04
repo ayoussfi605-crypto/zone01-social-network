@@ -1,12 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { ChatMessage } from "../types/chat";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { ChatEvent } from "../types/chat";
 
 type WebSocketContextType = {
   conected: boolean;
   sendMessage: (message: string) => void;
-  receiveMessage: (callback: (message: ChatMessage) => void) => void;
+  receiveMessage: (callback: (message: ChatEvent) => void) => () => void;
 };
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -17,63 +24,66 @@ export function WsProdider({
   children: React.ReactNode;
 }>) {
   const socketRef = useRef<WebSocket | null>(null);
+  const messageListeners = useRef(new Set<(message: ChatEvent) => void>());
   const [conected, setconected] = useState<boolean>(false);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080/api/ws");
-    socketRef.current = ws;
+    let disposed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let currentSocket: WebSocket | null = null;
 
-    ws.onopen = () => {
-      console.log("heloo websocket");
-      setconected(true);
-    };
-    ws.onclose = () => {
-      setconected(false);
+    const connect = () => {
+      if (disposed) return;
+
+      const ws = new WebSocket("ws://localhost:8080/api/ws");
+      currentSocket = ws;
+      socketRef.current = ws;
+
+      ws.onopen = () => setconected(true);
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as ChatEvent;
+          messageListeners.current.forEach((listener) => listener(message));
+        } catch (error) {
+          console.error("Invalid websocket message:", error);
+        }
+      };
+      ws.onclose = () => {
+        if (socketRef.current === ws) socketRef.current = null;
+        setconected(false);
+        if (!disposed) {
+          reconnectTimer = setTimeout(connect, 1500);
+        }
+      };
+      ws.onerror = () => ws.close();
     };
 
-    ws.onerror = (e) => {
-      console.log("WebSocket err", e);
-    };
+    connect();
+
     return () => {
-      ws.close();
+      disposed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      currentSocket?.close();
       socketRef.current = null;
     };
   }, []);
 
-  function sendMessage(message: string) {
+  const sendMessage = useCallback((message: string) => {
     const ws = socketRef.current;
 
-    if (!ws) {
-      return;
-    }
-    if (ws.readyState !== ws.OPEN) {
-      return;
-    }
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
     ws.send(message);
-  }
+  }, []);
 
-  function receiveMessage(callback: (message: ChatMessage) => void) {
-    console.log("receiveMessage called");
-    const ws = socketRef.current;
-
-    if (!ws) {
-      return;
-    }
-    if (ws.readyState !== ws.OPEN) {
-      return;
-    }
-    console.log("receiveMessage called and ws is open");
-    ws.onmessage = (event) => {
-      console.log(
-        "receiveMessage called and ws is open and message received",
-        event.data,
-      );
-      const data = JSON.parse(event.data);
-
-      console.log("Received message:", data);
-      callback(data);
-    };
-  }
+  const receiveMessage = useCallback(
+    (callback: (message: ChatEvent) => void) => {
+      messageListeners.current.add(callback);
+      return () => {
+        messageListeners.current.delete(callback);
+      };
+    },
+    [],
+  );
 
   return (
     <>

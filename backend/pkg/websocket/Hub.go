@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"social-network-network/pkg/services"
 
@@ -55,23 +56,27 @@ func (h *HUB) register(client *Client) {
 	h.MX.Lock()
 	defer h.MX.Unlock()
 
+	wasOnline := len(h.Clients[client.UserId]) > 0
 	if h.Clients[client.UserId] == nil {
 		h.Clients[client.UserId] = make(map[*Client]bool)
 	}
 	h.Clients[client.UserId][client] = true
+	if !wasOnline {
+		h.broadcastPresence(client.UserId, true)
+	}
 }
 
 func (h *HUB) unregister(client *Client) {
 	h.MX.Lock()
 	defer h.MX.Unlock()
-	clients, exsite := h.Clients[client.UserId]
+	clients, exists := h.Clients[client.UserId]
 
-	if !exsite {
+	if !exists {
 		return
 	}
-	_, exsite = clients[client]
+	_, exists = clients[client]
 
-	if !exsite {
+	if !exists {
 		return
 	}
 	delete(clients, client)
@@ -79,6 +84,34 @@ func (h *HUB) unregister(client *Client) {
 
 	if len(clients) == 0 {
 		delete(h.Clients, client.UserId)
+		h.broadcastPresence(client.UserId, false)
+	}
+}
+
+func (h *HUB) IsUserOnline(userID int) bool {
+	h.MX.Lock()
+	defer h.MX.Unlock()
+	_, ok := h.Clients[userID]
+	return ok
+}
+
+func (h *HUB) broadcastPresence(userID int, online bool) {
+	payload, err := json.Marshal(map[string]any{
+		"type":    "presence",
+		"user_id": userID,
+		"online":  online,
+		"sent_at": time.Now().UnixMilli(),
+	})
+	if err != nil {
+		return
+	}
+	for _, clients := range h.Clients {
+		for client := range clients {
+			select {
+			case client.Send <- payload:
+			default:
+			}
+		}
 	}
 }
 
@@ -182,7 +215,7 @@ func (c *Client) ReadPump() {
 				fmt.Println("error converting recipient ID:", err)
 				break
 			}
-			GlobalHub.sendToUser(payload, recipientId)
+			c.HUB.sendToUser(payload, recipientId)
 		}
 
 	}

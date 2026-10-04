@@ -23,8 +23,8 @@ type ChatUsers struct {
 	Avatar      string `json:"avatar"`
 	Time        string `json:"time"`
 	LastMessage string `json:"lastMessage"`
-	Unread      int    `json:"Unread"`
-	Online      bool   `json:"Online"`
+	Unread      int    `json:"unread"`
+	Online      bool   `json:"online"`
 }
 
 type chatRepository struct {
@@ -64,9 +64,28 @@ func (r *chatRepository) GetChatUsers(
 	query := `
 SELECT
     users.id,
-    users.nickname,
-    users.first_name || ' ' || users.last_name AS fullname,
-    users.avatar_path
+    COALESCE(users.nickname, '') AS name,
+    COALESCE(users.first_name || ' ' || users.last_name, '') AS full_name,
+    COALESCE('@' || users.nickname, '') AS handle,
+    COALESCE(users.avatar_path, '') AS avatar,
+    COALESCE(
+        (SELECT strftime('%H:%M', messages.created_at)
+         FROM messages
+         WHERE (messages.sender_id = users.id OR messages.recipient_id = users.id)
+         ORDER BY messages.created_at DESC
+         LIMIT 1),
+        ''
+    ) AS time,
+    COALESCE(
+        (SELECT messages.content
+         FROM messages
+         WHERE (messages.sender_id = users.id OR messages.recipient_id = users.id)
+         ORDER BY messages.created_at DESC
+         LIMIT 1),
+        ''
+    ) AS last_message,
+    0 AS unread,
+    0 AS online
 FROM users
 INNER JOIN followers
     ON users.id = followers.followed_id
@@ -89,7 +108,12 @@ WHERE followers.status = 'accepted'
 			&u.Id,
 			&u.Name,
 			&u.FullName,
+			&u.Handle,
 			&u.Avatar,
+			&u.Time,
+			&u.LastMessage,
+			&u.Unread,
+			&u.Online,
 		); err != nil {
 			return nil, err
 		}

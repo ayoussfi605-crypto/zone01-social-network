@@ -6,6 +6,15 @@ export type ChatMessage = {
   sender_name?: string;
 };
 
+export type ChatPresenceEvent = {
+  type: "presence";
+  user_id: number;
+  online: boolean;
+  sent_at: number;
+};
+
+export type ChatEvent = ChatMessage | ChatPresenceEvent;
+
 export interface ChatUsers {
   id: string;
   name: string;

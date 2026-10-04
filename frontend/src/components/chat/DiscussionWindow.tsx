@@ -2,7 +2,7 @@
 
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { authService } from "@/src/services/authService";
-import { ChatMessage } from "@/src/types/chat";
+import { ChatEvent, ChatMessage } from "@/src/types/chat";
 import { FaceSlightlySmilingIcon, Send } from "lucide-react";
 import { useState, useEffect, useRef, SetStateAction } from "react";
 type User = {
@@ -32,7 +32,7 @@ export default function DiscussionWindow({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
   };
-  const ws = useWebSocket();
+  const { sendMessage, receiveMessage } = useWebSocket();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -65,7 +65,7 @@ export default function DiscussionWindow({
       sender_id: Me?.id,
       sender_name: Me?.fullName,
     };
-    ws.sendMessage(JSON.stringify(payload));
+    sendMessage(JSON.stringify(payload));
 
     setChatMessages((prevMessages) => [
       ...prevMessages,
@@ -81,8 +81,8 @@ export default function DiscussionWindow({
   };
 
   useEffect(() => {
-    ws.receiveMessage((data: ChatMessage) => {
-      if (data.type !== "message_private") return;
+    return receiveMessage((data: ChatEvent) => {
+      if (!("message" in data) || data.type !== "message_private") return;
 
       const isMyConversation =
         (Number(data.sender_id) === Number(Me?.id) &&
@@ -94,11 +94,11 @@ export default function DiscussionWindow({
 
       setChatMessages((prevMessages) => [...prevMessages, data]);
     });
-  }, [ws, Me?.id, UserData.id, setChatMessages]);
+  }, [receiveMessage, Me?.id, UserData.id, setChatMessages]);
 
   return (
     <div className="flex flex-col h-dvh w-full overflow-hidden bg-white">
-      <div className="flex items-center justify-start p-3.5 border-b border-slate-200/60 shrink-0 h-16">
+      <div className="flex items-center justify-start p-3.5 border-b border-slate-200 shrink-0 h-16">
         <div className="image">
           <img
             className="h-10 w-10 rounded-full object-cover"
@@ -145,10 +145,10 @@ export default function DiscussionWindow({
                 </span>
 
                 <div
-                  className={`p-3 max-w-[75%] rounded-2xl text-sm leading-relaxed shadow-sm break-words ${
+                  className={`p-3 max-w-[75%] rounded-2xl text-sm leading-relaxed break-words ${
                     isMe
-                      ? "bg-[#1A1A1A] text-white rounded-br-xs"
-                      : "bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-xs"
+                      ? "bg-black text-white rounded-br-xs"
+                      : "bg-slate-100 text-slate-800 border border-slate-200 rounded-bl-xs"
                   }`}
                 >
                   {msg.message}
@@ -160,9 +160,9 @@ export default function DiscussionWindow({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 bg-white border-t border-slate-100 shrink-0">
-          <div className="bg-[#F8FAFC] p-2.5 flex flex-col gap-1.5 rounded-2xl border border-slate-200/80 shadow-inner w-full">
-            <div className="pb-1.5 flex text-[#9CA3AF] justify-start items-center gap-1.5 border-b border-slate-200/60">
+        <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+          <div className="bg-white p-2.5 flex flex-col gap-1.5 rounded-2xl border border-slate-200 w-full">
+            <div className="pb-1.5 flex text-[#6B7280] justify-start items-center gap-1.5 border-b border-slate-200">
               <img
                 className="w-8 h-8 object-cover rounded-full"
                 src={"http://localhost:8080" + UserData?.avatar}
@@ -180,7 +180,7 @@ export default function DiscussionWindow({
             </div>
             <div
               onClick={handleSend}
-              className="px-5 max-w-fit ml-auto text-[12px] py-2 bg-[#1A1A1A] hover:bg-black text-white rounded-xl font-bold flex items-center gap-2 shadow-md shadow-black/10 transition scale-100 active:scale-95 shrink-0 cursor-pointer"
+              className="px-5 max-w-fit ml-auto text-[12px] py-2 bg-black hover:bg-black text-white rounded-xl font-bold flex items-center gap-2 transition scale-100 active:scale-95 shrink-0 cursor-pointer"
             >
               <button className="cursor-pointer">Send</button>
               <Send size={16} />

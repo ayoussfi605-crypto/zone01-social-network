@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import { WsProdider } from "../context/WebSocketConetext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,9 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.className}  h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <WsProdider>{children}</WsProdider>
-      </body>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

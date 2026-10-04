@@ -8,6 +8,7 @@ import (
 	"social-network-network/pkg/middleware"
 	"social-network-network/pkg/services"
 	"social-network-network/pkg/utils"
+	ws "social-network-network/pkg/websocket"
 )
 
 type ChatHandler struct {
@@ -35,6 +36,13 @@ func (h *ChatHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 			Success: false,
 			Eroor:   err.Error(),
 		})
+		return
+	}
+
+	for i := range users {
+		if userID, err := strconv.Atoi(users[i].Id); err == nil {
+			users[i].Online = ws.GlobalHub != nil && ws.GlobalHub.IsUserOnline(userID)
+		}
 	}
 
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{

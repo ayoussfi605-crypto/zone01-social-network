@@ -1,8 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: white;
-  --foreground: black;
+  --background: #ffffff;
+  --foreground: #000000;
+
+  --color-zinc-50: #ffffff;
+  --color-zinc-100: #e5e7eb;
+  --color-zinc-200: #e5e7eb;
+  --color-zinc-400: #6b7280;
+  --color-zinc-500: #6b7280;
+  --color-zinc-600: #262626;
+  --color-zinc-700: #262626;
+  --color-zinc-800: #111827;
+  --color-zinc-900: #111827;
+  --color-zinc-950: #000000;
+  --color-slate-50: #ffffff;
+  --color-slate-100: #e5e7eb;
+  --color-slate-200: #e5e7eb;
+  --color-slate-300: #e5e7eb;
+  --color-slate-400: #6b7280;
+  --color-slate-500: #6b7280;
+  --color-slate-600: #262626;
+  --color-slate-700: #262626;
+  --color-slate-800: #111827;
+  --color-slate-900: #000000;
+  --color-gray-400: #6b7280;
+  --color-indigo-50: #e0f2fe;
+  --color-indigo-100: #c4b5fd;
+  --color-indigo-200: #c2dcfb;
+  --color-indigo-300: #c2dcfb;
+  --color-indigo-500: #111827;
+  --color-indigo-600: #000000;
+  --color-indigo-700: #000000;
+  --color-indigo-800: #111827;
+  --color-indigo-900: #111827;
+  --color-violet-300: #c4b5fd;
+  --color-violet-600: #111827;
+  --color-fuchsia-500: #e0f2fe;
+  --color-blue-100: #c2dcfb;
+  --color-emerald-50: #e0f2fe;
+  --color-emerald-100: #e0f2fe;
+  --color-emerald-200: #e5e7eb;
+  --color-emerald-500: #4ade80;
+  --color-emerald-700: #111827;
+  --color-emerald-800: #111827;
+  --color-green-600: #4ade80;
+  --color-amber-50: #fff8ec;
+  --color-amber-100: #fff8ec;
+  --color-amber-200: #e5e7eb;
+  --color-amber-700: #262626;
+  --color-amber-800: #262626;
+  --color-red-50: #fff8ec;
+  --color-red-200: #e5e7eb;
+  --color-red-500: #262626;
+  --color-red-600: #262626;
+  --color-red-700: #262626;
 }
 
 @theme inline {
@@ -14,8 +66,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: white;
-    --foreground: black;
+    --background: #ffffff;
+    --foreground: #000000;
   }
 }
 
