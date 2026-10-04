@@ -8,8 +8,8 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Sphere — social-network Network",
-  description: "Followers, posts, groups, chat and notifications.",
+  title: "VIBE — a calmer social network",
+  description: "A softer place to connect, share, and find your people.",
 };
 
 export default function RootLayout({

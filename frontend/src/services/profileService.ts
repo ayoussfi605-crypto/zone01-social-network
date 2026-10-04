@@ -8,6 +8,8 @@ import type { User } from "../types/user";
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+type ProfileEnvelope<T> = { data: T };
+
 async function profileApi<T>(
   path: string,
   options: RequestInit = {},
@@ -45,28 +47,43 @@ export const profileService = {
     const normalized = path.replace(/^\.\/?media\//, "/media/");
     return `${API_URL}${normalized.startsWith("/") ? normalized : `/${normalized}`}`;
   },
-  getCurrentUser: () => profileApi<User>("/api/auth/me"),
+  getCurrentUser: () =>
+    profileApi<ProfileEnvelope<User>>("/api/auth/me").then(
+      (response) => response.data,
+    ),
   getProfile: (id: number | string) =>
-    profileApi<UserProfile>(`/api/users/${id}/profile`),
+    profileApi<ProfileEnvelope<UserProfile>>(`/api/users/${id}/profile`).then(
+      (response) => response.data,
+    ),
   updatePrivacy: (isPrivate: boolean) =>
-    profileApi<User>("/api/users/privacy", {
+    profileApi<ProfileEnvelope<User>>("/api/users/privacy", {
       method: "PUT",
       body: JSON.stringify({ is_private: isPrivate }),
-    }),
+    }).then((response) => response.data),
   follow: (id: number | string) =>
-    profileApi<{
-      status: FollowStatus;
-      notification?: { type: string; recipient_id: number; actor_id: number };
-    }>(`/api/users/${id}/follow`, { method: "POST" }),
+    profileApi<
+      ProfileEnvelope<{
+        status: FollowStatus;
+        notification?: { type: string; recipient_id: number; actor_id: number };
+      }>
+    >(`/api/users/${id}/follow`, { method: "POST" }).then(
+      (response) => response.data,
+    ),
   unfollow: (id: number | string) =>
-    profileApi<{ status: "none" }>(`/api/users/${id}/unfollow`, {
-      method: "POST",
-    }),
+    profileApi<ProfileEnvelope<{ status: "none" }>>(
+      `/api/users/${id}/unfollow`,
+      {
+        method: "POST",
+      },
+    ).then((response) => response.data),
   respondToFollowRequest: (followerId: number, accept: boolean) =>
-    profileApi<{ status: FollowStatus }>("/api/users/follow-response", {
-      method: "POST",
-      body: JSON.stringify({ follower_id: followerId, accept }),
-    }),
+    profileApi<ProfileEnvelope<{ status: FollowStatus }>>(
+      "/api/users/follow-response",
+      {
+        method: "POST",
+        body: JSON.stringify({ follower_id: followerId, accept }),
+      },
+    ).then((response) => response.data),
   getPendingRequests: () =>
     profileApi<{ data: { users: FollowerSummary[] } }>(
       "/api/users/follow-requests",

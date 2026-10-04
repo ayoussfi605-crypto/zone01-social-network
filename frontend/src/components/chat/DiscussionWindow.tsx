@@ -3,7 +3,7 @@
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { authService } from "@/src/services/authService";
 import { ChatEvent, ChatMessage } from "@/src/types/chat";
-import { FaceSlightlySmilingIcon, Send } from "lucide-react";
+import { ArrowLeft, ImagePlus, Paperclip, Send } from "lucide-react";
 import { useState, useEffect, useRef, SetStateAction } from "react";
 type User = {
   id: number | string;
@@ -16,18 +16,22 @@ interface DiscussionWindowProps {
   UserData: User;
   DiscussionMessages: ChatMessage[];
   setChatMessages: (value: SetStateAction<ChatMessage[]>) => void;
+  onBack: () => void;
 }
 
 export default function DiscussionWindow({
   UserData,
   DiscussionMessages,
   setChatMessages,
+  onBack,
 }: DiscussionWindowProps) {
   console.log("DiscussionMessages", DiscussionMessages);
   const [message, setMessage] = useState<string>("");
 
   const [Me, setMe] = useState<User | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const [attachmentName, setAttachmentName] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
@@ -56,11 +60,17 @@ export default function DiscussionWindow({
   }, [DiscussionMessages]);
 
   const handleSend = () => {
-    if (!message.trim() || !Me) return;
+    if ((!message.trim() && !attachmentName) || !Me) return;
+    const messageContent = [
+      message.trim(),
+      attachmentName ? `[Attachment: ${attachmentName}]` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
 
     const payload = {
       type: "message_private",
-      message: message,
+      message: messageContent,
       receiver_id: UserData?.id,
       sender_id: Me?.id,
       sender_name: Me?.fullName,
@@ -71,13 +81,14 @@ export default function DiscussionWindow({
       ...prevMessages,
       {
         type: "message_private",
-        message: message,
+        message: messageContent,
         receiver_id: UserData?.id,
         sender_id: Me?.id,
         sender_name: Me?.fullName,
       },
     ]);
     setMessage("");
+    setAttachmentName("");
   };
 
   useEffect(() => {
@@ -97,8 +108,16 @@ export default function DiscussionWindow({
   }, [receiveMessage, Me?.id, UserData.id, setChatMessages]);
 
   return (
-    <div className="flex flex-col h-dvh w-full overflow-hidden bg-white">
+    <div className="flex h-[calc(100dvh-64px)] min-w-0 flex-1 flex-col overflow-hidden bg-white">
       <div className="flex items-center justify-start p-3.5 border-b border-slate-200 shrink-0 h-16">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back to messages"
+          className="mr-2 flex h-9 w-9 items-center justify-center rounded-full text-zinc-700 md:hidden"
+        >
+          <ArrowLeft size={19} />
+        </button>
         <div className="image">
           <img
             className="h-10 w-10 rounded-full object-cover"
@@ -114,12 +133,12 @@ export default function DiscussionWindow({
 
           {UserData?.online ? (
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span className="block h-2 w-2 rounded-full bg-green-600"></span>
+              <span className="block h-2 w-2 rounded-full bg-[#4ADE80]"></span>
               <p>online</p>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span className="block h-2 w-2 rounded-full bg-gray-400"></span>
+              <span className="block h-2 w-2 rounded-full bg-[#6B7280]"></span>
               <p>offline</p>
             </div>
           )}
@@ -129,7 +148,7 @@ export default function DiscussionWindow({
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
           {DiscussionMessages?.map((msg, index) => {
-            const isMe = Number(Me?.id) === msg.sender_id;
+            const isMe = Number(Me?.id) === Number(msg.sender_id);
 
             console.log("msg  ", msg);
 
@@ -147,8 +166,8 @@ export default function DiscussionWindow({
                 <div
                   className={`p-3 max-w-[75%] rounded-2xl text-sm leading-relaxed break-words ${
                     isMe
-                      ? "bg-black text-white rounded-br-xs"
-                      : "bg-slate-100 text-slate-800 border border-slate-200 rounded-bl-xs"
+                      ? "bg-[#E5E7EB] text-[#262626] rounded-br-xs"
+                      : "bg-[#C2DCFB] text-[#111827] border border-[#C2DCFB] rounded-bl-xs"
                   }`}
                 >
                   {msg.message}
@@ -160,31 +179,53 @@ export default function DiscussionWindow({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 bg-white border-t border-slate-200 shrink-0">
-          <div className="bg-white p-2.5 flex flex-col gap-1.5 rounded-2xl border border-slate-200 w-full">
-            <div className="pb-1.5 flex text-[#6B7280] justify-start items-center gap-1.5 border-b border-slate-200">
-              <img
-                className="w-8 h-8 object-cover rounded-full"
-                src={"http://localhost:8080" + UserData?.avatar}
-                alt="avatar"
-              />
-              <input
-                onChange={handleInputChange}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="outline-none border-none w-full p-1.5 bg-transparent text-slate-800 text-sm placeholder:text-slate-400"
-                type="text"
-                placeholder="Message..."
-                value={message}
-              />
-              <FaceSlightlySmilingIcon className="w-5 h-5 cursor-pointer text-slate-400 hover:text-slate-600 transition" />
-            </div>
-            <div
-              onClick={handleSend}
-              className="px-5 max-w-fit ml-auto text-[12px] py-2 bg-black hover:bg-black text-white rounded-xl font-bold flex items-center gap-2 transition scale-100 active:scale-95 shrink-0 cursor-pointer"
+        <div className="shrink-0 border-t border-slate-200 bg-white p-3 sm:p-4">
+          {attachmentName && (
+            <p className="mx-auto mb-2 max-w-3xl text-xs text-[#6B7280]">
+              Attached: {attachmentName}
+            </p>
+          )}
+          <div className="mx-auto flex max-w-3xl items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2">
+            <button
+              type="button"
+              onClick={() => attachmentInputRef.current?.click()}
+              aria-label="Attach a file"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6B7280]"
             >
-              <button className="cursor-pointer">Send</button>
-              <Send size={16} />
-            </div>
+              <Paperclip size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => attachmentInputRef.current?.click()}
+              aria-label="Attach an image"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6B7280]"
+            >
+              <ImagePlus size={18} />
+            </button>
+            <input
+              ref={attachmentInputRef}
+              type="file"
+              className="hidden"
+              onChange={(event) =>
+                setAttachmentName(event.target.files?.[0]?.name ?? "")
+              }
+            />
+            <input
+              onChange={handleInputChange}
+              onKeyDown={(event) => event.key === "Enter" && handleSend()}
+              className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-[#262626] outline-none placeholder:text-[#6B7280]"
+              type="text"
+              placeholder="Type a message..."
+              value={message}
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              aria-label="Send message"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black text-white"
+            >
+              <Send size={17} />
+            </button>
           </div>
         </div>
       </div>

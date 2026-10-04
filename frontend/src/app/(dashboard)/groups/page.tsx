@@ -121,7 +121,7 @@ export default function GroupsPage() {
         {error && (
           <p
             role="alert"
-            className="mb-5 rounded-xl border border-zinc-200 bg-[#FFF8EC] p-3 text-sm text-zinc-800"
+            className="mb-5 rounded-xl border border-zinc-200 bg-[#F3F4F6] p-3 text-sm text-zinc-800"
           >
             {error}
           </p>
@@ -166,7 +166,7 @@ export default function GroupsPage() {
                         <h3 className="truncate font-bold">{group.title}</h3>
                         {(group.is_creator ||
                           group.membership_status === "member") && (
-                          <span className="rounded-full bg-[#E0F2FE] px-2 py-0.5 text-xs font-semibold text-zinc-800">
+                          <span className="rounded-full bg-[#C2DCFB] px-2 py-0.5 text-xs font-semibold text-zinc-800">
                             Member
                           </span>
                         )}

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -88,7 +89,6 @@ export default function FollowersModal({
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     {user.avatar_path ? (
                       <img
                         src={profileService.avatarURL(user.avatar_path)}

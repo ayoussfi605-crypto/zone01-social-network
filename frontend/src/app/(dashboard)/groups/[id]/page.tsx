@@ -366,14 +366,14 @@ export default function GroupDetailPage() {
         {error && (
           <p
             role="alert"
-            className="mb-5 rounded-xl border border-zinc-200 bg-[#FFF8EC] p-3 text-sm text-zinc-800"
+            className="mb-5 rounded-xl border border-zinc-200 bg-[#F3F4F6] p-3 text-sm text-zinc-800"
           >
             {error}
           </p>
         )}
 
         <header className="mb-7 rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#C4B5FD] px-3 py-1 text-xs font-bold text-zinc-900">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#C2DCFB] px-3 py-1 text-xs font-bold text-zinc-900">
             <Users size={14} /> {group.member_count}{" "}
             {group.member_count === 1 ? "member" : "members"}
           </div>
@@ -476,7 +476,7 @@ export default function GroupDetailPage() {
                         className="rounded-2xl border border-zinc-200 bg-white p-5"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C4B5FD] text-xs font-bold text-zinc-900">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#C2DCFB] text-xs font-bold text-zinc-900">
                             {initials(
                               post.author_name.split(" ")[0] ?? "",
                               post.author_name.split(" ").slice(1).join(" "),
@@ -571,7 +571,7 @@ export default function GroupDetailPage() {
                 <ul className="space-y-3">
                   {members.map((member) => (
                     <li key={member.id} className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E0F2FE] text-xs font-bold text-zinc-900">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C2DCFB] text-xs font-bold text-zinc-900">
                         {initials(member.first_name, member.last_name)}
                       </span>
                       <span className="text-sm font-medium">

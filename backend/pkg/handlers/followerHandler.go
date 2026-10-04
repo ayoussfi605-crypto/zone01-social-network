@@ -8,8 +8,10 @@ import (
 	"strconv"
 
 	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/models"
 	"social-network-network/pkg/services"
 	"social-network-network/pkg/utils"
+	ws "social-network-network/pkg/websocket"
 )
 
 type FollowerHandler struct {
@@ -89,6 +91,7 @@ func (h *FollowerHandler) HandleGetFollowers(w http.ResponseWriter, r *http.Requ
 		writeFollowerResponse(w, http.StatusInternalServerError, false, "", "could not load followers", nil)
 		return
 	}
+	addOnlineStatus(users)
 	writeFollowerResponse(w, http.StatusOK, true, "", "", map[string]any{"users": users})
 }
 
@@ -102,6 +105,7 @@ func (h *FollowerHandler) HandleGetFollowing(w http.ResponseWriter, r *http.Requ
 		writeFollowerResponse(w, http.StatusInternalServerError, false, "", "could not load following", nil)
 		return
 	}
+	addOnlineStatus(users)
 	writeFollowerResponse(w, http.StatusOK, true, "", "", map[string]any{"users": users})
 }
 
@@ -113,6 +117,12 @@ func (h *FollowerHandler) HandleGetPendingRequests(w http.ResponseWriter, r *htt
 		return
 	}
 	writeFollowerResponse(w, http.StatusOK, true, "", "", map[string]any{"users": users})
+}
+
+func addOnlineStatus(users []models.FollowerData) {
+	for index := range users {
+		users[index].Online = ws.GlobalHub != nil && ws.GlobalHub.IsUserOnline(users[index].ID)
+	}
 }
 
 func (h *FollowerHandler) requireRelationshipAccess(w http.ResponseWriter, r *http.Request, targetID int) bool {
