@@ -16,10 +16,11 @@ import (
 
 type FollowerHandler struct {
 	followerService services.FollowerService
+	notifier        services.NotificationService
 }
 
-func NewFollowerHandler(s services.FollowerService) *FollowerHandler {
-	return &FollowerHandler{followerService: s}
+func NewFollowerHandler(s services.FollowerService, notifier services.NotificationService) *FollowerHandler {
+	return &FollowerHandler{followerService: s, notifier: notifier}
 }
 
 func (h *FollowerHandler) HandleFollow(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +40,11 @@ func (h *FollowerHandler) HandleFollow(w http.ResponseWriter, r *http.Request) {
 			writeFollowerResponse(w, http.StatusInternalServerError, false, "", "could not follow user", nil)
 		}
 		return
+	}
+	if h.notifier != nil && result.Notification != nil {
+		if notification, notifyErr := h.notifier.NotifyFollowRequest(r.Context(), result.Notification.RecipientID, viewer); notifyErr == nil {
+			pushNotification(notification)
+		}
 	}
 	writeFollowerResponse(w, http.StatusOK, true, "", "", result)
 }

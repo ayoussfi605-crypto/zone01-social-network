@@ -163,6 +163,20 @@ func (h *HUB) sendToUsers(message []byte, userIDs []int) {
 	}
 }
 
+// SendToUser pushes an already-encoded frame to every live connection of a
+// user. It is used for real-time notifications, which are deliberately kept
+// separate from chat messages (notifications are not stored here).
+func (h *HUB) SendToUser(message []byte, userID int) {
+	h.MX.Lock()
+	defer h.MX.Unlock()
+	for client := range h.Clients[userID] {
+		select {
+		case client.Send <- message:
+		default:
+		}
+	}
+}
+
 func (h *HUB) saveMessageToDB(message []byte, userId int) {
 	// Save the message to the database using your repository
 }

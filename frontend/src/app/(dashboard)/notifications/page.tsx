@@ -2,20 +2,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { AtSign, Bell, Heart, MessageCircle, Users } from "lucide-react";
-import MobileBottomNav from "@/src/components/navigation/MobileBottomNav";
+import { useEffect, useState } from "react";
+import { Bell, CheckCheck, Users } from "lucide-react";
 import { groupService } from "@/src/services/groupService";
+import { notificationService } from "@/src/services/notificationService";
 import { profileService } from "@/src/services/profileService";
+import type { AppNotification } from "@/src/types/notification";
 import type {
-  GroupDiscovery,
   GroupEvent,
   GroupInvite,
   GroupJoinRequest,
 } from "@/src/types/group";
 import type { FollowerSummary } from "@/src/types/profile";
 
-type NotificationFilter = "All" | "Mentions" | "Verified";
+type NotificationFilter = "All" | "Unread";
 type GroupRequestNotification = {
   groupID: number;
   groupTitle: string;
@@ -23,53 +23,23 @@ type GroupRequestNotification = {
 };
 type GroupEventNotification = { groupTitle: string; event: GroupEvent };
 
-const activityNotifications = [
-  {
-    id: "follow-activity",
-    kind: "follow",
-    actor: "Elena Moss and 12 others",
-    avatar:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=85",
-    text: "followed you",
-    time: "20 MINUTES AGO",
-    verified: false,
-  },
-  {
-    id: "like-activity",
-    kind: "like",
-    actor: "Sophia Chen",
-    avatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=85",
-    text: "liked your vibe",
-    time: "2 HOURS AGO",
-    verified: true,
-    snippet: "Chasing shadows in the concrete jungle...",
-  },
-  {
-    id: "comment-activity",
-    kind: "comment",
-    actor: "Marcus Rivers",
-    avatar:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=85",
-    text: "commented on your vibe",
-    time: "5 HOURS AGO",
-    verified: true,
-    snippet: "This lighting is absolutely perfect! What camera did you use?",
-  },
-  {
-    id: "mention-activity",
-    kind: "mention",
-    actor: "Zoe Vent",
-    avatar:
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=120&q=85",
-    text: "mentioned you in a vibe",
-    time: "YESTERDAY",
-    verified: false,
-  },
-];
-
 function initials(firstName: string, lastName: string) {
   return `${firstName[0] ?? "?"}${lastName[0] ?? ""}`.toUpperCase();
+}
+
+function notificationHref(item: AppNotification) {
+  if (item.type === "group_invite" || item.type === "group_join_request") {
+    return item.group_id ? `/groups/${item.group_id}` : "/notifications";
+  }
+  if (item.type === "group_event") {
+    return item.group_id ? `/groups/${item.group_id}` : "/notifications";
+  }
+  return item.actor_id ? `/profile/${item.actor_id}` : "/notifications";
+}
+
+function notificationTime(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
 export default function NotificationsPage() {
@@ -81,6 +51,7 @@ export default function NotificationsPage() {
   const [groupEventNotifications, setGroupEventNotifications] = useState<
     GroupEventNotification[]
   >([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyAction, setBusyAction] = useState("");
@@ -92,21 +63,13 @@ export default function NotificationsPage() {
       profileService.getPendingRequests(),
       groupService.getPendingInvites(),
       groupService.browseGroups(),
+      notificationService.list(50),
     ])
-      .then(async ([requests, invites, groups]) => {
+      .then(async ([requests, invites, groups, persisted]) => {
         if (!active) return;
-        if (
-          !Array.isArray(requests) ||
-          !Array.isArray(invites) ||
-          !Array.isArray(groups)
-        ) {
-          throw new Error("Invalid notifications response");
-        }
-        const ownedGroups = groups.filter(
-          (group: GroupDiscovery) => group.is_creator,
-        );
+        const ownedGroups = groups.filter((group) => group.is_creator);
         const memberGroups = groups.filter(
-          (group: GroupDiscovery) => group.membership_status === "member",
+          (group) => group.membership_status === "member",
         );
         const [joinRequestLists, eventLists] = await Promise.all([
           Promise.all(
@@ -119,6 +82,7 @@ export default function NotificationsPage() {
         if (!active) return;
         setFollowRequests(requests);
         setGroupInvites(invites);
+        setNotifications(persisted);
         setGroupJoinRequests(
           ownedGroups.flatMap((group, index) =>
             joinRequestLists[index].map((request) => ({
@@ -228,21 +192,37 @@ export default function NotificationsPage() {
     }
   }
 
+  async function markAllRead() {
+    setNotifications((current) =>
+      current.map((item) => ({ ...item, is_read: true })),
+    );
+    try {
+      await notificationService.markAllRead();
+    } catch (reason: unknown) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not update notifications",
+      );
+    }
+  }
+
   const notificationCount =
     followRequests.length +
     groupInvites.length +
     groupJoinRequests.length +
     groupEventNotifications.length;
-  const visibleActivities = useMemo(() => {
-    if (filter === "Mentions")
-      return activityNotifications.filter((item) => item.kind === "mention");
-    if (filter === "Verified")
-      return activityNotifications.filter((item) => item.verified);
-    return activityNotifications;
-  }, [filter]);
+  const visibleNotifications =
+    filter === "Unread"
+      ? notifications.filter((item) => !item.is_read)
+      : notifications;
+  const hasResponses =
+    followRequests.length > 0 ||
+    groupInvites.length > 0 ||
+    groupJoinRequests.length > 0;
 
   return (
-    <main className="min-h-screen bg-zinc-100 pb-24 text-zinc-900">
+    <main className="min-h-screen bg-white pb-24 text-zinc-900">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
@@ -252,7 +232,7 @@ export default function NotificationsPage() {
           <Bell size={19} />
         </div>
         <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3">
-          {(["All", "Mentions", "Verified"] as const).map((tab) => (
+          {(["All", "Unread"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -276,9 +256,7 @@ export default function NotificationsPage() {
 
       <div className="mx-auto grid max-w-6xl gap-5 px-3 py-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-5">
         <div className="space-y-5">
-          {(followRequests.length > 0 ||
-            groupInvites.length > 0 ||
-            groupJoinRequests.length > 0) && (
+          {hasResponses && (
             <section className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="font-bold">Needs your response</h2>
@@ -475,64 +453,80 @@ export default function NotificationsPage() {
           )}
 
           <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-            <div className="border-b border-zinc-200 px-4 py-4 sm:px-5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                Your latest
-              </p>
-              <h2 className="mt-1 text-lg font-bold">Activity</h2>
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-4 sm:px-5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
+                  Your latest
+                </p>
+                <h2 className="mt-1 text-lg font-bold">Notifications</h2>
+              </div>
+              {notifications.some((item) => !item.is_read) && (
+                <button
+                  type="button"
+                  onClick={() => void markAllRead()}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#6B7280]"
+                >
+                  <CheckCheck size={14} /> Mark all read
+                </button>
+              )}
             </div>
-            <ul className="divide-y divide-zinc-200 px-4 sm:px-5">
-              {visibleActivities.map((item) => {
-                const Icon =
-                  item.kind === "like"
-                    ? Heart
-                    : item.kind === "comment"
-                      ? MessageCircle
-                      : item.kind === "mention"
-                        ? AtSign
-                        : Users;
-                return (
-                  <li key={item.id} className="flex gap-3 py-4">
-                    <span className="relative h-11 w-11 shrink-0">
-                      <img
-                        src={item.avatar}
-                        alt=""
-                        className="h-11 w-11 rounded-full object-cover"
-                      />
-                      <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[#C2DCFB] text-[#111827]">
-                        <Icon size={12} />
-                      </span>
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm leading-5 text-[#262626]">
-                        <b className="text-[#111827]">{item.actor}</b>{" "}
-                        {item.text}
-                      </p>
-                      <p className="mt-1 text-[10px] font-semibold tracking-wide text-[#6B7280]">
-                        {item.time}
-                      </p>
-                      {item.snippet && (
-                        <p
-                          className={`mt-2 rounded-xl px-3 py-2 text-xs leading-5 text-[#262626] ${item.kind === "like" ? "bg-[#F3F4F6]" : "bg-[#E5E7EB]"}`}
-                        >
-                          “{item.snippet}”
-                        </p>
-                      )}
-                    </div>
-                    {item.verified && (
-                      <span
-                        className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#4ADE80]"
-                        aria-label="Verified creator"
-                      />
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            {visibleActivities.length === 0 && (
+            {loading ? (
+              <p className="p-6 text-sm text-zinc-500">Loading…</p>
+            ) : visibleNotifications.length === 0 ? (
               <p className="p-6 text-sm text-zinc-500">
-                Nothing in this category yet.
+                {filter === "Unread"
+                  ? "You have no unread notifications."
+                  : "No notifications yet."}
               </p>
+            ) : (
+              <ul className="divide-y divide-zinc-200">
+                {visibleNotifications.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      href={notificationHref(item)}
+                      onClick={() => {
+                        if (item.is_read) return;
+                        setNotifications((current) =>
+                          current.map((entry) =>
+                            entry.id === item.id
+                              ? { ...entry, is_read: true }
+                              : entry,
+                          ),
+                        );
+                        void notificationService
+                          .markRead(item.id)
+                          .catch(() => undefined);
+                      }}
+                      className={`flex gap-3 px-4 py-4 sm:px-5 ${item.is_read ? "bg-white" : "bg-[#C2DCFB]/25"}`}
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#C2DCFB] text-sm font-bold text-[#111827]">
+                        {item.actor_avatar ? (
+                          <img
+                            src={notificationService.avatarURL(
+                              item.actor_avatar,
+                            )}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          (item.actor_name || "?")[0]
+                        )}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm leading-5 text-[#262626]">
+                          {item.text || item.actor_name}
+                        </span>
+                        <span className="mt-1 block text-[10px] font-semibold uppercase tracking-wide text-[#6B7280]">
+                          {notificationTime(item.created_at)}
+                        </span>
+                      </span>
+                      {!item.is_read && (
+                        <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-black" />
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
         </div>
@@ -569,7 +563,6 @@ export default function NotificationsPage() {
           </Link>
         </aside>
       </div>
-      <MobileBottomNav active="notifications" />
     </main>
   );
 }

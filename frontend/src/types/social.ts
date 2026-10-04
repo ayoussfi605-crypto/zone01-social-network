@@ -23,6 +23,8 @@ export type SocialPost = {
   location: string;
   privacy: PostPrivacy;
   audienceIDs: number[];
+  category?: string;
+  tags?: string[];
   createdAt: string;
   likes: number;
   liked: boolean;

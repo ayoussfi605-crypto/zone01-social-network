@@ -6,11 +6,7 @@ import { useEffect, useState } from "react";
 import PrivateProfileView from "../../../../components/profile/PrivateProfileView";
 import ProfileHeader from "../../../../components/profile/ProfileHeader";
 import { profileService } from "../../../../services/profileService";
-import {
-  canViewSocialPost,
-  loadSocialPosts,
-  subscribeToSocialPosts,
-} from "@/src/utils/socialPosts";
+import { postService } from "@/src/services/postService";
 import type { SocialPost } from "@/src/types/social";
 import type { FollowStatus, UserProfile } from "../../../../types/profile";
 
@@ -26,20 +22,13 @@ export default function UserProfilePage() {
     let active = true;
     async function loadProfile() {
       try {
-        const [result, viewer] = await Promise.all([
-          profileService.getProfile(params.id),
-          profileService.getCurrentUser(),
-        ]);
-        const following = await profileService.getFollowing(viewer.id);
+        const result = await profileService.getProfile(params.id);
         if (!active) return;
         setProfile(result);
         setStatus(result.follow_status);
-        const followingIDs = following.map((person) => person.id);
-        const visible = loadSocialPosts().filter(
-          (post) =>
-            post.author.id === result.user.id &&
-            canViewSocialPost(post, viewer.id, followingIDs),
-        );
+        // The backend returns only the posts this viewer may see.
+        const visible = await postService.getUserPosts(result.user.id);
+        if (!active) return;
         setPosts(visible);
       } catch (err: unknown) {
         if (!active) return;
@@ -51,10 +40,8 @@ export default function UserProfilePage() {
       }
     }
     void loadProfile();
-    const unsubscribe = subscribeToSocialPosts(() => void loadProfile());
     return () => {
       active = false;
-      unsubscribe();
     };
   }, [params.id, router]);
 
@@ -68,7 +55,7 @@ export default function UserProfilePage() {
 
   const isRestricted = profile.restricted;
   return (
-    <main className="min-h-screen bg-zinc-100 px-4 py-8">
+    <main className="min-h-screen bg-white px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-5">
         <Link
           href="/feed"

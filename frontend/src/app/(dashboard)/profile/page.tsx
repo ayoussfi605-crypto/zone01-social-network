@@ -5,13 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Camera, Grid3X3, Heart, Pencil, Plus } from "lucide-react";
-import MobileBottomNav from "@/src/components/navigation/MobileBottomNav";
 import { profileService } from "@/src/services/profileService";
-import {
-  loadSocialPosts,
-  SELF,
-  subscribeToSocialPosts,
-} from "@/src/utils/socialPosts";
+import { postService } from "@/src/services/postService";
+import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
@@ -47,6 +43,8 @@ export default function MyProfilePage() {
         setUser(currentUser);
         setFollowersCount(followers.length);
         setFollowingCount(following.length);
+        const ownPosts = await postService.getUserPosts(currentUser.id);
+        if (active) setPosts(ownPosts);
         const savedBio = window.localStorage.getItem("vibe.profile.bio");
         const nextBio = savedBio ?? currentUser.about_me ?? defaultBio;
         setBio(nextBio);
@@ -63,12 +61,8 @@ export default function MyProfilePage() {
       }
     }
     void loadProfile();
-    const refreshPosts = () => setPosts(loadSocialPosts());
-    refreshPosts();
-    const unsubscribe = subscribeToSocialPosts(refreshPosts);
     return () => {
       active = false;
-      unsubscribe();
     };
   }, [router]);
 
@@ -100,7 +94,7 @@ export default function MyProfilePage() {
   const likesCount = 15400;
 
   return (
-    <main className="min-h-screen bg-zinc-100 pb-24 text-[#111827]">
+    <main className="min-h-screen bg-white pb-24 text-[#111827]">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
@@ -358,7 +352,6 @@ export default function MyProfilePage() {
           </form>
         </div>
       )}
-      <MobileBottomNav active="profile" />
     </main>
   );
 }

@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    image: vibe-social-network-backend
+    environment:
+      DB_PATH: /data/social-network.db
+      # Origin allowed by the backend's CORS middleware.
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      - backend-data:/data
+      - backend-media:/app/media
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Browser-facing backend URL, inlined into the client bundle at build.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
+    image: vibe-social-network-frontend
+    environment:
+      # Container-to-container URL used by SSR and server actions.
+      API_URL: http://backend:8080
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+  backend-media:
