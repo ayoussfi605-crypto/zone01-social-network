@@ -54,12 +54,13 @@ func main() {
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
 
 	// chat routes
-	mux.Handle("/api/ws", middleware.Auth(db, http.HandlerFunc(handlers.WebsocketHandler)))
 
 	chatrepo := repository.NewChatRepository(db)
-	chatservices := services.NewChatServices(chatrepo)
+	chatservices := services.NewChatServices(chatrepo )
 	chatHandler := handlers.NewChatHandler(chatservices)
+	wsHandler := handlers.NewWSHandler(chatservices)
 
+	mux.Handle("/api/ws", middleware.Auth(db, http.HandlerFunc(wsHandler.WebsocketHandler)))
 	mux.Handle("/api/chatuserlist/", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleChat)))
 	fmt.Println("//beforte chat start")
 

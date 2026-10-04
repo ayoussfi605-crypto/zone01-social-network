@@ -1,97 +1,153 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useWebSocket } from "@/src/context/WebSocketConetext";
+import { authService } from "@/src/services/authService";
 import { FaceSlightlySmilingIcon, Send } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+type User = {
+  id: number | string;
+  fullName?: string;
+  avatar?: string;
+  online?: boolean;
+};
+type ChatMessage = {
+  type: string;
+  content: string;
+  sender_id: number | string;
+  receiver_id: number | string;
+  sender_name?: string;
+};
 
-export default function DiscussionWindow({ UserData }: any) {
-  console.log("UserData: DIccc", UserData);
-
+export default function DiscussionWindow({ UserData }: { UserData: User }) {
   const [message, setMessage] = useState<string>("");
-  const [chatmessages, setChatMessages] = useState([{}]);
+  const [chatmessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [Me, setMe] = useState<User | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(e.target.value);
   };
   const ws = useWebSocket();
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+    const GetMe = async () => {
+      await authService
+        .me()
+        .then((user ) => {
+          if (user) {
+            setMe(user.data);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching user data:", error);
+        });
+    };
+    GetMe();
+  }, [chatmessages]);
+
   const handleSend = () => {
-    ws.sendMessage(
-      JSON.stringify({
-        type: "message",
-        content: message,
-        receiver_id: UserData.id,
-      }),
-    );
+    if (!message.trim() || !Me) return;
+
+    const payload = {
+      type: "message_private",
+      content: message,
+      receiver_id: UserData?.id,
+      sender_id: Me?.id,
+      sender_name: Me?.fullName,
+    };
+    ws.sendMessage(JSON.stringify(payload));
+
     setChatMessages((prevMessages) => [
       ...prevMessages,
       {
-        type: "message",
+        type: "message_private",
         content: message,
-        receiver_id: 0,
-        sender_id: "0", // Replace with the actual sender ID if available
-        sender_name: "You", // Replace with the actual sender name if available
+        receiver_id: UserData?.id,
+        sender_id: Me?.id,
+        sender_name: Me?.fullName,
       },
     ]);
     setMessage("");
   };
 
-  ws.receiveMessage((data) => {
-    console.log("Received message:", data);
-    if (data.type === "message") {
-      setChatMessages((prevMessages) => [...prevMessages, data]);
-      console.log("Updated chat messages:", chatmessages);
-    }
-  });
+  useEffect(() => {
+    ws.receiveMessage((data: ChatMessage) => {
+      console.log("Received message:", data);
+      if (data.type === "message_private") {
+        setChatMessages((prevMessages) => [...prevMessages, data]);
+      }
+    });
+  }, [ws]);
+
   return (
-    <div className="flex flex-col flex-1">
-      <div className="navebare flex items-center justify-start p-3.5 border-b border-slate-200/60 max-h-17.25">
+    <div className="flex flex-col h-screen h-dvh w-full overflow-hidden bg-white">
+      <div className="flex items-center justify-start p-3.5 border-b border-slate-200/60 shrink-0 h-16">
         <div className="image">
           <img
-            className="h-12 w-12 rounded-full object-cover"
+            className="h-10 w-10 rounded-full object-cover"
             src={"http://localhost:8080" + UserData?.avatar}
             alt={UserData?.fullName || "User avatar"}
           />
         </div>
 
         <div className="info ml-3">
-          <h3 className="text-[15px] font-bold">{UserData?.fullName}</h3>
+          <h3 className="text-[15px] font-bold leading-tight">
+            {UserData?.fullName}
+          </h3>
 
           {UserData?.online ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <span className="block h-2 w-2 rounded-full bg-green-600"></span>
               <p>online</p>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="block h-2 w-2 rounded-full bg-gray-500"></span>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span className="block h-2 w-2 rounded-full bg-gray-400"></span>
               <p>offline</p>
             </div>
           )}
         </div>
       </div>
-      <div className="chatwindow flex flex-col flex-1 justify-between">
-        <div className="flex flex-col gap-3 p-4 overflow-y-auto max-h-[500px]">
+
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3">
           {chatmessages.map((msg, index) => {
-            // Determine if the logged-in user is the sender
-            const isMe = Number(msg.receiver_id) === UserData.id;
-            console.log("isMe", isMe, "msg", msg, "UserData.id", UserData.id ,Number(msg.receiver_id) ,msg.receiver_id);
+            console.log("Rendering message:", msg);
+            console.log(
+              "Current user ID SELECTED:",
+              UserData,
+              "And received message receiver ID:",
+              msg.receiver_id,
+            );
+
+            const isMe = Number(Me?.id) === msg.sender_id;
+            console.log(
+              "Is the message from me?",
+              isMe,
+              "Message content:",
+              msg.content,
+            );
 
             return (
               <div
                 key={index}
-                className={`flex flex-col ${isMe ? "items-end" : "items-start ml-auto"}`}
+                className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
               >
-                {/* Author Label */}
                 <span className="text-[12px] font-medium text-slate-500 mb-0.5 px-1">
-                  {isMe ? "You" : msg.sender_name || "User"}
+                  {isMe
+                    ? "You"
+                    : msg.sender_name || UserData?.fullName || "User"}
                 </span>
 
-                {/* Message Bubble */}
                 <div
                   className={`p-3 max-w-[75%] rounded-2xl text-sm leading-relaxed shadow-sm break-words ${
                     isMe
-                      ? "bg-blue-600 text-white rounded-br-xs"
+                      ? "bg-[#1A1A1A] text-white rounded-br-xs"
                       : "bg-slate-100 text-slate-800 border border-slate-200/80 rounded-bl-xs"
                   }`}
                 >
@@ -100,30 +156,34 @@ export default function DiscussionWindow({ UserData }: any) {
               </div>
             );
           })}
+
+          <div ref={messagesEndRef} />
         </div>
-        <div className="flex bg-white p-4">
+
+        <div className="p-4 bg-white border-t border-slate-100 shrink-0">
           <div className="bg-[#F8FAFC] p-2.5 flex flex-col gap-1.5 rounded-2xl border border-slate-200/80 shadow-inner w-full">
-            <div className="pb-1.5 flex text-[#9CA3AF] justify-start items-center gap-1.5 border-b  border-slate-200/60 ">
+            <div className="pb-1.5 flex text-[#9CA3AF] justify-start items-center gap-1.5 border-b border-slate-200/60">
               <img
-                className="w-9 h-9 placeholder-[#9CA3AF] object-cover rounded-full "
-                src={"http://localhost:8080" + UserData.avatar}
-                alt="heloo"
+                className="w-8 h-8 object-cover rounded-full"
+                src={"http://localhost:8080" + UserData?.avatar}
+                alt="avatar"
               />
               <input
                 onChange={handleInputChange}
-                className="outline-0 border-0 w-full p-1.5"
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                className="outline-none border-none w-full p-1.5 bg-transparent text-slate-800 text-sm placeholder:text-slate-400"
                 type="text"
-                placeholder="message..."
+                placeholder="Message..."
                 value={message}
               />
-              <FaceSlightlySmilingIcon />
+              <FaceSlightlySmilingIcon className="w-5 h-5 cursor-pointer text-slate-400 hover:text-slate-600 transition" />
             </div>
             <div
               onClick={handleSend}
-              className="px-5  max-w-fit ml-auto text-[12px] py-2 bg-[#1A1A1A] hover:bg-black disabled:opacity-50 text-white rounded-xl font-bold flex items-center gap-2 shadow-md shadow-black/10 transition scale-100 active:scale-95 shrink-0"
+              className="px-5 max-w-fit ml-auto text-[12px] py-2 bg-[#1A1A1A] hover:bg-black text-white rounded-xl font-bold flex items-center gap-2 shadow-md shadow-black/10 transition scale-100 active:scale-95 shrink-0 cursor-pointer"
             >
-              <button>Send</button>
-              <Send size={18} />
+              <button className="cursor-pointer">Send</button>
+              <Send size={16} />
             </div>
           </div>
         </div>

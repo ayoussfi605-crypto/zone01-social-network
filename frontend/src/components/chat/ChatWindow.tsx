@@ -115,16 +115,14 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                   key={el.id}
                   onClick={() => {
                     // setActiveUserId(el.id);
-                    setUsedUser(
-                      el
-                    );
-                    console.log(UsedUser  ,);
+                    setUsedUser(el);
+                    console.log(UsedUser);
                   }}
                   className={`group p-3 border  rounded-2xl flex items-center gap-3 cursor-pointer transition-all duration-200  ${UsedUser?.id == el.id ? ActiveClass : UnActiveClass}`}
                 >
                   <img
                     className="w-12.5 h-12.5 rounded-full object-cover"
-                    src={"http://localhost:8080"+el.avatar}
+                    src={"http://localhost:8080" + el.avatar}
                     alt="heloo"
                   />
                   <div className="flex  flex-col flex-1  gap-1">
@@ -155,7 +153,6 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
           )}
         </ul>
       </aside>
-      
 
       <>
         {UsedUser ? (

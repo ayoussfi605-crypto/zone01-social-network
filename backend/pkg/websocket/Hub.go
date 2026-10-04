@@ -1,10 +1,13 @@
 package ws
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync"
+
+	"social-network-network/pkg/services"
 
 	"github.com/gorilla/websocket"
 )
@@ -12,9 +15,11 @@ import (
 var GlobalHub *HUB
 
 type Client struct {
-	UserId int
-	Conn   *websocket.Conn
-	Send   chan []byte
+	UserId       int
+	Conn         *websocket.Conn
+	Send         chan []byte
+	ChatServices services.ChatServices
+	HUB          *HUB
 }
 
 type HUB struct {
@@ -131,33 +136,45 @@ func (c *Client) WritePump() {
 	}
 }
 
-func (c *Client) ReadPump() {
+func (c *Client) ReadPump(ctx context.Context) {
 	defer func() {
+		fmt.Println("UNREGISTER CLIENT:", c.UserId)
+		c.HUB.UnRegister <- c
 		c.Conn.Close()
 	}()
 	type message struct {
 		Type        string `json:"type"`
 		Message     string `json:"content"`
+		Sender_id   int `json:"sender_id"`
 		Receiver_id string `json:"receiver_id"`
 		Sender_name string `json:"sender_name"`
 	}
 	for {
-		var message message
+
 		_, payload, err := c.Conn.ReadMessage()
-		fmt.Println("payload", string(payload))
 		if err != nil {
 			fmt.Println("read error:", err)
 			break
 		}
-
-		err = json.Unmarshal([]byte(payload), &message)
+		var msg message
+		err = json.Unmarshal(payload, &msg)
+		if err != nil {
+			fmt.Println("unmarshal error:", err)
+			break
+		}
+		recipientId, err := strconv.Atoi(msg.Receiver_id)
+		if err != nil {
+			fmt.Println("error converting recipient ID:", err)
+			break
+		}
+		err = c.ChatServices.SaveMessage(ctx, c.UserId, recipientId, msg.Message)
 		if err != nil {
 			fmt.Println("unmarshal error:", err)
 			break
 		}
 
-		if message.Type == "message" {
-			recipientId, err := strconv.Atoi(message.Receiver_id)
+		if msg.Type == "message_private" {
+			recipientId, err := strconv.Atoi(msg.Receiver_id)
 			if err != nil {
 				fmt.Println("error converting recipient ID:", err)
 				break
