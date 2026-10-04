@@ -31,6 +31,9 @@ func TestCreateGroupRepository(t *testing.T) {
 	if _, err := db.Exec(`INSERT INTO users (email, password_hash, first_name, last_name, dob) VALUES (?, ?, ?, ?, ?)`, "invitee@example.com", "hash", "Casey", "Taylor", "2000-01-03"); err != nil {
 		t.Fatalf("create invitee: %v", err)
 	}
+	if _, err := db.Exec(`INSERT INTO users (email, password_hash, first_name, last_name, dob) VALUES (?, ?, ?, ?, ?)`, "requester@example.com", "hash", "Devon", "Riley", "2000-01-04"); err != nil {
+		t.Fatalf("create requester: %v", err)
+	}
 
 	repo := NewGroupRepository(db)
 	group, err := repo.CreateGroup(context.Background(), 1, "Design Circle", "UI Reviews")
@@ -90,5 +93,75 @@ func TestCreateGroupRepository(t *testing.T) {
 	}
 	if remainingInvites != 0 {
 		t.Fatalf("expected declined invite to be removed, got %d rows", remainingInvites)
+	}
+
+	discovery, err := repo.BrowseGroups(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("browse groups as creator: %v", err)
+	}
+	if len(discovery) != 1 || !discovery[0].IsCreator || discovery[0].MembershipStatus != "member" || discovery[0].MemberCount != 2 {
+		t.Fatalf("unexpected creator discovery result: %+v", discovery)
+	}
+
+	if err := repo.RequestToJoin(context.Background(), group.ID, 4); err != nil {
+		t.Fatalf("request to join group: %v", err)
+	}
+	requests, err := repo.GetJoinRequests(context.Background(), group.ID)
+	if err != nil {
+		t.Fatalf("get group join requests: %v", err)
+	}
+	if len(requests) != 1 || requests[0].UserID != 4 {
+		t.Fatalf("unexpected join requests: %+v", requests)
+	}
+	if err := repo.RespondToJoinRequest(context.Background(), group.ID, 4, true); err != nil {
+		t.Fatalf("creator accepts join request: %v", err)
+	}
+
+	members, err := repo.GetGroupMembers(context.Background(), group.ID)
+	if err != nil {
+		t.Fatalf("get group members: %v", err)
+	}
+	if len(members) != 3 {
+		t.Fatalf("expected creator and two members, got %d", len(members))
+	}
+	if err := repo.InviteMembers(context.Background(), group.ID, []int{3}); err != nil {
+		t.Fatalf("member invites another user: %v", err)
+	}
+	invites, err = repo.GetPendingInvites(context.Background(), 3)
+	if err != nil || len(invites) != 1 {
+		t.Fatalf("expected member-created invitation, got %v, %v", invites, err)
+	}
+
+	post, err := repo.CreateGroupPost(context.Background(), group.ID, 1, "Members only update")
+	if err != nil {
+		t.Fatalf("create group post: %v", err)
+	}
+	if _, err := repo.CreateGroupComment(context.Background(), post.ID, 2, "A member comment"); err != nil {
+		t.Fatalf("create group comment: %v", err)
+	}
+	posts, err := repo.GetGroupPosts(context.Background(), group.ID)
+	if err != nil {
+		t.Fatalf("get group posts: %v", err)
+	}
+	if len(posts) != 1 || len(posts[0].Comments) != 1 || posts[0].Comments[0].Content != "A member comment" {
+		t.Fatalf("unexpected group posts/comments: %+v", posts)
+	}
+
+	event, err := repo.CreateGroupEvent(context.Background(), group.ID, 1, "Planning call", "Roadmap review", "2030-05-20T10:00:00Z")
+	if err != nil {
+		t.Fatalf("create group event: %v", err)
+	}
+	if err := repo.RespondToEvent(context.Background(), event.ID, 2, "going"); err != nil {
+		t.Fatalf("record going response: %v", err)
+	}
+	if err := repo.RespondToEvent(context.Background(), event.ID, 4, "not_going"); err != nil {
+		t.Fatalf("record not-going response: %v", err)
+	}
+	events, err := repo.GetGroupEvents(context.Background(), group.ID, 2)
+	if err != nil {
+		t.Fatalf("get group events: %v", err)
+	}
+	if len(events) != 1 || events[0].GoingCount != 1 || events[0].NotGoingCount != 1 || events[0].MyResponse != "going" {
+		t.Fatalf("unexpected event responses: %+v", events)
 	}
 }

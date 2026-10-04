@@ -72,6 +72,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDescription, setNewGroupDescription] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [memberSearchTerm, setMemberSearchTerm] = useState("");
   const [groups, setGroups] = useState<ChatContact[]>(DEFAULT_GROUPS);
@@ -177,6 +178,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
     try {
       const createdGroup = await groupService.createGroup(
         newGroupName.trim(),
+        newGroupDescription.trim(),
         selectedMembers.map(Number).filter(Number.isFinite),
       );
       const newGroup: ChatContact = {
@@ -198,6 +200,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
 
       setGroups((prev) => [newGroup, ...prev]);
       setNewGroupName("");
+      setNewGroupDescription("");
       setSelectedMembers([]);
       setShowCreateGroup(false);
       setActiveFilter("groups");
@@ -304,6 +307,21 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                   />
                 </div>
 
+                <div>
+                  <label className="mb-1 block text-xs font-medium uppercase tracking-[0.1em] text-slate-500">
+                    Description
+                  </label>
+                  <textarea
+                    value={newGroupDescription}
+                    onChange={(event) =>
+                      setNewGroupDescription(event.target.value)
+                    }
+                    placeholder="What is this group for?"
+                    rows={3}
+                    className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition focus:border-violet-300 focus:bg-white"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">
                     Add members
@@ -353,7 +371,11 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                 <button
                   type="button"
                   onClick={handleCreateGroup}
-                  disabled={isCreatingGroup || !newGroupName.trim()}
+                  disabled={
+                    isCreatingGroup ||
+                    !newGroupName.trim() ||
+                    !newGroupDescription.trim()
+                  }
                   className="w-full rounded-xl bg-slate-900 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
                 >
                   {isCreatingGroup ? "Creating…" : "Create group"}
