@@ -13,4 +13,6 @@ export interface FollowerSummary {
   first_name: string;
   last_name: string;
   avatar_path: string;
+  nickname: string;
+  online: boolean;
 }

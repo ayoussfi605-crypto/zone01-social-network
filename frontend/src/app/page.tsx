@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import FeedPage from "../components/feed/feed";
+import GlobalSessionActions from "@/src/components/navigation/GlobalSessionActions";
 import { checkSession } from "../utils/checkSession";
 
 export default async function Feed() {
@@ -12,7 +13,10 @@ export default async function Feed() {
 
   return (
     <>
-      <FeedPage />
+      <>
+        <FeedPage />
+        <GlobalSessionActions />
+      </>
     </>
   );
 }

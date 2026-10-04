@@ -24,6 +24,8 @@ type FollowerData struct {
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
 	AvatarPath string `json:"avatar_path"`
+	Nickname   string `json:"nickname"`
+	Online     bool   `json:"online"`
 }
 
 type UserProfile struct {

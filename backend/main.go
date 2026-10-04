@@ -55,8 +55,29 @@ func main() {
 	mux.Handle("GET /api/users/{id}/following", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowing)))
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
 
-	// chat routes
+	// group routes
+	groupRepo := repository.NewGroupRepository(db)
+	groupService := services.NewGroupService(groupRepo)
+	groupHandler := handlers.NewGroupHandler(groupService)
+	mux.Handle("POST /api/groups", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreateGroup)))
+	mux.Handle("GET /api/groups", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetGroups)))
+	mux.Handle("GET /api/groups/invites", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetPendingInvites)))
+	mux.Handle("POST /api/groups/{id}/invite-response", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleRespondToInvite)))
+	mux.Handle("GET /api/groups/discover", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleBrowseGroups)))
+	mux.Handle("GET /api/groups/{id}/members", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetMembers)))
+	mux.Handle("GET /api/groups/{id}/invite-candidates", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleInviteCandidates)))
+	mux.Handle("POST /api/groups/{id}/invites", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleInviteMembers)))
+	mux.Handle("POST /api/groups/{id}/join-requests", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleRequestToJoin)))
+	mux.Handle("GET /api/groups/{id}/join-requests", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetJoinRequests)))
+	mux.Handle("POST /api/groups/{id}/join-requests/{userID}/response", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleRespondToJoinRequest)))
+	mux.Handle("GET /api/groups/{id}/posts", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetPosts)))
+	mux.Handle("POST /api/groups/{id}/posts", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreatePost)))
+	mux.Handle("POST /api/groups/{id}/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreateComment)))
+	mux.Handle("GET /api/groups/{id}/events", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleGetEvents)))
+	mux.Handle("POST /api/groups/{id}/events", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleCreateEvent)))
+	mux.Handle("POST /api/groups/{id}/events/{eventID}/response", middleware.Auth(db, http.HandlerFunc(groupHandler.HandleRespondToEvent)))
 
+	// chat routes
 	chatrepo := repository.NewChatRepository(db)
 	chatservices := services.NewChatServices(chatrepo)
 	chatHandler := handlers.NewChatHandler(chatservices)
@@ -65,6 +86,7 @@ func main() {
 	mux.Handle("/api/ws", middleware.Auth(db, http.HandlerFunc(wsHandler.WebsocketHandler)))
 	mux.Handle("/api/chatuserlist/", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleChat)))
 	mux.Handle("/api/messages/{id}", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleGetMessages)))
+	mux.Handle("/api/groups/{id}/messages", middleware.Auth(db, http.HandlerFunc(chatHandler.HandleGetGroupMessages)))
 	fmt.Println("//beforte chat start")
 
 	fmt.Println("backend running on :8080")

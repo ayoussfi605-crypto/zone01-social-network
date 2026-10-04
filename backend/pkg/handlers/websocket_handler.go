@@ -41,7 +41,7 @@ func (h *WSHandler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	client := ws.Client{
 		UserId:       middleware.GetUser(r).Id,
 		Conn:         conn,
-		Send:         make(chan []byte),
+		Send:         make(chan []byte, 16),
 		ChatServices: h.ChatServices,
 		HUB:          ws.GlobalHub,
 	}

@@ -13,6 +13,9 @@ type ChatServices interface {
 	GetChatUsers(ctx context.Context, userId int) ([]repository.ChatUsers, error)
 	SaveMessage(senderId int, receiverId int, message string) error
 	GetMessages(senderID int, receiverID int) ([]models.ChatMessage, error)
+	SaveGroupMessage(senderID, groupID int, message string) error
+	GetGroupMessages(userID, groupID int) ([]models.GroupChatMessage, error)
+	GetGroupMemberIDs(groupID int) ([]int, error)
 }
 
 type chatServices struct {
@@ -43,6 +46,13 @@ func (s *chatServices) SaveMessage(senderId int, receiverId int, message string)
 	if userOne.Id == "" || UserTwo.Id == "" {
 		return errors.New("you can't send message to this user")
 	}
+	allowed, err := s.ChatRepo.CanMessage(senderId, receiverId)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errors.New("you can only message users connected to you or public profiles")
+	}
 	fmt.Println("Saving message from user", senderId, "to user", receiverId, "with content:", message)
 	err = s.ChatRepo.SaveMessage(senderId, receiverId, message)
 	if err != nil {
@@ -64,9 +74,45 @@ func (s *chatServices) GetMessages(senderID int, receiverID int) ([]models.ChatM
 	if sender == nil || receiver == nil {
 		return nil, errors.New("you can't get messages for this user")
 	}
+	allowed, err := s.ChatRepo.CanMessage(senderID, receiverID)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, errors.New("you can only view conversations connected to you")
+	}
 	messages, err := s.ChatRepo.GetMessages(senderID, receiverID)
 	if err != nil {
 		return nil, err
 	}
 	return messages, nil
+}
+
+func (s *chatServices) SaveGroupMessage(senderID, groupID int, message string) error {
+	if senderID <= 0 || groupID <= 0 || message == "" {
+		return errors.New("invalid group message")
+	}
+	member, err := s.ChatRepo.IsGroupMember(groupID, senderID)
+	if err != nil {
+		return err
+	}
+	if !member {
+		return errors.New("only group members can send messages")
+	}
+	return s.ChatRepo.SaveGroupMessage(senderID, groupID, message)
+}
+
+func (s *chatServices) GetGroupMessages(userID, groupID int) ([]models.GroupChatMessage, error) {
+	member, err := s.ChatRepo.IsGroupMember(groupID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !member {
+		return nil, errors.New("only group members can view messages")
+	}
+	return s.ChatRepo.GetGroupMessages(groupID)
+}
+
+func (s *chatServices) GetGroupMemberIDs(groupID int) ([]int, error) {
+	return s.ChatRepo.GetGroupMemberIDs(groupID)
 }
