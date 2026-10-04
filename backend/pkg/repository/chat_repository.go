@@ -1,14 +1,14 @@
 package repository
 
 import (
-	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 type ChatRepository interface {
-	GetUserById(ctx context.Context, userId int) (*ChatUsers, error)
-	GetChatUsers(ctx context.Context, userID int) ([]ChatUsers, error)
+	GetUserById(userId int) (*ChatUsers, error)
+	GetChatUsers(userID int) ([]ChatUsers, error)
 	SaveMessage(senderID int, receiverID int, message string) error
 }
 
@@ -32,7 +32,7 @@ func NewChatRepository(db *sql.DB) ChatRepository {
 	return &chatRepository{db: db}
 }
 
-func (r *chatRepository) GetUserById(ctx context.Context, userId int) (*ChatUsers, error) {
+func (r *chatRepository) GetUserById(userId int) (*ChatUsers, error) {
 	query := `
 SELECT
 	users.id,
@@ -40,58 +40,77 @@ SELECT
 FROM users
 WHERE users.id = ?;
 `
-	rows, err := r.db.Query(query, userId)
-	if err != nil || rows.Err() != nil {
-		return nil, errors.New("you can't send message to this user you need to follow him first")
-	}
-
 	var user ChatUsers
-
-	if rows.Next() {
-		err := rows.Scan(&user.Id, &user.Name)
-		if err != nil {
-			return nil, errors.New("you can't send message to this user you need to follow him first")
+	err := r.db.QueryRow(query, userId).Scan(&user.Id, &user.Name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New(
+				"you can't send message to this user",
+			)
 		}
+
+		return nil, err
 	}
 
 	return &user, nil
 }
 
-func (r *chatRepository) GetChatUsers(ctx context.Context, userId int) ([]ChatUsers, error) {
+func (r *chatRepository) GetChatUsers(
+	userId int,
+) ([]ChatUsers, error) {
 	query := `
 SELECT
     users.id,
     users.nickname,
-	users.first_name|| ' ' || users.last_name AS fullname,
+    users.first_name || ' ' || users.last_name AS fullname,
     users.avatar_path
 FROM users
 INNER JOIN followers
     ON users.id = followers.followed_id
 WHERE followers.status = 'accepted'
   AND followers.follower_id = ?;
-
 `
-	rows, err := r.db.Query(query, userId)
-	if err != nil || rows.Err() != nil {
-		return nil, errors.New("invalid rows")
-	}
 
-	var AllUsers []ChatUsers
+	rows, err := r.db.Query(query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var allUsers []ChatUsers
 
 	for rows.Next() {
 		var u ChatUsers
 
-		err := rows.Scan(&u.Id, &u.Name, &u.FullName, &u.Avatar)
-		if err != nil {
-			return nil, errors.New("Invalide Query")
+		if err := rows.Scan(
+			&u.Id,
+			&u.Name,
+			&u.FullName,
+			&u.Avatar,
+		); err != nil {
+			return nil, err
 		}
-		AllUsers = append(AllUsers, u)
+
+		allUsers = append(allUsers, u)
 	}
 
-	return AllUsers, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return allUsers, nil
 }
 
 func (r *chatRepository) SaveMessage(senderID int, receiverID int, message string) error {
-	// Implement the logic to save the message to the database
+	fmt.Println("Saving message to DB:", senderID, receiverID, message)
+	query := `
+INSERT INTO messages (sender_id, recipient_id, content)
+VALUES (?, ?, ?);
+`
+	_, err := r.db.Exec(query, senderID, receiverID, message)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Message saved successfully")
 	return nil
 }

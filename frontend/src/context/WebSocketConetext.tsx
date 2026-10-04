@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { ChatMessage } from "../types/chat";
 
 type WebSocketContextType = {
   conected: boolean;
   sendMessage: (message: string) => void;
-  receiveMessage: (callback: (message: any) => void) => void;
+  receiveMessage: (callback: (message: ChatMessage) => void) => void;
 };
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -51,7 +52,7 @@ export function WsProdider({
     ws.send(message);
   }
 
-  function receiveMessage(callback: (message: any) => void) {
+  function receiveMessage(callback: (message: ChatMessage) => void) {
     console.log("receiveMessage called");
     const ws = socketRef.current;
 

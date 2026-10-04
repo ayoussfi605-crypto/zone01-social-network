@@ -136,7 +136,7 @@ func (c *Client) WritePump() {
 	}
 }
 
-func (c *Client) ReadPump(ctx context.Context) {
+func (c *Client) ReadPump() {
 	defer func() {
 		fmt.Println("UNREGISTER CLIENT:", c.UserId)
 		c.HUB.UnRegister <- c
@@ -167,7 +167,8 @@ func (c *Client) ReadPump(ctx context.Context) {
 			fmt.Println("error converting recipient ID:", err)
 			break
 		}
-		err = c.ChatServices.SaveMessage(ctx, c.UserId, recipientId, msg.Message)
+		fmt.Println("Pump Saving message from user", c.UserId, "to user", recipientId, "with content:", msg.Message)
+		err = c.ChatServices.SaveMessage(c.UserId, recipientId, msg.Message)
 		if err != nil {
 			fmt.Println("unmarshal error:", err)
 			break

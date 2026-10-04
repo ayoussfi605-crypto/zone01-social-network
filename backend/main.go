@@ -19,6 +19,8 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
 	handlers.DB = db // give DB to handlers (simple global)
 
 	ws.GlobalHub = ws.InitHUb()
@@ -56,7 +58,7 @@ func main() {
 	// chat routes
 
 	chatrepo := repository.NewChatRepository(db)
-	chatservices := services.NewChatServices(chatrepo )
+	chatservices := services.NewChatServices(chatrepo)
 	chatHandler := handlers.NewChatHandler(chatservices)
 	wsHandler := handlers.NewWSHandler(chatservices)
 

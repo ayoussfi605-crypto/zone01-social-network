@@ -17,21 +17,34 @@ func Init(dbPath string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	// Required by the subject: enforce foreign keys.
-	_, err = db.Exec("PRAGMA foreign_keys = ON")
+	// SQLite works best with a single writer connection
+	// for this application.
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
+	_, err = db.Exec(`
+		PRAGMA foreign_keys = ON;
+		PRAGMA busy_timeout = 5000;
+		PRAGMA journal_mode = WAL;
+	`)
 	if err != nil {
+		db.Close()
 		return nil, err
 	}
 
 	migrationDir, err := findMigrationDir()
 	if err != nil {
+		db.Close()
 		return nil, err
 	}
+
 	if err := runMigrations(db, migrationDir); err != nil {
+		db.Close()
 		return nil, err
 	}
 
 	fmt.Println("migrations applied OK")
+
 	return db, nil
 }
 
