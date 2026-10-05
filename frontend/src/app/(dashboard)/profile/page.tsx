@@ -11,9 +11,7 @@ import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
-type ProfileTab = "MY VIBES" | "MEDIA" | "LIKES" | "TAGGED";
-
-const tabs: ProfileTab[] = ["MY VIBES", "MEDIA", "LIKES", "TAGGED"];
+const tabs = ["MY VIBES"] as const;
 const defaultBio =
   "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
 
@@ -23,7 +21,7 @@ export default function MyProfilePage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [activeTab, setActiveTab] = useState<ProfileTab>("MY VIBES");
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("MY VIBES");
   const [bio, setBio] = useState(defaultBio);
   const [draftBio, setDraftBio] = useState(defaultBio);
   const [draftIsPrivate, setDraftIsPrivate] = useState(false);
@@ -74,16 +72,7 @@ export default function MyProfilePage() {
     [posts, user],
   );
 
-  const visiblePosts = useMemo(() => {
-    if (activeTab === "LIKES") return ownPosts.filter((post) => post.liked);
-    if (activeTab === "TAGGED")
-      return ownPosts.filter((post) =>
-        post.caption.toLowerCase().includes("@"),
-      );
-    if (activeTab === "MEDIA")
-      return ownPosts.filter((post) => post.images.length > 0);
-    return ownPosts;
-  }, [activeTab, ownPosts]);
+  const visiblePosts = ownPosts;
 
   const firstName = user?.first_name || "Jordan";
   const lastName = user?.last_name || "Carter";
@@ -261,59 +250,6 @@ export default function MyProfilePage() {
               ))}
             </div>
           )}
-        </section>
-
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold">People to know</h2>
-            <Link
-              href="/followers"
-              className="text-xs font-semibold text-[#6B7280]"
-            >
-              Explore
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              {
-                name: "Amara Okafor",
-                handle: "@amaraokafor",
-                color: "bg-[#F3F4F6]",
-                avatar:
-                  "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=160&q=85",
-              },
-              {
-                name: "Theo Martin",
-                handle: "@theomartin",
-                color: "bg-[#C2DCFB]",
-                avatar:
-                  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=85",
-              },
-            ].map((person) => (
-              <article
-                key={person.handle}
-                className={`flex items-center gap-3 rounded-2xl border border-zinc-200 p-3 ${person.color}`}
-              >
-                <img
-                  src={person.avatar}
-                  alt=""
-                  className="h-11 w-11 rounded-full object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{person.name}</p>
-                  <p className="truncate text-xs text-[#6B7280]">
-                    {person.handle}
-                  </p>
-                </div>
-                <Link
-                  href="/followers"
-                  className="rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white"
-                >
-                  Follow
-                </Link>
-              </article>
-            ))}
-          </div>
         </section>
       </div>
 
