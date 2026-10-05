@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Camera, Grid3X3, Heart, Pencil, Plus } from "lucide-react";
+import { Camera, Grid3X3, Heart, Pencil, Plus, UserRound } from "lucide-react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
 import type { SocialPost } from "@/src/types/social";
@@ -121,13 +121,15 @@ export default function MyProfilePage() {
           <div className="px-5 pb-5 sm:px-8 sm:pb-7">
             <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
               <span className="rounded-full bg-[#C2DCFB] p-1.5">
-                <span className="block h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-[#C2DCFB] sm:h-28 sm:w-28">
-                  {avatar && (
+                <span className="block flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#C2DCFB] text-[#4B5563] sm:h-28 sm:w-28">
+                  {avatar ? (
                     <img
                       src={avatar}
                       alt={`${firstName} ${lastName}`}
                       className="h-full w-full object-cover"
                     />
+                  ) : (
+                    <UserRound className="h-12 w-12" aria-label="User avatar" />
                   )}
                 </span>
               </span>
