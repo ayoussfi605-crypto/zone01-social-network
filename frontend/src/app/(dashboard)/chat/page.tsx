@@ -9,17 +9,8 @@ export default async function ChatPage() {
   if (!isLogin) {
     redirect("/login");
   }
-  const res: any = await ChatService.getChatUserList();
-
-  if (!res.success) {
-    //banner
-    console.log(res?.data);
-  }
-  console.log("res ,", res?.data);
-
-  const users: ChatUsers[] = res?.data;
-
-  console.log(users, "dddd");
+  const response = await ChatService.getChatUserList();
+  const users: ChatUsers[] = Array.isArray(response.data) ? response.data : [];
 
   return (
     <>

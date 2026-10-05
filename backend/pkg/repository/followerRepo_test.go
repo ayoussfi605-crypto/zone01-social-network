@@ -22,6 +22,7 @@ func TestFollowerRepositoryUsesMigrationColumns(t *testing.T) {
 			first_name TEXT NOT NULL,
 			last_name TEXT NOT NULL,
 			avatar_path TEXT,
+			nickname TEXT,
 			is_private INTEGER NOT NULL DEFAULT 0
 		);
 		CREATE TABLE followers (
@@ -31,9 +32,9 @@ func TestFollowerRepositoryUsesMigrationColumns(t *testing.T) {
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (follower_id, followed_id)
 		);
-		INSERT INTO users (id, first_name, last_name, avatar_path, is_private) VALUES
-			(1, 'Ari', 'Follower', '/media/ari.png', 0),
-			(2, 'Sam', 'Private', '/media/sam.gif', 1);
+		INSERT INTO users (id, first_name, last_name, avatar_path, nickname, is_private) VALUES
+			(1, 'Ari', 'Follower', '/media/ari.png', 'ari_follower', 0),
+			(2, 'Sam', 'Private', '/media/sam.gif', 'sam_private', 1);
 	`)
 	if err != nil {
 		t.Fatal(err)
