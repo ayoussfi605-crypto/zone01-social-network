@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Camera, Grid3X3, Heart, Pencil, Plus } from "lucide-react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
-import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
@@ -70,16 +69,34 @@ export default function MyProfilePage() {
     [posts, user],
   );
 
-  const firstName = user?.first_name || "Jordan";
-  const lastName = user?.last_name || "Carter";
-  const handle = (user?.nickname || "JORDAN_VIBE")
-    .replace(/^@/, "")
-    .toUpperCase();
+  const firstName = user?.first_name ?? "";
+  const lastName = user?.last_name ?? "";
+  const handle = user?.nickname
+    ? user.nickname.replace(/^@/, "").toUpperCase()
+    : "";
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
-    : SELF.avatar;
+    : "";
   const postCount = ownPosts.length || 12;
   const likesCount = 15400;
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white px-5 text-center text-sm font-semibold text-[#6B7280]">
+        Loading profile…
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white px-5 text-center">
+        <p role="alert" className="text-sm font-semibold text-red-700">
+          {error || "Could not load your profile."}
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white pb-24 text-[#111827]">
@@ -99,25 +116,19 @@ export default function MyProfilePage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-3 py-5 sm:px-5 sm:py-8">
-        {error && (
-          <p
-            role="alert"
-            className="mb-4 rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#262626]"
-          >
-            {error}
-          </p>
-        )}
         <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
           <div className="h-28 bg-[#C2DCFB] sm:h-36" />
           <div className="px-5 pb-5 sm:px-8 sm:pb-7">
             <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
               <span className="rounded-full bg-[#C2DCFB] p-1.5">
                 <span className="block h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-[#C2DCFB] sm:h-28 sm:w-28">
-                  <img
-                    src={avatar}
-                    alt={`${firstName} ${lastName}`}
-                    className="h-full w-full object-cover"
-                  />
+                  {avatar && (
+                    <img
+                      src={avatar}
+                      alt={`${firstName} ${lastName}`}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
                 </span>
               </span>
               <div className="flex gap-2 pb-1">
@@ -161,11 +172,11 @@ export default function MyProfilePage() {
               {[
                 { value: postCount.toLocaleString(), label: "Posts" },
                 {
-                  value: (followersCount || 1240).toLocaleString(),
+                  value: followersCount.toLocaleString(),
                   label: "Followers",
                 },
                 {
-                  value: (followingCount || 842).toLocaleString(),
+                  value: followingCount.toLocaleString(),
                   label: "Following",
                 },
                 {
@@ -193,11 +204,7 @@ export default function MyProfilePage() {
           <div className="flex min-h-12 items-center px-4 text-[10px] font-bold tracking-wide sm:text-xs">
             MY VIBES
           </div>
-          {loading ? (
-            <p className="py-12 text-center text-sm text-[#6B7280]">
-              Loading your vibes…
-            </p>
-          ) : ownPosts.length === 0 ? (
+          {ownPosts.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <Camera size={23} className="mx-auto text-[#6B7280]" />
               <p className="mt-3 text-sm font-semibold">Nothing here yet</p>
