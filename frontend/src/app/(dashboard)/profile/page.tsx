@@ -26,7 +26,10 @@ export default function MyProfilePage() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("MY VIBES");
   const [bio, setBio] = useState(defaultBio);
   const [draftBio, setDraftBio] = useState(defaultBio);
+  const [draftIsPrivate, setDraftIsPrivate] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editError, setEditError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -143,6 +146,8 @@ export default function MyProfilePage() {
                   type="button"
                   onClick={() => {
                     setDraftBio(bio);
+                    setDraftIsPrivate(user?.is_private ?? false);
+                    setEditError("");
                     setEditing(true);
                   }}
                   className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#111827]"
@@ -315,11 +320,30 @@ export default function MyProfilePage() {
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#E5E7EB] p-4">
           <form
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
-              setBio(draftBio.trim());
-              localStorage.setItem("vibe.profile.bio", draftBio.trim());
-              setEditing(false);
+              if (!user) return;
+              setSavingProfile(true);
+              setEditError("");
+              try {
+                const updatedUser =
+                  draftIsPrivate === user.is_private
+                    ? user
+                    : await profileService.updatePrivacy(draftIsPrivate);
+                setUser(updatedUser);
+                const nextBio = draftBio.trim();
+                setBio(nextBio);
+                localStorage.setItem("vibe.profile.bio", nextBio);
+                setEditing(false);
+              } catch (reason: unknown) {
+                setEditError(
+                  reason instanceof Error
+                    ? reason.message
+                    : "Could not save profile settings",
+                );
+              } finally {
+                setSavingProfile(false);
+              }
             }}
             className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5"
           >
@@ -343,11 +367,47 @@ export default function MyProfilePage() {
                 className="mt-2 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm font-normal outline-none focus:border-black"
               />
             </label>
+            <fieldset className="mt-5">
+              <legend className="text-sm font-semibold">Profile visibility</legend>
+              <p className="mt-1 text-xs leading-5 text-[#6B7280]">
+                Choose who can see your profile and posts.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  aria-pressed={!draftIsPrivate}
+                  onClick={() => setDraftIsPrivate(false)}
+                  className={`rounded-xl border p-3 text-left transition ${!draftIsPrivate ? "border-black bg-zinc-50 ring-1 ring-black" : "border-zinc-200 hover:bg-zinc-50"}`}
+                >
+                  <span className="block text-sm font-bold">🌍 Public</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#6B7280]">
+                    Anyone can see your profile and posts.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={draftIsPrivate}
+                  onClick={() => setDraftIsPrivate(true)}
+                  className={`rounded-xl border p-3 text-left transition ${draftIsPrivate ? "border-black bg-zinc-50 ring-1 ring-black" : "border-zinc-200 hover:bg-zinc-50"}`}
+                >
+                  <span className="block text-sm font-bold">🔒 Private</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#6B7280]">
+                    Only accepted followers can see your posts and details.
+                  </span>
+                </button>
+              </div>
+            </fieldset>
+            {editError && (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                {editError}
+              </p>
+            )}
             <button
               type="submit"
-              className="mt-4 w-full rounded-xl bg-black px-4 py-3 text-sm font-bold text-white"
+              disabled={savingProfile}
+              className="mt-4 w-full rounded-xl bg-black px-4 py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60"
             >
-              Save changes
+              {savingProfile ? "Saving…" : "Save changes"}
             </button>
           </form>
         </div>
