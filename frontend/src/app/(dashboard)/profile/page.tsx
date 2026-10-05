@@ -11,7 +11,6 @@ import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
-const tabs = ["MY VIBES"] as const;
 const defaultBio =
   "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
 
@@ -21,7 +20,6 @@ export default function MyProfilePage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("MY VIBES");
   const [bio, setBio] = useState(defaultBio);
   const [draftBio, setDraftBio] = useState(defaultBio);
   const [draftIsPrivate, setDraftIsPrivate] = useState(false);
@@ -71,8 +69,6 @@ export default function MyProfilePage() {
     () => posts.filter((post) => user && post.author.id === user.id),
     [posts, user],
   );
-
-  const visiblePosts = ownPosts;
 
   const firstName = user?.first_name || "Jordan";
   const lastName = user?.last_name || "Carter";
@@ -194,23 +190,14 @@ export default function MyProfilePage() {
         </section>
 
         <section className="mt-5 rounded-2xl border border-zinc-200 bg-white">
-          <div className="grid grid-cols-4 border-b border-zinc-200">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`min-h-12 text-[10px] font-bold tracking-wide sm:text-xs ${activeTab === tab ? "border-black text-black" : "border-transparent text-[#6B7280]"}`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex min-h-12 items-center px-4 text-[10px] font-bold tracking-wide sm:text-xs">
+            MY VIBES
           </div>
           {loading ? (
             <p className="py-12 text-center text-sm text-[#6B7280]">
               Loading your vibes…
             </p>
-          ) : visiblePosts.length === 0 ? (
+          ) : ownPosts.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <Camera size={23} className="mx-auto text-[#6B7280]" />
               <p className="mt-3 text-sm font-semibold">Nothing here yet</p>
@@ -223,7 +210,7 @@ export default function MyProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-1 p-1">
-              {visiblePosts.map((post) => (
+              {ownPosts.map((post) => (
                 <Link
                   key={post.id}
                   href={`/posts/${post.id}`}
