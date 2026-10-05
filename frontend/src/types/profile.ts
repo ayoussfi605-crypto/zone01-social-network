@@ -16,3 +16,12 @@ export interface FollowerSummary {
   nickname: string;
   online: boolean;
 }
+
+export interface DiscoverableUser extends FollowerSummary {
+  follow_status: FollowStatus;
+}
+
+export interface UserDiscoveryPage {
+  users: DiscoverableUser[];
+  has_more: boolean;
+}

@@ -9,6 +9,7 @@ import (
 
 type ProfileUserRepository interface {
 	GetProfileUser(ctx context.Context, userID int) (*models.User, error)
+	DiscoverUsers(ctx context.Context, viewerID int, query string, limit, offset int) ([]models.FollowerData, error)
 }
 
 type profileUserRepository struct {
@@ -26,6 +27,33 @@ func (r *profileUserRepository) GetProfileUser(ctx context.Context, userID int) 
 		        is_private, created_at
 		 FROM users WHERE id = ?`, userID)
 	return scanUser(row)
+}
+
+func (r *profileUserRepository) DiscoverUsers(ctx context.Context, viewerID int, query string, limit, offset int) ([]models.FollowerData, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT u.id, u.first_name, u.last_name,
+		       COALESCE(u.avatar_path, ''), COALESCE(u.nickname, ''),
+		       COALESCE(f.status, 'none')
+		FROM users u
+		LEFT JOIN followers f ON f.follower_id = ? AND f.followed_id = u.id
+		WHERE u.id != ?
+		  AND (? = '' OR instr(lower(u.first_name || ' ' || u.last_name || ' ' || COALESCE(u.nickname, '')), lower(?)) > 0)
+		ORDER BY u.id ASC
+		LIMIT ? OFFSET ?`, viewerID, viewerID, query, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]models.FollowerData, 0, limit)
+	for rows.Next() {
+		var user models.FollowerData
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath, &user.Nickname, &user.FollowStatus); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, rows.Err()
 }
 
 // CreateUser inserts a new user. Returns new user id.

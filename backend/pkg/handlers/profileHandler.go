@@ -5,14 +5,55 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"social-network-network/pkg/middleware"
 	"social-network-network/pkg/services"
 	"social-network-network/pkg/utils"
+	ws "social-network-network/pkg/websocket"
 )
 
 type ProfileHandler struct {
 	profileService services.ProfileService
+}
+
+func (h *ProfileHandler) HandleDiscoverUsers(w http.ResponseWriter, r *http.Request) {
+	viewer := middleware.GetUser(r)
+	limit := 10
+	if rawLimit := r.URL.Query().Get("limit"); rawLimit != "" {
+		parsed, err := strconv.Atoi(rawLimit)
+		if err != nil || parsed < 1 {
+			utils.WriteJSON(w, http.StatusBadRequest, utils.ResposAPI{Success: false, Eroor: "invalid limit"})
+			return
+		}
+		limit = parsed
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	offset := 0
+	if rawOffset := r.URL.Query().Get("offset"); rawOffset != "" {
+		parsed, err := strconv.Atoi(rawOffset)
+		if err != nil || parsed < 0 {
+			utils.WriteJSON(w, http.StatusBadRequest, utils.ResposAPI{Success: false, Eroor: "invalid offset"})
+			return
+		}
+		offset = parsed
+	}
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	queryRunes := []rune(query)
+	if len(queryRunes) > 100 {
+		query = string(queryRunes[:100])
+	}
+	page, err := h.profileService.DiscoverUsers(r.Context(), viewer.Id, query, limit, offset)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.ResposAPI{Success: false, Eroor: "could not discover users"})
+		return
+	}
+	for index := range page.Users {
+		page.Users[index].Online = ws.GlobalHub != nil && ws.GlobalHub.IsUserOnline(page.Users[index].ID)
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: page})
 }
 
 func NewProfileHandler(s services.ProfileService) *ProfileHandler {
