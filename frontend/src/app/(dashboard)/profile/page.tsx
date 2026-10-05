@@ -200,7 +200,7 @@ export default function MyProfilePage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`min-h-12 border-b-2 text-[10px] font-bold tracking-wide sm:text-xs ${activeTab === tab ? "border-black text-black" : "border-transparent text-[#6B7280]"}`}
+                className={`min-h-12 text-[10px] font-bold tracking-wide sm:text-xs ${activeTab === tab ? "border-black text-black" : "border-transparent text-[#6B7280]"}`}
               >
                 {tab}
               </button>
