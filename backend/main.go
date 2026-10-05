@@ -67,6 +67,7 @@ func main() {
 	mux.Handle("GET /api/users/follow-requests", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetPendingRequests)))
 	mux.Handle("GET /api/users/{id}/followers", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowers)))
 	mux.Handle("GET /api/users/{id}/following", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowing)))
+	mux.Handle("GET /api/users/discover", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleDiscoverUsers)))
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
 
 	// group routes

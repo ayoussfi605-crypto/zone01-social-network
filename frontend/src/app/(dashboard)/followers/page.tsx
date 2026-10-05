@@ -4,17 +4,20 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Users } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { profileService } from "@/src/services/profileService";
-import type { FollowStatus, FollowerSummary } from "@/src/types/profile";
+import type {
+  DiscoverableUser,
+  FollowStatus,
+} from "@/src/types/profile";
 
 type PeopleListProps = {
   title: string;
-  people: FollowerSummary[];
+  people: DiscoverableUser[];
   followStatuses: Record<number, FollowStatus>;
   busyID: number | null;
-  onToggleFollow: (person: FollowerSummary) => void;
+  onToggleFollow: (person: DiscoverableUser) => void;
 };
 
 function initials(firstName: string, lastName: string) {
@@ -106,50 +109,63 @@ function PeopleList({
 export default function FollowersPage() {
   const router = useRouter();
   const { receiveMessage } = useWebSocket();
-  const [followers, setFollowers] = useState<FollowerSummary[]>([]);
-  const [following, setFollowing] = useState<FollowerSummary[]>([]);
+  const [users, setUsers] = useState<DiscoverableUser[]>([]);
   const [followStatuses, setFollowStatuses] = useState<
     Record<number, FollowStatus>
   >({});
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
   const [busyID, setBusyID] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const loadingMoreRef = useRef(false);
+  const searchVersionRef = useRef(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     let active = true;
-    async function loadPeople() {
+    const searchVersion = ++searchVersionRef.current;
+    loadingMoreRef.current = true;
+    async function loadUsers() {
       try {
-        const user = await profileService.getCurrentUser();
-        const [followerList, followingList] = await Promise.all([
-          profileService.getFollowers(user.id),
-          profileService.getFollowing(user.id),
-        ]);
-        if (!active) return;
-        setFollowers(followerList);
-        setFollowing(followingList);
+        const page = await profileService.discoverUsers(10, 0, debouncedQuery);
+        if (!active || searchVersion !== searchVersionRef.current) return;
+        setUsers(page.users);
         setFollowStatuses(
           Object.fromEntries(
-            followingList.map((person) => [person.id, "accepted" as const]),
+            page.users.map((person) => [person.id, person.follow_status]),
           ),
         );
+        setOffset(page.users.length);
+        setHasMore(page.has_more);
       } catch (reason: unknown) {
-        if (!active) return;
+        if (!active || searchVersion !== searchVersionRef.current) return;
         const message =
-          reason instanceof Error ? reason.message : "Could not load people";
+          reason instanceof Error ? reason.message : "Could not load users";
         setError(message);
         if (message.toLowerCase().includes("not logged in")) {
           router.push("/login");
         }
       } finally {
-        if (active) setLoading(false);
+        if (active && searchVersion === searchVersionRef.current) {
+          setLoading(false);
+          loadingMoreRef.current = false;
+        }
       }
     }
-    void loadPeople();
+    void loadUsers();
     return () => {
       active = false;
     };
-  }, [router]);
+  }, [debouncedQuery, router]);
 
   useEffect(
     () =>
@@ -161,14 +177,7 @@ export default function FollowersPage() {
         ) {
           return;
         }
-        setFollowers((current) =>
-          current.map((person) =>
-            person.id === event.user_id
-              ? { ...person, online: event.online }
-              : person,
-          ),
-        );
-        setFollowing((current) =>
+        setUsers((current) =>
           current.map((person) =>
             person.id === event.user_id
               ? { ...person, online: event.online }
@@ -179,27 +188,72 @@ export default function FollowersPage() {
     [receiveMessage],
   );
 
-  const visibleFollowers = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return followers;
-    return followers.filter((person) =>
-      `${person.first_name} ${person.last_name} ${person.nickname}`
-        .toLowerCase()
-        .includes(normalized),
-    );
-  }, [followers, query]);
+  const visibleUsers = useMemo(
+    () =>
+      users.filter((person) => {
+        const normalized = query.trim().toLowerCase();
+        return (
+          !normalized ||
+          `${person.first_name} ${person.last_name} ${person.nickname}`
+            .toLowerCase()
+            .includes(normalized)
+        );
+      }),
+    [users, query],
+  );
 
-  const visibleFollowing = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return following;
-    return following.filter((person) =>
-      `${person.first_name} ${person.last_name} ${person.nickname}`
-        .toLowerCase()
-        .includes(normalized),
-    );
-  }, [following, query]);
+  const loadMore = useCallback(async () => {
+    if (!hasMore || loading || loadingMoreRef.current) return;
+    const searchVersion = searchVersionRef.current;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setError("");
+    try {
+      const page = await profileService.discoverUsers(
+        10,
+        offset,
+        debouncedQuery,
+      );
+      if (searchVersion !== searchVersionRef.current) return;
+      setUsers((current) => {
+        const existingIDs = new Set(current.map((person) => person.id));
+        return [...current, ...page.users.filter((person) => !existingIDs.has(person.id))];
+      });
+      setFollowStatuses((current) => ({
+        ...current,
+        ...Object.fromEntries(
+          page.users.map((person) => [person.id, person.follow_status]),
+        ),
+      }));
+      setOffset((current) => current + page.users.length);
+      setHasMore(page.has_more);
+    } catch (reason: unknown) {
+      setError(
+        reason instanceof Error ? reason.message : "Could not load more users",
+      );
+    } finally {
+      if (searchVersion === searchVersionRef.current) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
+    }
+  }, [debouncedQuery, hasMore, loading, offset]);
 
-  async function toggleFollow(person: FollowerSummary) {
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || loading || loadingMore || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+      },
+      { rootMargin: "240px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore, loading, loadingMore]);
+
+  async function toggleFollow(person: DiscoverableUser) {
     const currentStatus = followStatuses[person.id] ?? "none";
     setBusyID(person.id);
     setError("");
@@ -212,17 +266,11 @@ export default function FollowersPage() {
         ...current,
         [person.id]: result.status,
       }));
-      if (result.status === "accepted") {
-        setFollowing((current) =>
-          current.some((item) => item.id === person.id)
-            ? current
-            : [...current, person],
-        );
-      } else if (result.status === "none") {
-        setFollowing((current) =>
-          current.filter((item) => item.id !== person.id),
-        );
-      }
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === person.id ? { ...item, follow_status: result.status } : item,
+        ),
+      );
     } catch (reason: unknown) {
       setError(
         reason instanceof Error
@@ -241,9 +289,9 @@ export default function FollowersPage() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-                Your people
+                Find your people
               </p>
-              <h1 className="text-2xl font-bold">Followers</h1>
+              <h1 className="text-2xl font-bold">Explore</h1>
             </div>
             <Link
               href="/profile"
@@ -256,7 +304,15 @@ export default function FollowersPage() {
             <Search size={17} />
             <input
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                searchVersionRef.current += 1;
+                loadingMoreRef.current = true;
+                setLoading(true);
+                setLoadingMore(false);
+                setError("");
+                setHasMore(false);
+              }}
               placeholder="Search people"
               className="min-w-0 flex-1 bg-transparent text-sm text-[#262626] outline-none placeholder:text-[#6B7280]"
             />
@@ -274,24 +330,36 @@ export default function FollowersPage() {
         )}
         {loading ? (
           <p className="py-12 text-center text-sm text-zinc-500">
-            Loading people…
+            Loading users…
           </p>
         ) : (
           <>
-            <PeopleList
-              title="Followers"
-              people={visibleFollowers}
-              followStatuses={followStatuses}
-              busyID={busyID}
-              onToggleFollow={toggleFollow}
-            />
-            <PeopleList
-              title="Following"
-              people={visibleFollowing}
-              followStatuses={followStatuses}
-              busyID={busyID}
-              onToggleFollow={toggleFollow}
-            />
+            {visibleUsers.length === 0 ? (
+              <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-12 text-center">
+                <Users size={25} className="mx-auto text-zinc-500" />
+                <p className="mt-3 text-sm font-semibold">No users found</p>
+                <p className="mt-1 text-xs text-zinc-500">Try another search.</p>
+              </div>
+            ) : (
+              <PeopleList
+                title="Users"
+                people={visibleUsers}
+                followStatuses={followStatuses}
+                busyID={busyID}
+                onToggleFollow={toggleFollow}
+              />
+            )}
+            <div ref={sentinelRef} aria-hidden="true" className="h-1" />
+            {loadingMore && (
+              <p className="py-4 text-center text-sm text-zinc-500">
+                Loading more users…
+              </p>
+            )}
+            {!hasMore && users.length > 0 && (
+              <p className="py-4 text-center text-xs text-zinc-500">
+                You’ve reached the end.
+              </p>
+            )}
           </>
         )}
       </div>

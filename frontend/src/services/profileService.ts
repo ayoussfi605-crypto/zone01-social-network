@@ -1,5 +1,6 @@
 import type {
   FollowStatus,
+  UserDiscoveryPage,
   FollowerSummary,
   UserProfile,
 } from "../types/profile";
@@ -108,4 +109,12 @@ export const profileService = {
     profileApi<{ data: { users: FollowerSummary[] } }>(
       `/api/users/${id}/following`,
     ).then((response) => response.data.users),
+  discoverUsers: (limit: number, offset: number, query: string) => {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    if (query.trim()) params.set("q", query.trim());
+    return profileApi<UserDiscoveryPage>(`/api/users/discover?${params}`);
+  },
 };
