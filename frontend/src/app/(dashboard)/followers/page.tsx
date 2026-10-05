@@ -335,11 +335,13 @@ export default function FollowersPage() {
         ) : (
           <>
             {visibleUsers.length === 0 ? (
-              <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-12 text-center">
-                <Users size={25} className="mx-auto text-zinc-500" />
-                <p className="mt-3 text-sm font-semibold">No users found</p>
-                <p className="mt-1 text-xs text-zinc-500">Try another search.</p>
-              </div>
+              error ? null : (
+                <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-12 text-center">
+                  <Users size={25} className="mx-auto text-zinc-500" />
+                  <p className="mt-3 text-sm font-semibold">No users found</p>
+                  <p className="mt-1 text-xs text-zinc-500">Try another search.</p>
+                </div>
+              )
             ) : (
               <PeopleList
                 title="Users"
