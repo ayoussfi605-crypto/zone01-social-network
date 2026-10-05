@@ -77,8 +77,8 @@ export default function MyProfilePage() {
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
     : "";
-  const postCount = ownPosts.length || 12;
-  const likesCount = 15400;
+  const postCount = ownPosts.length;
+  const vibesCount = ownPosts.reduce((total, post) => total + post.likes, 0);
 
   if (loading) {
     return (
@@ -182,10 +182,7 @@ export default function MyProfilePage() {
                   label: "Following",
                 },
                 {
-                  value:
-                    likesCount >= 1000
-                      ? `${(likesCount / 1000).toFixed(1)}k`
-                      : likesCount.toLocaleString(),
+                  value: vibesCount.toLocaleString(),
                   label: "Vibes",
                 },
               ].map((stat) => (
