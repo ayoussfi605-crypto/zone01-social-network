@@ -9,6 +9,7 @@ import (
 
 type ProfileUserRepository interface {
 	GetProfileUser(ctx context.Context, userID int) (*models.User, error)
+	GetProfileStats(ctx context.Context, userID int) (models.ProfileStats, error)
 	DiscoverUsers(ctx context.Context, viewerID int, query string, limit, offset int) ([]models.FollowerData, error)
 }
 
@@ -18,6 +19,21 @@ type profileUserRepository struct {
 
 func NewProfileUserRepository(db *sql.DB) ProfileUserRepository {
 	return &profileUserRepository{db: db}
+}
+
+func (r *profileUserRepository) GetProfileStats(ctx context.Context, userID int) (models.ProfileStats, error) {
+	var stats models.ProfileStats
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			(SELECT COUNT(*) FROM posts WHERE author_id = ?),
+			(SELECT COUNT(*) FROM followers WHERE followed_id = ? AND status = 'accepted'),
+			(SELECT COUNT(*) FROM followers WHERE follower_id = ? AND status = 'accepted')
+	`, userID, userID, userID).Scan(
+		&stats.PostCount,
+		&stats.FollowerCount,
+		&stats.FollowingCount,
+	)
+	return stats, err
 }
 
 func (r *profileUserRepository) GetProfileUser(ctx context.Context, userID int) (*models.User, error) {

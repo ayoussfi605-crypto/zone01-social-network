@@ -7,8 +7,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Camera, Grid3X3, Heart, Pencil, Plus, UserRound } from "lucide-react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
+import FollowersModal from "@/src/components/profile/FollowersModal";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
+
+type Relationship = "followers" | "following";
 
 const defaultBio =
   "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
@@ -16,8 +19,8 @@ const defaultBio =
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [followersCount, setFollowersCount] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
+  const [stats, setStats] = useState({ post_count: 0, follower_count: 0, following_count: 0 });
+  const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [bio, setBio] = useState(defaultBio);
   const [draftBio, setDraftBio] = useState(defaultBio);
@@ -33,14 +36,14 @@ export default function MyProfilePage() {
     async function loadProfile() {
       try {
         const currentUser = await profileService.getCurrentUser();
-        const [followers, following] = await Promise.all([
-          profileService.getFollowers(currentUser.id),
-          profileService.getFollowing(currentUser.id),
-        ]);
+        const profile = await profileService.getProfile(currentUser.id);
         if (!active) return;
         setUser(currentUser);
-        setFollowersCount(followers.length);
-        setFollowingCount(following.length);
+        setStats({
+          post_count: profile.stats?.post_count ?? 0,
+          follower_count: profile.stats?.follower_count ?? 0,
+          following_count: profile.stats?.following_count ?? 0,
+        });
         const ownPosts = await postService.getUserPosts(currentUser.id);
         if (active) setPosts(ownPosts);
         const savedBio = window.localStorage.getItem("vibe.profile.bio");
@@ -77,8 +80,6 @@ export default function MyProfilePage() {
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
     : "";
-  const postCount = ownPosts.length;
-  const vibesCount = ownPosts.reduce((total, post) => total + post.likes, 0);
 
   if (loading) {
     return (
@@ -170,29 +171,45 @@ export default function MyProfilePage() {
               </p>
             </div>
 
-            <div className="mt-6 grid grid-cols-4 border-t border-zinc-200 pt-4 text-center">
+            <div className="mt-6 grid grid-cols-3 border-t border-zinc-200 pt-4 text-center">
               {[
-                { value: postCount.toLocaleString(), label: "Posts" },
+                { value: stats.post_count.toLocaleString(), label: "Posts" },
                 {
-                  value: followersCount.toLocaleString(),
+                  value: stats.follower_count.toLocaleString(),
                   label: "Followers",
+                  relationship: "followers" as const,
                 },
                 {
-                  value: followingCount.toLocaleString(),
+                  value: stats.following_count.toLocaleString(),
                   label: "Following",
-                },
-                {
-                  value: vibesCount.toLocaleString(),
-                  label: "Vibes",
+                  relationship: "following" as const,
                 },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <p className="text-base font-bold text-[#111827]">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-[10px] text-[#6B7280] sm:text-xs">
-                    {stat.label}
-                  </p>
+                  {stat.relationship ? (
+                    <button
+                      type="button"
+                      onClick={() => setRelationship(stat.relationship)}
+                      className="w-full rounded-lg text-left hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                      aria-label={`Open ${stat.label} list`}
+                    >
+                      <p className="text-base font-bold text-[#111827]">
+                        {stat.value}
+                      </p>
+                      <p className="mt-1 text-[10px] text-[#6B7280] sm:text-xs">
+                        {stat.label}
+                      </p>
+                    </button>
+                  ) : (
+                    <>
+                      <p className="text-base font-bold text-[#111827]">
+                        {stat.value}
+                      </p>
+                      <p className="mt-1 text-[10px] text-[#6B7280] sm:text-xs">
+                        {stat.label}
+                      </p>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -245,6 +262,14 @@ export default function MyProfilePage() {
           )}
         </section>
       </div>
+
+      {relationship && user.id > 0 && (
+        <FollowersModal
+          userId={user.id}
+          relationship={relationship}
+          onClose={() => setRelationship(null)}
+        />
+      )}
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#E5E7EB] p-4">

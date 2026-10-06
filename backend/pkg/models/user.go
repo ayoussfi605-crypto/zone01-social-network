@@ -34,8 +34,15 @@ type UserDiscoveryPage struct {
 	HasMore bool           `json:"has_more"`
 }
 
+type ProfileStats struct {
+	PostCount      int `json:"post_count"`
+	FollowerCount  int `json:"follower_count"`
+	FollowingCount int `json:"following_count"`
+}
+
 type UserProfile struct {
-	User         *User  `json:"user"`
-	Restricted   bool   `json:"restricted"`
-	FollowStatus string `json:"follow_status"`
+	User         *User        `json:"user"`
+	Restricted   bool         `json:"restricted"`
+	FollowStatus string       `json:"follow_status"`
+	Stats        ProfileStats `json:"stats"`
 }

@@ -27,6 +27,10 @@ func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID 
 	if err != nil {
 		return nil, err
 	}
+	stats, err := s.userRepo.GetProfileStats(ctx, targetID)
+	if err != nil {
+		return nil, err
+	}
 
 	status := "none"
 	if viewerID > 0 && viewerID != targetID {
@@ -51,6 +55,7 @@ func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID 
 		User:         user,
 		Restricted:   restricted,
 		FollowStatus: status,
+		Stats:        stats,
 	}, nil
 }
 
