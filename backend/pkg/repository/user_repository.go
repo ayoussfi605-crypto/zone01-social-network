@@ -108,10 +108,28 @@ func GetUserByID(db *sql.DB, id int) (*models.User, error) {
 	return scanUser(row)
 }
 
-// UpdatePrivacy switches profile public/private.
+// UpdatePrivacy switches profile public/private and automatically grants
+// previously pending followers when the profile becomes public.
 func UpdatePrivacy(db *sql.DB, userID int, isPrivate bool) error {
-	_, err := db.Exec(`UPDATE users SET is_private = ? WHERE id = ?`, boolToInt(isPrivate), userID)
-	return err
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`UPDATE users SET is_private = ? WHERE id = ?`, boolToInt(isPrivate), userID); err != nil {
+		return err
+	}
+	if !isPrivate {
+		if _, err := tx.Exec(`
+			UPDATE followers
+			SET status = 'accepted'
+			WHERE followed_id = ? AND status = 'pending'
+		`, userID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // scanUser converts one DB row into a User struct.
