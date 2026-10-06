@@ -19,7 +19,11 @@ const defaultBio =
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState({ post_count: 0, follower_count: 0, following_count: 0 });
+  const [stats, setStats] = useState({
+    post_count: 0,
+    follower_count: 0,
+    following_count: 0,
+  });
   const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [bio, setBio] = useState(defaultBio);
@@ -46,7 +50,9 @@ export default function MyProfilePage() {
         });
         const ownPosts = await postService.getUserPosts(currentUser.id);
         if (active) setPosts(ownPosts);
-        const savedBio = window.localStorage.getItem("vibe.profile.bio");
+        const savedBio = window.localStorage.getItem(
+          "Socil Network.profile.bio",
+        );
         const nextBio = savedBio ?? currentUser.about_me ?? defaultBio;
         setBio(nextBio);
         setDraftBio(nextBio);
@@ -104,7 +110,7 @@ export default function MyProfilePage() {
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
-            VIBE
+            Socil Network
           </Link>
           <Link
             href="/notifications"
@@ -139,7 +145,7 @@ export default function MyProfilePage() {
                   href="/create-post"
                   className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white"
                 >
-                  <Plus size={16} /> Post Vibe
+                  <Plus size={16} /> Post Socil Network
                 </Link>
                 <button
                   type="button"
@@ -218,7 +224,7 @@ export default function MyProfilePage() {
 
         <section className="mt-5 rounded-2xl border border-zinc-200 bg-white">
           <div className="flex min-h-12 items-center px-4 text-[10px] font-bold tracking-wide sm:text-xs">
-            MY VIBES
+            MY Socil NetworkS
           </div>
           {ownPosts.length === 0 ? (
             <div className="px-5 py-12 text-center">
@@ -228,7 +234,7 @@ export default function MyProfilePage() {
                 href="/create-post"
                 className="mt-3 inline-block text-sm font-semibold underline underline-offset-4"
               >
-                Share your first vibe
+                Share your first Socil Network
               </Link>
             </div>
           ) : (
@@ -287,7 +293,7 @@ export default function MyProfilePage() {
                 setUser(updatedUser);
                 const nextBio = draftBio.trim();
                 setBio(nextBio);
-                localStorage.setItem("vibe.profile.bio", nextBio);
+                localStorage.setItem("Socil Network.profile.bio", nextBio);
                 setEditing(false);
               } catch (reason: unknown) {
                 setEditError(
@@ -322,7 +328,9 @@ export default function MyProfilePage() {
               />
             </label>
             <fieldset className="mt-5">
-              <legend className="text-sm font-semibold">Profile visibility</legend>
+              <legend className="text-sm font-semibold">
+                Profile visibility
+              </legend>
               <p className="mt-1 text-xs leading-5 text-[#6B7280]">
                 Choose who can see your profile and posts.
               </p>

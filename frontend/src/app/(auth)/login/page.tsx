@@ -22,14 +22,14 @@ export default async function LoginPage() {
           href="/"
           className="text-2xl font-black tracking-[0.22em] text-[#111827]"
         >
-          VIBE
+          Socil Network
         </Link>
         <div className="mx-auto w-full max-w-xl py-8 lg:py-12">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-[#6B7280]">
             Your space, your pace
           </p>
           <h2 className="max-w-lg text-4xl font-bold leading-tight text-[#111827] sm:text-5xl">
-            Welcome back to the vibe tribe.
+            Welcome back to the Socil Network tribe.
           </h2>
           <p className="mt-5 max-w-md text-base leading-7 text-[#262626]">
             A calmer corner of the internet, made better by the people you
@@ -83,7 +83,7 @@ export default async function LoginPage() {
             </button>
           </div>
           <p className="mt-7 text-center text-sm text-[#6B7280]">
-            New to VIBE?{" "}
+            New to Socil Network?{" "}
             <Link
               href="/register"
               className="font-semibold text-black underline underline-offset-4"

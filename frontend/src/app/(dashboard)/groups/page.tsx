@@ -87,7 +87,8 @@ export default function GroupsPage() {
     [groups],
   );
   const pendingInvites = useMemo(
-    () => groups.filter((group) => group.membership_status === "pending_invite"),
+    () =>
+      groups.filter((group) => group.membership_status === "pending_invite"),
     [groups],
   );
 
@@ -201,7 +202,7 @@ export default function GroupsPage() {
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
-            VIBE
+            Socil Network
           </Link>
           <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6B7280] md:flex">
             <Link href="/" className="hover:text-black">
@@ -354,7 +355,8 @@ export default function GroupsPage() {
                               group.is_creator ||
                               group.membership_status === "member"
                                 ? "bg-[#C2DCFB] text-[#111827]"
-                                : group.membership_status === "pending_invite" ||
+                                : group.membership_status ===
+                                      "pending_invite" ||
                                     group.membership_status ===
                                       "pending_request"
                                   ? "bg-[#F3F4F6] text-[#6B7280]"
@@ -387,7 +389,10 @@ export default function GroupsPage() {
               <Plus size={18} />
               <h2 className="font-bold">Create a group</h2>
             </div>
-            <form onSubmit={(event) => void createGroup(event)} className="space-y-4">
+            <form
+              onSubmit={(event) => void createGroup(event)}
+              className="space-y-4"
+            >
               <label className="block text-sm font-semibold">
                 Title
                 <input

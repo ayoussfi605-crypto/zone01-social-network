@@ -226,7 +226,7 @@ export default function NotificationsPage() {
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
-            VIBE
+            Socil Network
           </Link>
           <h1 className="text-sm font-bold">Notifications</h1>
           <Bell size={19} />
@@ -535,11 +535,15 @@ export default function NotificationsPage() {
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
             Around the community
           </p>
-          <h2 className="mt-1 text-lg font-bold">Trending Vibes</h2>
+          <h2 className="mt-1 text-lg font-bold">Trending Socil Networks</h2>
           <ul className="mt-4 space-y-3">
             {[
               { tag: "#Minimalism", category: "DESIGN", color: "bg-[#F3F4F6]" },
-              { tag: "#VibeWeb", category: "TECH", color: "bg-[#C2DCFB]" },
+              {
+                tag: "#Socil NetworkWeb",
+                category: "TECH",
+                color: "bg-[#C2DCFB]",
+              },
               { tag: "#DigitalZen", category: "LIFE", color: "bg-[#E5E7EB]" },
             ].map((trend) => (
               <li

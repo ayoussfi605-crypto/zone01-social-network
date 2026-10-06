@@ -177,7 +177,7 @@ export default function RegisterForm() {
         <span>
           I agree to the{" "}
           <a
-            href="mailto:hello@vibe.social?subject=Terms%20of%20Service"
+            href="mailto:hello@Socil Network.social?subject=Terms%20of%20Service"
             className="font-semibold underline underline-offset-2"
           >
             Terms of Service

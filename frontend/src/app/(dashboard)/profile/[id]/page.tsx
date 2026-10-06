@@ -75,7 +75,7 @@ export default function UserProfilePage() {
         ) : (
           <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-              <h2 className="font-bold">Vibes</h2>
+              <h2 className="font-bold">Socil Networks</h2>
               <span className="text-xs text-zinc-500">
                 {posts.length} posts
               </span>

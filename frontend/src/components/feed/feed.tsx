@@ -60,10 +60,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      postService.getFeed(),
-      profileService.getCurrentUser(),
-    ])
+    Promise.all([postService.getFeed(), profileService.getCurrentUser()])
       .then(([feed, currentUser]) => {
         if (!active) return;
         setPosts(feed);
@@ -120,7 +117,7 @@ export default function FeedPage() {
                   A little more you
                 </p>
                 <h1 className="text-xl font-black tracking-[0.16em] text-[#111827]">
-                  VIBE
+                  Socil Network
                 </h1>
               </div>
               <Link
@@ -269,7 +266,8 @@ export default function FeedPage() {
                 ))}
                 {posts.length === 0 && (
                   <li className="px-4 pb-8 text-center text-sm text-zinc-500">
-                    No posts yet. Follow people or share your first vibe.
+                    No posts yet. Follow people or share your first Socil
+                    Network.
                   </li>
                 )}
               </ul>
@@ -281,8 +279,8 @@ export default function FeedPage() {
           <label className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-3 text-[#6B7280]">
             <Compass size={17} />
             <input
-              aria-label="Search VIBE"
-              placeholder="Search VIBE"
+              aria-label="Search Socil Network"
+              placeholder="Search Socil Network"
               className="min-w-0 flex-1 bg-transparent text-sm text-[#262626] outline-none placeholder:text-[#6B7280]"
             />
           </label>
@@ -352,7 +350,7 @@ export default function FeedPage() {
             </Link>
           </section>
           <p className="mt-auto text-[10px] leading-5 text-[#6B7280]">
-            About · Community guidelines · Privacy · © 2026 VIBE
+            About · Community guidelines · Privacy · © 2026 Socil Network
           </p>
         </aside>
       </div>

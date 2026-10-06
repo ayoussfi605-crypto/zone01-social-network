@@ -36,8 +36,8 @@ FILE: ./frontend/src/utils/socialPosts.ts
 
 import type { PostPrivacy, SocialPost } from "@/src/types/social";
 
-const STORAGE_KEY = "vibe.social.posts.v1";
-const DRAFT_STORAGE_KEY = "vibe.social.drafts.v1";
+const STORAGE_KEY = "Socil Network.social.posts.v1";
+const DRAFT_STORAGE_KEY = "Socil Network.social.drafts.v1";
 
 export type SocialDraft = {
   id: string;
@@ -54,14 +54,14 @@ export type SocialDraft = {
 export const SELF: SocialPost["author"] = {
   id: 1,
   name: "Jordan Carter",
-  handle: "@jordan_vibe",
+  handle: "@jordan_Socil Network",
   avatar:
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=85",
 };
 
 const STARTER_POSTS: SocialPost[] = [
   {
-    id: "vibe-post-1",
+    id: "Socil Network-post-1",
     author: {
       id: 2,
       name: "Noah Bennett",
@@ -101,7 +101,7 @@ const STARTER_POSTS: SocialPost[] = [
     ],
   },
   {
-    id: "vibe-post-2",
+    id: "Socil Network-post-2",
     author: {
       id: 3,
       name: "Amara Okafor",
@@ -122,7 +122,7 @@ const STARTER_POSTS: SocialPost[] = [
     comments: [],
   },
   {
-    id: "vibe-post-3",
+    id: "Socil Network-post-3",
     author: {
       id: 4,
       name: "Theo Martin",
@@ -167,7 +167,7 @@ export function loadSocialPosts(): SocialPost[] {
 
 export function saveSocialPosts(posts: SocialPost[]) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-  window.dispatchEvent(new Event("vibe-social-posts-updated"));
+  window.dispatchEvent(new Event("Socil Network-social-posts-updated"));
 }
 
 export function loadSocialDrafts(): SocialDraft[] {
@@ -210,10 +210,10 @@ export function canViewSocialPost(
 }
 
 export function subscribeToSocialPosts(onUpdate: () => void) {
-  window.addEventListener("vibe-social-posts-updated", onUpdate);
+  window.addEventListener("Socil Network-social-posts-updated", onUpdate);
   window.addEventListener("storage", onUpdate);
   return () => {
-    window.removeEventListener("vibe-social-posts-updated", onUpdate);
+    window.removeEventListener("Socil Network-social-posts-updated", onUpdate);
     window.removeEventListener("storage", onUpdate);
   };
 }
@@ -540,7 +540,7 @@ const FALLBACK_AVATAR =
 
 function handleFrom(name: string, nickname: string) {
   const base = (nickname || name).replace(/^@/, "").replace(/\s+/g, "");
-  return `@${base.toLowerCase() || "vibe"}`;
+  return `@${base.toLowerCase() || "Socil Network"}`;
 }
 
 function avatarURL(path: string) {
@@ -562,7 +562,7 @@ export function toSocialPerson(
 ): SocialPerson {
   return {
     id,
-    name: name || "VIBE member",
+    name: name || "Socil Network member",
     handle: handleFrom(name, nickname),
     avatar: avatarURL(avatarPath),
   };
@@ -1792,7 +1792,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
           href="/"
           className="text-lg font-black tracking-[0.18em] text-[#111827]"
         >
-          VIBE
+          Socil Network
         </Link>
         <nav
           aria-label="Main navigation"
@@ -2205,7 +2205,7 @@ export default function DashboardSidebar() {
         href="/"
         className="mb-9 text-2xl font-black tracking-[0.2em] text-[#111827]"
       >
-        VIBE
+        Socil Network
       </Link>
       <nav aria-label="Main navigation" className="space-y-1">
         {items.map(({ href, label, Icon }) => {
@@ -3096,7 +3096,7 @@ export default function RegisterForm() {
         <span>
           I agree to the{" "}
           <a
-            href="mailto:hello@vibe.social?subject=Terms%20of%20Service"
+            href="mailto:hello@Socil Network.social?subject=Terms%20of%20Service"
             className="font-semibold underline underline-offset-2"
           >
             Terms of Service
@@ -3176,7 +3176,7 @@ export default function LoginForm() {
             Password
           </label>
           <a
-            href="mailto:support@vibe.social?subject=Password%20reset"
+            href="mailto:support@Socil Network.social?subject=Password%20reset"
             className="text-xs font-semibold text-[#6B7280] underline underline-offset-2"
           >
             Forgot Password?
@@ -3332,7 +3332,7 @@ export default function FeedPage() {
                   A little more you
                 </p>
                 <h1 className="text-xl font-black tracking-[0.16em] text-[#111827]">
-                  VIBE
+                  Socil Network
                 </h1>
               </div>
               <Link
@@ -3481,7 +3481,7 @@ export default function FeedPage() {
                 ))}
                 {posts.length === 0 && (
                   <li className="px-4 pb-8 text-center text-sm text-zinc-500">
-                    No posts yet. Follow people or share your first vibe.
+                    No posts yet. Follow people or share your first Socil Network.
                   </li>
                 )}
               </ul>
@@ -3493,8 +3493,8 @@ export default function FeedPage() {
           <label className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-3 text-[#6B7280]">
             <Compass size={17} />
             <input
-              aria-label="Search VIBE"
-              placeholder="Search VIBE"
+              aria-label="Search Socil Network"
+              placeholder="Search Socil Network"
               className="min-w-0 flex-1 bg-transparent text-sm text-[#262626] outline-none placeholder:text-[#6B7280]"
             />
           </label>
@@ -3564,7 +3564,7 @@ export default function FeedPage() {
             </Link>
           </section>
           <p className="mt-auto text-[10px] leading-5 text-[#6B7280]">
-            About · Community guidelines · Privacy · © 2026 VIBE
+            About · Community guidelines · Privacy · © 2026 Socil Network
           </p>
         </aside>
       </div>
@@ -4064,7 +4064,7 @@ export default function UserProfilePage() {
         ) : (
           <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4">
-              <h2 className="font-bold">Vibes</h2>
+              <h2 className="font-bold">Socil Networks</h2>
               <span className="text-xs text-zinc-500">
                 {posts.length} posts
               </span>
@@ -4126,9 +4126,9 @@ import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
-type ProfileTab = "MY VIBES" | "MEDIA" | "LIKES" | "TAGGED";
+type ProfileTab = "MY Socil NetworkS" | "MEDIA" | "LIKES" | "TAGGED";
 
-const tabs: ProfileTab[] = ["MY VIBES", "MEDIA", "LIKES", "TAGGED"];
+const tabs: ProfileTab[] = ["MY Socil NetworkS", "MEDIA", "LIKES", "TAGGED"];
 const defaultBio =
   "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
 
@@ -4138,7 +4138,7 @@ export default function MyProfilePage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [activeTab, setActiveTab] = useState<ProfileTab>("MY VIBES");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("MY Socil NetworkS");
   const [bio, setBio] = useState(defaultBio);
   const [draftBio, setDraftBio] = useState(defaultBio);
   const [editing, setEditing] = useState(false);
@@ -4160,7 +4160,7 @@ export default function MyProfilePage() {
         setFollowingCount(following.length);
         const ownPosts = await postService.getUserPosts(currentUser.id);
         if (active) setPosts(ownPosts);
-        const savedBio = window.localStorage.getItem("vibe.profile.bio");
+        const savedBio = window.localStorage.getItem("Socil Network.profile.bio");
         const nextBio = savedBio ?? currentUser.about_me ?? defaultBio;
         setBio(nextBio);
         setDraftBio(nextBio);
@@ -4199,7 +4199,7 @@ export default function MyProfilePage() {
 
   const firstName = user?.first_name || "Jordan";
   const lastName = user?.last_name || "Carter";
-  const handle = (user?.nickname || "JORDAN_VIBE")
+  const handle = (user?.nickname || "JORDAN_Socil Network")
     .replace(/^@/, "")
     .toUpperCase();
   const avatar = user?.avatar_path
@@ -4213,7 +4213,7 @@ export default function MyProfilePage() {
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
-            VIBE
+            Socil Network
           </Link>
           <Link
             href="/notifications"
@@ -4252,7 +4252,7 @@ export default function MyProfilePage() {
                   href="/create-post"
                   className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-bold text-white"
                 >
-                  <Plus size={16} /> Post Vibe
+                  <Plus size={16} /> Post Socil Network
                 </Link>
                 <button
                   type="button"
@@ -4298,7 +4298,7 @@ export default function MyProfilePage() {
                     likesCount >= 1000
                       ? `${(likesCount / 1000).toFixed(1)}k`
                       : likesCount.toLocaleString(),
-                  label: "Vibes",
+                  label: "Socil Networks",
                 },
               ].map((stat) => (
                 <div key={stat.label}>
@@ -4329,7 +4329,7 @@ export default function MyProfilePage() {
           </div>
           {loading ? (
             <p className="py-12 text-center text-sm text-[#6B7280]">
-              Loading your vibes…
+              Loading your Socil Networks…
             </p>
           ) : visiblePosts.length === 0 ? (
             <div className="px-5 py-12 text-center">
@@ -4339,7 +4339,7 @@ export default function MyProfilePage() {
                 href="/create-post"
                 className="mt-3 inline-block text-sm font-semibold underline underline-offset-4"
               >
-                Share your first vibe
+                Share your first Socil Network
               </Link>
             </div>
           ) : (
@@ -4433,7 +4433,7 @@ export default function MyProfilePage() {
             onSubmit={(event) => {
               event.preventDefault();
               setBio(draftBio.trim());
-              localStorage.setItem("vibe.profile.bio", draftBio.trim());
+              localStorage.setItem("Socil Network.profile.bio", draftBio.trim());
               setEditing(false);
             }}
             className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5"
@@ -4703,7 +4703,7 @@ export default function NotificationsPage() {
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
-            VIBE
+            Socil Network
           </Link>
           <h1 className="text-sm font-bold">Notifications</h1>
           <Bell size={19} />
@@ -5012,11 +5012,11 @@ export default function NotificationsPage() {
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
             Around the community
           </p>
-          <h2 className="mt-1 text-lg font-bold">Trending Vibes</h2>
+          <h2 className="mt-1 text-lg font-bold">Trending Socil Networks</h2>
           <ul className="mt-4 space-y-3">
             {[
               { tag: "#Minimalism", category: "DESIGN", color: "bg-[#F3F4F6]" },
-              { tag: "#VibeWeb", category: "TECH", color: "bg-[#C2DCFB]" },
+              { tag: "#Socil NetworkWeb", category: "TECH", color: "bg-[#C2DCFB]" },
               { tag: "#DigitalZen", category: "LIFE", color: "bg-[#E5E7EB]" },
             ].map((trend) => (
               <li
@@ -6375,7 +6375,7 @@ export default function GroupsPage() {
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
-            VIBE
+            Socil Network
           </Link>
           <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6B7280] md:flex">
             <Link href="/" className="hover:text-black">
@@ -6746,13 +6746,13 @@ const locations = [
   "London, United Kingdom",
 ];
 
-const categories = ["Minimalism", "VibeWeb", "DigitalZen"] as const;
+const categories = ["Minimalism", "Socil NetworkWeb", "DigitalZen"] as const;
 
 const privacyOptions = [
   {
     id: "public",
     label: "Public",
-    detail: "Anyone on VIBE can see this post.",
+    detail: "Anyone on Socil Network can see this post.",
     Icon: Globe,
   },
   {
@@ -7194,7 +7194,7 @@ export default function CreatePostPage() {
                 <input
                   value={tagDraft}
                   onChange={(event) => setTagDraft(event.target.value)}
-                  placeholder="#vibes"
+                  placeholder="#Socil Networks"
                   maxLength={24}
                   className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-black"
                 />
@@ -7326,7 +7326,7 @@ export default function CreatePostPage() {
           <section className="rounded-2xl border border-zinc-200 bg-white p-5">
             <h2 className="text-sm font-bold">Category</h2>
             <p className="mt-1 text-xs text-[#6B7280]">
-              Help people find your vibe. Pick one tag.
+              Help people find your Socil Network. Pick one tag.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {categories.map((item) => (
@@ -8009,14 +8009,14 @@ export default async function LoginPage() {
           href="/"
           className="text-2xl font-black tracking-[0.22em] text-[#111827]"
         >
-          VIBE
+          Socil Network
         </Link>
         <div className="mx-auto w-full max-w-xl py-8 lg:py-12">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-[#6B7280]">
             Your space, your pace
           </p>
           <h2 className="max-w-lg text-4xl font-bold leading-tight text-[#111827] sm:text-5xl">
-            Welcome back to the vibe tribe.
+            Welcome back to the Socil Network tribe.
           </h2>
           <p className="mt-5 max-w-md text-base leading-7 text-[#262626]">
             A calmer corner of the internet, made better by the people you
@@ -8070,7 +8070,7 @@ export default async function LoginPage() {
             </button>
           </div>
           <p className="mt-7 text-center text-sm text-[#6B7280]">
-            New to VIBE?{" "}
+            New to Socil Network?{" "}
             <Link
               href="/register"
               className="font-semibold text-black underline underline-offset-4"
@@ -8111,14 +8111,14 @@ export default async function RegisterPage() {
           href="/"
           className="text-2xl font-black tracking-[0.22em] text-[#111827]"
         >
-          VIBE
+          Socil Network
         </Link>
         <div className="mx-auto w-full max-w-xl py-8 lg:py-12">
           <span className="inline-flex rounded-full border border-white bg-white px-3 py-1.5 text-xs font-bold text-[#111827]">
             Join 12k+ creators
           </span>
           <h2 className="mt-5 max-w-lg text-4xl font-bold leading-tight text-[#111827] sm:text-5xl">
-            Define your vibe. Share your story.
+            Define your Socil Network. Share your story.
           </h2>
           <blockquote className="mt-10 rounded-2xl border border-white bg-white p-5 sm:p-6">
             <p className="text-base leading-7 text-[#262626]">
@@ -8126,7 +8126,7 @@ export default async function RegisterPage() {
               but by connection.”
             </p>
             <footer className="mt-4 text-sm font-semibold text-[#111827]">
-              The VIBE community
+              The Socil Network community
             </footer>
           </blockquote>
         </div>
@@ -8155,7 +8155,7 @@ export default async function RegisterPage() {
               href="/login"
               className="font-semibold text-black underline underline-offset-4"
             >
-              Log in to VIBE
+              Log in to Socil Network
             </Link>
           </p>
         </div>
@@ -8180,7 +8180,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "VIBE — a calmer social network",
+  title: "Socil Network — a calmer social network",
   description: "A softer place to connect, share, and find your people.",
 };
 

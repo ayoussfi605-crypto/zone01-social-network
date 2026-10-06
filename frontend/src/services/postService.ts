@@ -18,7 +18,7 @@ const FALLBACK_AVATAR =
 
 function handleFrom(name: string, nickname: string) {
   const base = (nickname || name).replace(/^@/, "").replace(/\s+/g, "");
-  return `@${base.toLowerCase() || "vibe"}`;
+  return `@${base.toLowerCase() || "Socil Network"}`;
 }
 
 function avatarURL(path: string) {
@@ -40,7 +40,7 @@ export function toSocialPerson(
 ): SocialPerson {
   return {
     id,
-    name: name || "VIBE member",
+    name: name || "Socil Network member",
     handle: handleFrom(name, nickname),
     avatar: avatarURL(avatarPath),
   };
@@ -137,9 +137,7 @@ export const postService = {
     ),
   getPost: async (postID: number | string): Promise<SocialPost | null> => {
     try {
-      const response = await postApi<Envelope<ApiPost>>(
-        `/api/posts/${postID}`,
-      );
+      const response = await postApi<Envelope<ApiPost>>(`/api/posts/${postID}`);
       return toSocialPost(response.data);
     } catch (error) {
       if ((error as { status?: number }).status === 403) return null;

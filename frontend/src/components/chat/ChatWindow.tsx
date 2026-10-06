@@ -223,7 +223,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
           href="/"
           className="text-lg font-black tracking-[0.18em] text-[#111827]"
         >
-          VIBE
+          Socil Network
         </Link>
         <nav
           aria-label="Main navigation"

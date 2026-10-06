@@ -46,13 +46,13 @@ const locations = [
   "London, United Kingdom",
 ];
 
-const categories = ["Minimalism", "VibeWeb", "DigitalZen"] as const;
+const categories = ["Minimalism", "Socil NetworkWeb", "DigitalZen"] as const;
 
 const privacyOptions = [
   {
     id: "public",
     label: "Public",
-    detail: "Anyone on VIBE can see this post.",
+    detail: "Anyone on Socil Network can see this post.",
     Icon: Globe,
   },
   {
@@ -466,7 +466,9 @@ export default function CreatePostPage() {
                     key={tag}
                     type="button"
                     onClick={() =>
-                      setTags((current) => current.filter((item) => item !== tag))
+                      setTags((current) =>
+                        current.filter((item) => item !== tag),
+                      )
                     }
                     aria-label={`Remove tag ${tag}`}
                     className="inline-flex items-center gap-1.5 rounded-full bg-[#F3F4F6] px-3 py-1.5 text-xs font-semibold text-[#262626]"
@@ -494,7 +496,7 @@ export default function CreatePostPage() {
                 <input
                   value={tagDraft}
                   onChange={(event) => setTagDraft(event.target.value)}
-                  placeholder="#vibes"
+                  placeholder="#Socil Networks"
                   maxLength={24}
                   className="min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-black"
                 />
@@ -584,7 +586,9 @@ export default function CreatePostPage() {
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-[#6B7280]">{activePrivacy.detail}</p>
+            <p className="mt-2 text-xs text-[#6B7280]">
+              {activePrivacy.detail}
+            </p>
 
             {privacy === "private" && (
               <div className="mt-3 max-h-40 space-y-2 overflow-y-auto rounded-xl border border-zinc-200 p-3">
@@ -626,7 +630,7 @@ export default function CreatePostPage() {
           <section className="rounded-2xl border border-zinc-200 bg-white p-5">
             <h2 className="text-sm font-bold">Category</h2>
             <p className="mt-1 text-xs text-[#6B7280]">
-              Help people find your vibe. Pick one tag.
+              Help people find your Socil Network. Pick one tag.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {categories.map((item) => (

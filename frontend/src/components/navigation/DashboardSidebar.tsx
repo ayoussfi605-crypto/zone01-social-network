@@ -30,7 +30,7 @@ export default function DashboardSidebar() {
         href="/"
         className="mb-9 text-2xl font-black tracking-[0.2em] text-[#111827]"
       >
-        VIBE
+        Socil Network
       </Link>
       <nav aria-label="Main navigation" className="space-y-1">
         {items.map(({ href, label, Icon }) => {

@@ -21,14 +21,14 @@ export default async function RegisterPage() {
           href="/"
           className="text-2xl font-black tracking-[0.22em] text-[#111827]"
         >
-          VIBE
+          Socil Network
         </Link>
         <div className="mx-auto w-full max-w-xl py-8 lg:py-12">
           <span className="inline-flex rounded-full border border-white bg-white px-3 py-1.5 text-xs font-bold text-[#111827]">
             Join 12k+ creators
           </span>
           <h2 className="mt-5 max-w-lg text-4xl font-bold leading-tight text-[#111827] sm:text-5xl">
-            Define your vibe. Share your story.
+            Define your Socil Network. Share your story.
           </h2>
           <blockquote className="mt-10 rounded-2xl border border-white bg-white p-5 sm:p-6">
             <p className="text-base leading-7 text-[#262626]">
@@ -36,7 +36,7 @@ export default async function RegisterPage() {
               but by connection.”
             </p>
             <footer className="mt-4 text-sm font-semibold text-[#111827]">
-              The VIBE community
+              The Socil Network community
             </footer>
           </blockquote>
         </div>
@@ -65,7 +65,7 @@ export default async function RegisterPage() {
               href="/login"
               className="font-semibold text-black underline underline-offset-4"
             >
-              Log in to VIBE
+              Log in to Socil Network
             </Link>
           </p>
         </div>

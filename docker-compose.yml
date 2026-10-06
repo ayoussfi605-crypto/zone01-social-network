@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./backend
-    image: vibe-social-network-backend
+    image: Socil Network-social-network-backend
     environment:
       DB_PATH: /data/social-network.db
       # Origin allowed by the backend's CORS middleware.
@@ -20,7 +20,7 @@ services:
       args:
         # Browser-facing backend URL, inlined into the client bundle at build.
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
-    image: vibe-social-network-frontend
+    image: Socil Network-social-network-frontend
     environment:
       # Container-to-container URL used by SSR and server actions.
       API_URL: http://backend:8080

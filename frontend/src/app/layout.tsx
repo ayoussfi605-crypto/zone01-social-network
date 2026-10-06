@@ -10,7 +10,7 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "VIBE — a calmer social network",
+  title: "Socil Network — a calmer social network",
   description: "A softer place to connect, share, and find your people.",
 };
 

@@ -50,7 +50,7 @@ export default function LoginForm() {
             Password
           </label>
           <a
-            href="mailto:support@vibe.social?subject=Password%20reset"
+            href="mailto:support@Socil Network.social?subject=Password%20reset"
             className="text-xs font-semibold text-[#6B7280] underline underline-offset-2"
           >
             Forgot Password?
