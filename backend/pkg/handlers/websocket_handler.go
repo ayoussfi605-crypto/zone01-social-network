@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/services"
 	ws "social-network-network/pkg/websocket"
 
 	"github.com/gorilla/websocket"
@@ -17,8 +19,15 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
-	
+type WSHandler struct {
+	ChatServices services.ChatServices
+}
+
+func NewWSHandler(chatservices services.ChatServices) *WSHandler {
+	return &WSHandler{ChatServices: chatservices}
+}
+
+func (h *WSHandler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("err1", err)
@@ -30,9 +39,11 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	// get userId helper
 
 	client := ws.Client{
-		UserId: 1,
-		Conn:   conn,
-		Send:   make(chan []byte),
+		UserId:       middleware.GetUser(r).Id,
+		Conn:         conn,
+		Send:         make(chan []byte, 16),
+		ChatServices: h.ChatServices,
+		HUB:          ws.GlobalHub,
 	}
 
 	ws.GlobalHub.Register <- &client

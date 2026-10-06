@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"social-network-network/pkg/models"
 	"social-network-network/pkg/repository"
@@ -9,6 +10,7 @@ import (
 
 type ProfileService interface {
 	GetUserProfile(ctx context.Context, viewerID, targetID int) (*models.UserProfile, error)
+	DiscoverUsers(ctx context.Context, viewerID int, query string, limit, offset int) (*models.UserDiscoveryPage, error)
 }
 
 type profileService struct {
@@ -22,6 +24,10 @@ func NewProfileService(userRepo repository.ProfileUserRepository, followerRepo r
 
 func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID int) (*models.UserProfile, error) {
 	user, err := s.userRepo.GetProfileUser(ctx, targetID)
+	if err != nil {
+		return nil, err
+	}
+	stats, err := s.userRepo.GetProfileStats(ctx, targetID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,5 +55,18 @@ func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID 
 		User:         user,
 		Restricted:   restricted,
 		FollowStatus: status,
+		Stats:        stats,
 	}, nil
+}
+
+func (s *profileService) DiscoverUsers(ctx context.Context, viewerID int, query string, limit, offset int) (*models.UserDiscoveryPage, error) {
+	users, err := s.userRepo.DiscoverUsers(ctx, viewerID, strings.TrimSpace(query), limit+1, offset)
+	if err != nil {
+		return nil, err
+	}
+	hasMore := len(users) > limit
+	if hasMore {
+		users = users[:limit]
+	}
+	return &models.UserDiscoveryPage{Users: users, HasMore: hasMore}, nil
 }

@@ -1,12 +1,30 @@
 import { api } from "./api";
-import { setCookies } from "../utils/setCookies";
+import { clearSessionCookie, setCookies } from "../utils/setCookies";
+import type { User } from "../types/user";
+
+type APIResponse<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
+
+type RegisterData = {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  dob: string;
+  nickname?: string;
+  about_me?: string;
+  avatar?: File | null;
+};
 
 export const authService = {
   login: async (email: string, password: string) => {
-    const res: any = await api("/api/auth/login", {
+    const res = (await api("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
-    });
+    })) as APIResponse<{ user: User; token: string }>;
 
     if (!res.success) {
       return res;
@@ -17,7 +35,7 @@ export const authService = {
   },
 
   // data may include avatar: File | null (optional). Uses multipart when a file is present.
-  register: async (data: any) => {
+  register: async (data: RegisterData) => {
     if (data.avatar instanceof File) {
       const fd = new FormData();
       for (const key of [
@@ -28,27 +46,36 @@ export const authService = {
         "dob",
         "nickname",
         "about_me",
-      ]) {
+      ] as const) {
         fd.append(key, data[key] ?? "");
       }
       fd.append("avatar", data.avatar);
-      const res: any = await api("/api/auth/register", {
+      const res = (await api("/api/auth/register", {
         method: "POST",
         body: fd,
-      });
+      })) as APIResponse<User>;
       if (!res.success) {
         return res;
       }
 
       return res;
     }
-    const { avatar, ...rest } = data; // never send avatar:null in JSON
+    const rest = { ...data };
+    delete rest.avatar;
     return api("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(rest),
-    });
+    }) as Promise<APIResponse<User>>;
   },
 
-  logout: () => api("/api/auth/logout", { method: "POST" }),
-  me: () => api("/api/auth/me"),
+  logout: async () => {
+    try {
+      return (await api("/api/auth/logout", {
+        method: "POST",
+      })) as APIResponse<null>;
+    } finally {
+      await clearSessionCookie();
+    }
+  },
+  me: () => api("/api/auth/me") as Promise<APIResponse<User>>,
 };

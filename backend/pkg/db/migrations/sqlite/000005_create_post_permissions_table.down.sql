@@ -1,1 +1,2 @@
-DROP TABLE IF EXISTS post_viewer_permissions;
+DROP INDEX IF EXISTS idx_post_permissions_user;
+DROP TABLE IF EXISTS post_permissions;

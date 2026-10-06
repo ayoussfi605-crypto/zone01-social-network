@@ -156,9 +156,9 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	fmt.Println("enter")
+
 	user := middleware.GetUser(r)
-	fmt.Println("user = ", user)
+
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Data: user})
 }
 

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+
 	"social-network-network/pkg/models"
 )
 
@@ -54,7 +55,7 @@ func (r *followerRepository) DeleteFollower(ctx context.Context, followerID, tar
 
 func (r *followerRepository) GetFollowers(ctx context.Context, userID int) ([]models.FollowerData, error) {
 	query := `
-		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_path, '')
+		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_path, ''), COALESCE(u.nickname, '')
 		FROM users u 
 		INNER JOIN followers f ON u.id = f.follower_id 
 		WHERE f.followed_id = ? AND f.status = 'accepted'`
@@ -68,7 +69,7 @@ func (r *followerRepository) GetFollowers(ctx context.Context, userID int) ([]mo
 	var followers []models.FollowerData
 	for rows.Next() {
 		var user models.FollowerData
-		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath); err != nil {
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath, &user.Nickname); err != nil {
 			return nil, err
 		}
 		followers = append(followers, user)
@@ -78,7 +79,7 @@ func (r *followerRepository) GetFollowers(ctx context.Context, userID int) ([]mo
 
 func (r *followerRepository) GetFollowing(ctx context.Context, userID int) ([]models.FollowerData, error) {
 	query := `
-		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_path, '')
+		SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_path, ''), COALESCE(u.nickname, '')
 		FROM users u 
 		INNER JOIN followers f ON u.id = f.followed_id
 		WHERE f.follower_id = ? AND f.status = 'accepted'`
@@ -92,7 +93,7 @@ func (r *followerRepository) GetFollowing(ctx context.Context, userID int) ([]mo
 	var following []models.FollowerData
 	for rows.Next() {
 		var user models.FollowerData
-		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath); err != nil {
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath, &user.Nickname); err != nil {
 			return nil, err
 		}
 		following = append(following, user)
@@ -101,7 +102,7 @@ func (r *followerRepository) GetFollowing(ctx context.Context, userID int) ([]mo
 }
 
 func (r *followerRepository) GetPendingFollowRequests(ctx context.Context, userID int) ([]models.FollowerData, error) {
-	query := `SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_path, '')
+	query := `SELECT u.id, u.first_name, u.last_name, COALESCE(u.avatar_path, ''), COALESCE(u.nickname, '')
 		FROM users u INNER JOIN followers f ON u.id = f.follower_id
 		WHERE f.followed_id = ? AND f.status = 'pending' ORDER BY f.created_at`
 	rows, err := r.db.QueryContext(ctx, query, userID)
@@ -113,7 +114,7 @@ func (r *followerRepository) GetPendingFollowRequests(ctx context.Context, userI
 	requests := make([]models.FollowerData, 0)
 	for rows.Next() {
 		var user models.FollowerData
-		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath); err != nil {
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.AvatarPath, &user.Nickname); err != nil {
 			return nil, err
 		}
 		requests = append(requests, user)

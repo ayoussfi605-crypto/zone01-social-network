@@ -33,12 +33,12 @@ const (
 )
 
 func main() {
-	cwd, err := os.Getwd()
+	projectRoot, err := sqlite.FindProjectRoot()
 	if err != nil {
 		panic(err)
 	}
 
-	dbPath := filepath.Join(cwd, "social-network.db")
+	dbPath := filepath.Join(projectRoot, "social-network.db")
 	db, err := sqlite.Init(dbPath)
 	if err != nil {
 		panic(err)
@@ -75,12 +75,12 @@ func main() {
 		panic(err)
 	}
 
-	if err := writeCredentialFile(cwd, users); err != nil {
+	if err := writeCredentialFile(projectRoot, users); err != nil {
 		panic(err)
 	}
 
 	fmt.Println("Seed completed successfully.")
-	fmt.Printf("Database created at: %s\n", dbPath)
+	fmt.Printf("Database used: %s\n", dbPath)
 	fmt.Printf("Inserted %d users with realistic follows, sessions, chats, groups, and notifications.\n", len(users))
 	fmt.Println("Test accounts saved to: backend/test-users.txt")
 	fmt.Println("Demo logins:")

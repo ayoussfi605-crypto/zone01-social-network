@@ -1,23 +1,22 @@
 package models
 
-import "mime/multipart"
-
 type Post struct {
-	ID        int    `json:"id"`
-	UserID    int    `json:"user_id"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	ImagePath string `json:"image_path"`
-	Privacy   string `json:"privacy"`
-	CreatedAt string `json:"created_at"`
+	ID             int       `json:"id"`
+	AuthorID       int       `json:"author_id"`
+	AuthorName     string    `json:"author_name"`
+	AuthorAvatar   string    `json:"author_avatar"`
+	AuthorNickname string    `json:"author_nickname"`
+	Content        string    `json:"content"`
+	ImagePath      string    `json:"image_path"`
+	Privacy        string    `json:"privacy"`
+	CreatedAt      string    `json:"created_at"`
+	Comments       []Comment `json:"comments"`
+	CommentCount   int       `json:"comment_count"`
+	AllowedUserIDs []int     `json:"allowed_user_ids,omitempty"`
 }
 
-type Postdata = Post
-
-type CreatePostDTO struct {
-	Title            string
-	Content          string
-	Privacy          string
-	Image            *multipart.FileHeader
-	PermittedUserIDs []int
+type CreatePostRequest struct {
+	Content        string `json:"content"`
+	Privacy        string `json:"privacy"`
+	AllowedUserIDs []int  `json:"allowed_user_ids"`
 }

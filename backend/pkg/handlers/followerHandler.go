@@ -8,16 +8,19 @@ import (
 	"strconv"
 
 	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/models"
 	"social-network-network/pkg/services"
 	"social-network-network/pkg/utils"
+	ws "social-network-network/pkg/websocket"
 )
 
 type FollowerHandler struct {
 	followerService services.FollowerService
+	notifier        services.NotificationService
 }
 
-func NewFollowerHandler(s services.FollowerService) *FollowerHandler {
-	return &FollowerHandler{followerService: s}
+func NewFollowerHandler(s services.FollowerService, notifier services.NotificationService) *FollowerHandler {
+	return &FollowerHandler{followerService: s, notifier: notifier}
 }
 
 func (h *FollowerHandler) HandleFollow(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +40,11 @@ func (h *FollowerHandler) HandleFollow(w http.ResponseWriter, r *http.Request) {
 			writeFollowerResponse(w, http.StatusInternalServerError, false, "", "could not follow user", nil)
 		}
 		return
+	}
+	if h.notifier != nil && result.Notification != nil {
+		if notification, notifyErr := h.notifier.NotifyFollowRequest(r.Context(), result.Notification.RecipientID, viewer); notifyErr == nil {
+			pushNotification(notification)
+		}
 	}
 	writeFollowerResponse(w, http.StatusOK, true, "", "", result)
 }
@@ -89,6 +97,7 @@ func (h *FollowerHandler) HandleGetFollowers(w http.ResponseWriter, r *http.Requ
 		writeFollowerResponse(w, http.StatusInternalServerError, false, "", "could not load followers", nil)
 		return
 	}
+	addOnlineStatus(users)
 	writeFollowerResponse(w, http.StatusOK, true, "", "", map[string]any{"users": users})
 }
 
@@ -102,6 +111,7 @@ func (h *FollowerHandler) HandleGetFollowing(w http.ResponseWriter, r *http.Requ
 		writeFollowerResponse(w, http.StatusInternalServerError, false, "", "could not load following", nil)
 		return
 	}
+	addOnlineStatus(users)
 	writeFollowerResponse(w, http.StatusOK, true, "", "", map[string]any{"users": users})
 }
 
@@ -113,6 +123,12 @@ func (h *FollowerHandler) HandleGetPendingRequests(w http.ResponseWriter, r *htt
 		return
 	}
 	writeFollowerResponse(w, http.StatusOK, true, "", "", map[string]any{"users": users})
+}
+
+func addOnlineStatus(users []models.FollowerData) {
+	for index := range users {
+		users[index].Online = ws.GlobalHub != nil && ws.GlobalHub.IsUserOnline(users[index].ID)
+	}
 }
 
 func (h *FollowerHandler) requireRelationshipAccess(w http.ResponseWriter, r *http.Request, targetID int) bool {
