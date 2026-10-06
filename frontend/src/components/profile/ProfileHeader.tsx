@@ -1,15 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { UserRound } from "lucide-react";
 import { profileService } from "../../services/profileService";
 import type { User } from "../../types/user";
 import type { FollowStatus } from "../../types/profile";
 import FollowButton from "./FollowButton";
-import FollowersModal from "./FollowersModal";
 import PrivacyToggle from "./PrivacyToggle";
-
-type Relationship = "followers" | "following";
 
 export default function ProfileHeader({
   user,
@@ -24,8 +20,6 @@ export default function ProfileHeader({
   onUserChange: (user: User) => void;
   onFollowStatusChange: (status: FollowStatus) => void;
 }) {
-  const [relationship, setRelationship] = useState<Relationship | null>(null);
-
   return (
     <>
       <section className="overflow-hidden rounded-3xl border border-zinc-200 bg-white">
@@ -69,24 +63,6 @@ export default function ProfileHeader({
             </>
           ) : null}
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            {(!user.is_private || isOwner || followStatus === "accepted") && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setRelationship("followers")}
-                  className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-                >
-                  Followers
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRelationship("following")}
-                  className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-                >
-                  Following
-                </button>
-              </>
-            )}
             {isOwner ? (
               <PrivacyToggle user={user} onChange={onUserChange} />
             ) : (
@@ -99,13 +75,6 @@ export default function ProfileHeader({
           </div>
         </div>
       </section>
-      {relationship && (
-        <FollowersModal
-          userId={user.id}
-          relationship={relationship}
-          onClose={() => setRelationship(null)}
-        />
-      )}
     </>
   );
 }
