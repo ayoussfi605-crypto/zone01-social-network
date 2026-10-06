@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UserRound } from "lucide-react";
 import { profileService } from "../../services/profileService";
 import type { User } from "../../types/user";
 import type { FollowStatus } from "../../types/profile";
@@ -24,8 +25,6 @@ export default function ProfileHeader({
   onFollowStatusChange: (status: FollowStatus) => void;
 }) {
   const [relationship, setRelationship] = useState<Relationship | null>(null);
-  const initials =
-    `${user.first_name[0] ?? "?"}${user.last_name[0] ?? ""}`.toUpperCase();
 
   return (
     <>
@@ -41,7 +40,7 @@ export default function ProfileHeader({
                 className="h-full w-full object-cover"
               />
             ) : (
-              initials
+              <UserRound className="h-12 w-12" aria-label="User avatar" />
             )}
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">

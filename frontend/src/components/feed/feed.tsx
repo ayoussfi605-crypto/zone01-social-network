@@ -18,6 +18,7 @@ import DashboardSidebar from "@/src/components/navigation/DashboardSidebar";
 import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import { postService } from "@/src/services/postService";
+import { profileService } from "@/src/services/profileService";
 
 const stories = [
   SELF,
@@ -54,14 +55,19 @@ function timeLabel(value: string) {
 
 export default function FeedPage() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [currentUserID, setCurrentUserID] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    postService
-      .getFeed()
-      .then((feed) => {
-        if (active) setPosts(feed);
+    Promise.all([
+      postService.getFeed(),
+      profileService.getCurrentUser(),
+    ])
+      .then(([feed, currentUser]) => {
+        if (!active) return;
+        setPosts(feed);
+        setCurrentUserID(currentUser.id);
       })
       .catch(() => undefined)
       .finally(() => {
@@ -71,6 +77,10 @@ export default function FeedPage() {
       active = false;
     };
   }, []);
+
+  function profileHref(authorID: number) {
+    return authorID === currentUserID ? "/profile" : `/profile/${authorID}`;
+  }
 
   function toggleLike(postID: string) {
     setPosts((current) =>
@@ -164,7 +174,7 @@ export default function FeedPage() {
                   >
                     <div className="flex items-center gap-3 px-4 py-3">
                       <Link
-                        href={`/profile/${post.author.id}`}
+                        href={profileHref(post.author.id)}
                         className="h-10 w-10 overflow-hidden rounded-full bg-[#C2DCFB]"
                       >
                         <img
@@ -175,7 +185,7 @@ export default function FeedPage() {
                       </Link>
                       <div className="min-w-0 flex-1">
                         <Link
-                          href={`/profile/${post.author.id}`}
+                          href={profileHref(post.author.id)}
                           className="block truncate text-sm font-bold"
                         >
                           {post.author.name}

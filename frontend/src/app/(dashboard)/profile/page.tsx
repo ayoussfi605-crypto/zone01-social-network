@@ -4,16 +4,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Camera, Grid3X3, Heart, Pencil, Plus } from "lucide-react";
+import { Camera, Grid3X3, Heart, Pencil, Plus, UserRound } from "lucide-react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
-import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
-type ProfileTab = "MY VIBES" | "MEDIA" | "LIKES" | "TAGGED";
-
-const tabs: ProfileTab[] = ["MY VIBES", "MEDIA", "LIKES", "TAGGED"];
 const defaultBio =
   "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
 
@@ -23,10 +19,12 @@ export default function MyProfilePage() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [activeTab, setActiveTab] = useState<ProfileTab>("MY VIBES");
   const [bio, setBio] = useState(defaultBio);
   const [draftBio, setDraftBio] = useState(defaultBio);
+  const [draftIsPrivate, setDraftIsPrivate] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [editError, setEditError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -71,27 +69,34 @@ export default function MyProfilePage() {
     [posts, user],
   );
 
-  const visiblePosts = useMemo(() => {
-    if (activeTab === "LIKES") return ownPosts.filter((post) => post.liked);
-    if (activeTab === "TAGGED")
-      return ownPosts.filter((post) =>
-        post.caption.toLowerCase().includes("@"),
-      );
-    if (activeTab === "MEDIA")
-      return ownPosts.filter((post) => post.images.length > 0);
-    return ownPosts;
-  }, [activeTab, ownPosts]);
-
-  const firstName = user?.first_name || "Jordan";
-  const lastName = user?.last_name || "Carter";
-  const handle = (user?.nickname || "JORDAN_VIBE")
-    .replace(/^@/, "")
-    .toUpperCase();
+  const firstName = user?.first_name ?? "";
+  const lastName = user?.last_name ?? "";
+  const handle = user?.nickname
+    ? user.nickname.replace(/^@/, "").toUpperCase()
+    : "";
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
-    : SELF.avatar;
-  const postCount = ownPosts.length || 12;
-  const likesCount = 15400;
+    : "";
+  const postCount = ownPosts.length;
+  const vibesCount = ownPosts.reduce((total, post) => total + post.likes, 0);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white px-5 text-center text-sm font-semibold text-[#6B7280]">
+        Loading profile…
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-white px-5 text-center">
+        <p role="alert" className="text-sm font-semibold text-red-700">
+          {error || "Could not load your profile."}
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white pb-24 text-[#111827]">
@@ -111,25 +116,21 @@ export default function MyProfilePage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-3 py-5 sm:px-5 sm:py-8">
-        {error && (
-          <p
-            role="alert"
-            className="mb-4 rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#262626]"
-          >
-            {error}
-          </p>
-        )}
         <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
           <div className="h-28 bg-[#C2DCFB] sm:h-36" />
           <div className="px-5 pb-5 sm:px-8 sm:pb-7">
             <div className="-mt-12 flex flex-wrap items-end justify-between gap-4 sm:-mt-14">
               <span className="rounded-full bg-[#C2DCFB] p-1.5">
-                <span className="block h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-[#C2DCFB] sm:h-28 sm:w-28">
-                  <img
-                    src={avatar}
-                    alt={`${firstName} ${lastName}`}
-                    className="h-full w-full object-cover"
-                  />
+                <span className="block flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-[#C2DCFB] text-[#4B5563] sm:h-28 sm:w-28">
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt={`${firstName} ${lastName}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserRound className="h-12 w-12" aria-label="User avatar" />
+                  )}
                 </span>
               </span>
               <div className="flex gap-2 pb-1">
@@ -143,6 +144,8 @@ export default function MyProfilePage() {
                   type="button"
                   onClick={() => {
                     setDraftBio(bio);
+                    setDraftIsPrivate(user?.is_private ?? false);
+                    setEditError("");
                     setEditing(true);
                   }}
                   className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#111827]"
@@ -171,18 +174,15 @@ export default function MyProfilePage() {
               {[
                 { value: postCount.toLocaleString(), label: "Posts" },
                 {
-                  value: (followersCount || 1240).toLocaleString(),
+                  value: followersCount.toLocaleString(),
                   label: "Followers",
                 },
                 {
-                  value: (followingCount || 842).toLocaleString(),
+                  value: followingCount.toLocaleString(),
                   label: "Following",
                 },
                 {
-                  value:
-                    likesCount >= 1000
-                      ? `${(likesCount / 1000).toFixed(1)}k`
-                      : likesCount.toLocaleString(),
+                  value: vibesCount.toLocaleString(),
                   label: "Vibes",
                 },
               ].map((stat) => (
@@ -200,23 +200,10 @@ export default function MyProfilePage() {
         </section>
 
         <section className="mt-5 rounded-2xl border border-zinc-200 bg-white">
-          <div className="grid grid-cols-4 border-b border-zinc-200">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`min-h-12 border-b-2 text-[10px] font-bold tracking-wide sm:text-xs ${activeTab === tab ? "border-black text-black" : "border-transparent text-[#6B7280]"}`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex min-h-12 items-center px-4 text-[10px] font-bold tracking-wide sm:text-xs">
+            MY VIBES
           </div>
-          {loading ? (
-            <p className="py-12 text-center text-sm text-[#6B7280]">
-              Loading your vibes…
-            </p>
-          ) : visiblePosts.length === 0 ? (
+          {ownPosts.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <Camera size={23} className="mx-auto text-[#6B7280]" />
               <p className="mt-3 text-sm font-semibold">Nothing here yet</p>
@@ -229,7 +216,7 @@ export default function MyProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-1 p-1">
-              {visiblePosts.map((post) => (
+              {ownPosts.map((post) => (
                 <Link
                   key={post.id}
                   href={`/posts/${post.id}`}
@@ -257,69 +244,35 @@ export default function MyProfilePage() {
             </div>
           )}
         </section>
-
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold">People to know</h2>
-            <Link
-              href="/followers"
-              className="text-xs font-semibold text-[#6B7280]"
-            >
-              Explore
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              {
-                name: "Amara Okafor",
-                handle: "@amaraokafor",
-                color: "bg-[#F3F4F6]",
-                avatar:
-                  "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=160&q=85",
-              },
-              {
-                name: "Theo Martin",
-                handle: "@theomartin",
-                color: "bg-[#C2DCFB]",
-                avatar:
-                  "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=85",
-              },
-            ].map((person) => (
-              <article
-                key={person.handle}
-                className={`flex items-center gap-3 rounded-2xl border border-zinc-200 p-3 ${person.color}`}
-              >
-                <img
-                  src={person.avatar}
-                  alt=""
-                  className="h-11 w-11 rounded-full object-cover"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{person.name}</p>
-                  <p className="truncate text-xs text-[#6B7280]">
-                    {person.handle}
-                  </p>
-                </div>
-                <Link
-                  href="/followers"
-                  className="rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white"
-                >
-                  Follow
-                </Link>
-              </article>
-            ))}
-          </div>
-        </section>
       </div>
 
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#E5E7EB] p-4">
           <form
-            onSubmit={(event) => {
+            onSubmit={async (event) => {
               event.preventDefault();
-              setBio(draftBio.trim());
-              localStorage.setItem("vibe.profile.bio", draftBio.trim());
-              setEditing(false);
+              if (!user) return;
+              setSavingProfile(true);
+              setEditError("");
+              try {
+                const updatedUser =
+                  draftIsPrivate === user.is_private
+                    ? user
+                    : await profileService.updatePrivacy(draftIsPrivate);
+                setUser(updatedUser);
+                const nextBio = draftBio.trim();
+                setBio(nextBio);
+                localStorage.setItem("vibe.profile.bio", nextBio);
+                setEditing(false);
+              } catch (reason: unknown) {
+                setEditError(
+                  reason instanceof Error
+                    ? reason.message
+                    : "Could not save profile settings",
+                );
+              } finally {
+                setSavingProfile(false);
+              }
             }}
             className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5"
           >
@@ -343,11 +296,47 @@ export default function MyProfilePage() {
                 className="mt-2 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm font-normal outline-none focus:border-black"
               />
             </label>
+            <fieldset className="mt-5">
+              <legend className="text-sm font-semibold">Profile visibility</legend>
+              <p className="mt-1 text-xs leading-5 text-[#6B7280]">
+                Choose who can see your profile and posts.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  aria-pressed={!draftIsPrivate}
+                  onClick={() => setDraftIsPrivate(false)}
+                  className={`rounded-xl border p-3 text-left transition ${!draftIsPrivate ? "border-black bg-zinc-50 ring-1 ring-black" : "border-zinc-200 hover:bg-zinc-50"}`}
+                >
+                  <span className="block text-sm font-bold">🌍 Public</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#6B7280]">
+                    Anyone can see your profile and posts.
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={draftIsPrivate}
+                  onClick={() => setDraftIsPrivate(true)}
+                  className={`rounded-xl border p-3 text-left transition ${draftIsPrivate ? "border-black bg-zinc-50 ring-1 ring-black" : "border-zinc-200 hover:bg-zinc-50"}`}
+                >
+                  <span className="block text-sm font-bold">🔒 Private</span>
+                  <span className="mt-1 block text-xs leading-5 text-[#6B7280]">
+                    Only accepted followers can see your posts and details.
+                  </span>
+                </button>
+              </div>
+            </fieldset>
+            {editError && (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                {editError}
+              </p>
+            )}
             <button
               type="submit"
-              className="mt-4 w-full rounded-xl bg-black px-4 py-3 text-sm font-bold text-white"
+              disabled={savingProfile}
+              className="mt-4 w-full rounded-xl bg-black px-4 py-3 text-sm font-bold text-white disabled:cursor-wait disabled:opacity-60"
             >
-              Save changes
+              {savingProfile ? "Saving…" : "Save changes"}
             </button>
           </form>
         </div>

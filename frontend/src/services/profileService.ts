@@ -85,13 +85,13 @@ export const profileService = {
       (response) => response.users,
     ),
   getFollowers: (id: number | string) =>
-    profileApi<{ users: FollowerSummary[] }>(
+    profileApi<{ users: FollowerSummary[] | null }>(
       `/api/users/${id}/followers`,
-    ).then((response) => response.users),
+    ).then((response) => response.users ?? []),
   getFollowing: (id: number | string) =>
-    profileApi<{ users: FollowerSummary[] }>(
+    profileApi<{ users: FollowerSummary[] | null }>(
       `/api/users/${id}/following`,
-    ).then((response) => response.users),
+    ).then((response) => response.users ?? []),
   discoverUsers: (limit: number, offset: number, query: string) => {
     const params = new URLSearchParams({
       limit: String(limit),
