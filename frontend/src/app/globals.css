@@ -76,3 +76,12 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans);
 }
+
+/* Keeps sticky page headers clear of the fixed GlobalSessionActions
+   (notification bell + log out) pinned to the top-right corner. */
+@utility session-actions-gap {
+  padding-right: 104px;
+  @media (width >= 48rem) {
+    padding-right: 196px;
+  }
+}

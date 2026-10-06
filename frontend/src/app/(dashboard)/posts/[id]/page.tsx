@@ -111,7 +111,7 @@ export default function PostDetailsPage() {
 
   return (
     <main className="min-h-screen bg-white pb-24 text-zinc-900">
-      <header className="sticky top-0 z-20 flex h-14 items-center border-b border-zinc-200 bg-white px-4">
+      <header className="sticky top-0 z-20 flex h-14 items-center border-b border-zinc-200 bg-white pl-4 session-actions-gap">
         <Link
           href="/"
           aria-label="Back to feed"

@@ -98,23 +98,25 @@ export default function FeedPage() {
 
   return (
     <main className="min-h-screen flex bg-white pb-24 text-zinc-900 md:pb-0">
-      <div className="min-h-screen min-w-0 flex-1 md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,680px)_300px]">
+      <div className="min-h-screen min-w-0 flex-1 md:grid md:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_300px]">
         <DashboardSidebar />
 
         <section className="min-w-0 flex-1 bg-white md:border-r md:border-zinc-200">
           <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
             <div className="mx-auto flex h-16 max-w-xl items-center justify-between px-4 md:justify-center">
-              <Link
-                href="/profile"
-                aria-label="Open profile"
-                className="h-10 w-10 overflow-hidden rounded-full border-2 border-[#C2DCFB] md:hidden"
-              >
-                <img
-                  src={SELF.avatar}
-                  alt="Maya Chen"
-                  className="h-full w-full object-cover"
-                />
-              </Link>
+              <div className="w-[84px] md:hidden">
+                <Link
+                  href="/profile"
+                  aria-label="Open profile"
+                  className="block h-10 w-10 overflow-hidden rounded-full border-2 border-[#C2DCFB]"
+                >
+                  <img
+                    src={SELF.avatar}
+                    alt="Maya Chen"
+                    className="h-full w-full object-cover"
+                  />
+                </Link>
+              </div>
               <div className="text-center leading-tight">
                 <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 md:block">
                   A little more you
@@ -123,14 +125,8 @@ export default function FeedPage() {
                   VIBE
                 </h1>
               </div>
-              <Link
-                href="/notifications"
-                aria-label="Notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 text-zinc-900 md:hidden"
-              >
-                <Bookmark size={18} />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[#4ADE80]" />
-              </Link>
+              {/* Reserves room for the fixed GlobalSessionActions on mobile. */}
+              <div aria-hidden="true" className="w-[84px] md:hidden" />
             </div>
           </header>
 
@@ -277,7 +273,7 @@ export default function FeedPage() {
           </div>
         </section>
 
-        <aside className="sticky w-75 top-0 hidden h-screen flex-col gap-5 bg-[#F3F4F6] px-5 py-6 xl:flex">
+        <aside className="sticky top-0 hidden h-screen flex-col gap-5 bg-[#F3F4F6] px-5 pb-6 pt-20 xl:flex">
           <label className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-3 text-[#6B7280]">
             <Compass size={17} />
             <input

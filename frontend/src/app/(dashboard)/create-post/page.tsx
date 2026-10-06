@@ -278,7 +278,7 @@ export default function CreatePostPage() {
 
   return (
     <main className="min-h-screen bg-white pb-24 text-zinc-900 lg:pb-0">
-      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white">
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white session-actions-gap">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
           <Link
             href="/"

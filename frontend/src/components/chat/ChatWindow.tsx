@@ -218,7 +218,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
 
   return (
     <main className="min-h-dvh bg-white text-zinc-900">
-      <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4">
+      <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white pl-4 session-actions-gap">
         <Link
           href="/"
           className="text-lg font-black tracking-[0.18em] text-[#111827]"

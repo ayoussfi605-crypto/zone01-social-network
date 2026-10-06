@@ -101,7 +101,7 @@ export default function MyProfilePage() {
 
   return (
     <main className="min-h-screen bg-white pb-24 text-[#111827]">
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
+      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white session-actions-gap">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
             VIBE
