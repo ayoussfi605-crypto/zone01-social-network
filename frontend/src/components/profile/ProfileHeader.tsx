@@ -49,19 +49,14 @@ export default function ProfileHeader({
           </div>
           {user.nickname && (
             <p className="mt-1 text-sm font-medium text-indigo-600">
-              @{user.nickname}
+              @{user?.nickname ? user.nickname.replace(/^@/, "") : "vibeuser"}
             </p>
           )}
-          {!user.is_private || isOwner || followStatus === "accepted" ? (
-            <>
-              {user.about_me && (
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
-                  {user.about_me}
-                </p>
-              )}
-              <p className="mt-2 text-sm text-zinc-500">{user.email}</p>
-            </>
-          ) : null}
+          {user.about_me && (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+              {user.about_me}
+            </p>
+          )}
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {isOwner ? (
               <PrivacyToggle user={user} onChange={onUserChange} />

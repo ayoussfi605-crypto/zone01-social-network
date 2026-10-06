@@ -47,6 +47,7 @@ func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID 
 			FirstName:  user.FirstName,
 			LastName:   user.LastName,
 			AvatarPath: user.AvatarPath,
+			AboutMe:    user.AboutMe,
 			IsPrivate:  user.IsPrivate,
 		}
 	}
