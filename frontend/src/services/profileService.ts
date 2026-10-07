@@ -66,11 +66,6 @@ export const profileService = {
       method: "PUT",
       body: JSON.stringify({ about_me: aboutMe, is_private: isPrivate }),
     }),
-  updatePrivacy: (isPrivate: boolean) =>
-    profileApi<User>("/api/users/privacy", {
-      method: "PUT",
-      body: JSON.stringify({ is_private: isPrivate }),
-    }),
   follow: (id: number | string) =>
     profileApi<{
       status: FollowStatus;

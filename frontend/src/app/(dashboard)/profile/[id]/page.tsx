@@ -74,9 +74,7 @@ export default function UserProfilePage() {
         </Link>
         <ProfileHeader
           user={profile.user}
-          isOwner={false}
           followStatus={status}
-          onUserChange={() => undefined}
           onFollowStatusChange={setStatus}
         />
         {!isRestricted && profile.stats && (

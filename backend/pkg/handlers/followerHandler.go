@@ -158,14 +158,6 @@ func pathUserID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	return id, true
 }
 
-func writeFollowerError(w http.ResponseWriter, err error, fallback string) {
-	if errors.Is(err, sql.ErrNoRows) {
-		writeFollowerResponse(w, http.StatusNotFound, false, "", "relationship not found", nil)
-		return
-	}
-	writeFollowerResponse(w, http.StatusInternalServerError, false, "", fallback, nil)
-}
-
 func writeFollowerResponse(w http.ResponseWriter, status int, success bool, message, responseError string, data any) {
 	utils.WriteJSON(w, status, utils.ResposAPI{
 		Success: success,

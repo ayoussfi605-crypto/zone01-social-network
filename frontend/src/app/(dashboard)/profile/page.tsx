@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Camera, Grid3X3, Heart, Pencil, Plus, UserRound } from "lucide-react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
@@ -66,11 +66,6 @@ export default function MyProfilePage() {
       active = false;
     };
   }, [router]);
-
-  const ownPosts = useMemo(
-    () => posts.filter((post) => user && post.author.id === user.id),
-    [posts, user],
-  );
 
   const firstName = user?.first_name ?? "";
   const lastName = user?.last_name ?? "";
@@ -235,7 +230,7 @@ export default function MyProfilePage() {
           <div className="flex min-h-12 items-center px-4 text-[10px] font-bold tracking-wide sm:text-xs">
             MY Socil NetworkS
           </div>
-          {ownPosts.length === 0 ? (
+          {posts.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <Camera size={23} className="mx-auto text-[#6B7280]" />
               <p className="mt-3 text-sm font-semibold">Nothing here yet</p>
@@ -248,7 +243,7 @@ export default function MyProfilePage() {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-1 p-1">
-              {ownPosts.map((post) => (
+              {posts.map((post) => (
                 <Link
                   key={post.id}
                   href={`/posts/${post.id}`}
