@@ -26,6 +26,11 @@ export default function UserProfilePage() {
     let active = true;
     async function loadProfile() {
       try {
+        const currentUser = await profileService.getCurrentUser();
+        if (currentUser.id === Number(params.id)) {
+          router.replace("/profile");
+          return;
+        }
         const result = await profileService.getProfile(params.id);
         if (!active) return;
         setProfile(result);
