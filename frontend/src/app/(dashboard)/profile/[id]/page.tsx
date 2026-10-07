@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import FollowersModal from "../../../../components/profile/FollowersModal";
 import PrivateProfileView from "../../../../components/profile/PrivateProfileView";
 import ProfileHeader from "../../../../components/profile/ProfileHeader";
 import { profileService } from "../../../../services/profileService";
@@ -10,12 +11,15 @@ import { postService } from "@/src/services/postService";
 import type { SocialPost } from "@/src/types/social";
 import type { FollowStatus, UserProfile } from "../../../../types/profile";
 
+type Relationship = "followers" | "following";
+
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [status, setStatus] = useState<FollowStatus>("none");
   const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -70,6 +74,40 @@ export default function UserProfilePage() {
           onUserChange={() => undefined}
           onFollowStatusChange={setStatus}
         />
+        {!isRestricted && (
+          <section
+            aria-label="Profile relationships"
+            className="grid grid-cols-2 rounded-2xl border border-zinc-200 bg-white text-center"
+          >
+            {[
+              {
+                label: "Followers",
+                value: profile.stats.follower_count,
+                relationship: "followers" as const,
+              },
+              {
+                label: "Following",
+                value: profile.stats.following_count,
+                relationship: "following" as const,
+              },
+            ].map((item) => (
+              <button
+                key={item.relationship}
+                type="button"
+                onClick={() => setRelationship(item.relationship)}
+                aria-label={`View ${item.value} ${item.label.toLowerCase()}`}
+                className="rounded-xl px-4 py-4 hover:bg-zinc-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
+              >
+                <span className="block font-bold text-zinc-900">
+                  {item.value.toLocaleString()}
+                </span>
+                <span className="mt-1 block text-xs text-zinc-500">
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </section>
+        )}
         {isRestricted ? (
           <PrivateProfileView pending={status === "pending"} />
         ) : (
@@ -109,6 +147,13 @@ export default function UserProfilePage() {
               </div>
             )}
           </section>
+        )}
+        {relationship && (
+          <FollowersModal
+            userId={profile.user.id}
+            relationship={relationship}
+            onClose={() => setRelationship(null)}
+          />
         )}
         {error && (
           <p role="alert" className="text-sm text-red-700">
