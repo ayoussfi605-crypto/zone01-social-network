@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  Bell,
   Building2,
   Check,
   Compass,
@@ -84,11 +83,6 @@ export default function GroupsPage() {
       groups.filter(
         (group) => group.is_creator || group.membership_status === "member",
       ),
-    [groups],
-  );
-  const pendingInvites = useMemo(
-    () =>
-      groups.filter((group) => group.membership_status === "pending_invite"),
     [groups],
   );
 
@@ -203,32 +197,6 @@ export default function GroupsPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
             Socil Network
-          </Link>
-          <nav className="hidden items-center gap-5 text-sm font-semibold text-[#6B7280] md:flex">
-            <Link href="/" className="hover:text-black">
-              Home
-            </Link>
-            <Link href="/chat" className="hover:text-black">
-              Messages
-            </Link>
-            <Link href="/groups" className="text-black">
-              Groups
-            </Link>
-            <Link href="/notifications" className="hover:text-black">
-              Notifications
-            </Link>
-          </nav>
-          <Link
-            href="/notifications"
-            aria-label="Invitations and notifications"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200"
-          >
-            <Bell size={18} />
-            {pendingInvites.length > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[10px] font-bold text-white">
-                {pendingInvites.length}
-              </span>
-            )}
           </Link>
         </div>
       </header>

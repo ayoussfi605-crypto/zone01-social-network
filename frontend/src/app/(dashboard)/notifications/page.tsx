@@ -14,6 +14,7 @@ import type {
   GroupJoinRequest,
 } from "@/src/types/group";
 import type { FollowerSummary } from "@/src/types/profile";
+import { useWebSocket } from "@/src/context/WebSocketConetext";
 
 type NotificationFilter = "All" | "Unread";
 type GroupRequestNotification = {
@@ -57,7 +58,8 @@ export default function NotificationsPage() {
   const [busyAction, setBusyAction] = useState("");
   const [filter, setFilter] = useState<NotificationFilter>("All");
 
-  useEffect(() => {
+  const ws = useWebSocket();
+  const LoadAllNotification = () => {
     let active = true;
     Promise.all([
       profileService.getPendingRequests(),
@@ -124,7 +126,19 @@ export default function NotificationsPage() {
     return () => {
       active = false;
     };
-  }, []);
+  };
+
+  useEffect(() => {
+    LoadAllNotification();
+  }, [ws]);
+
+  useEffect(() => {
+    return ws.receiveMessage(async (e) => {
+      if (e.type == "notification") {
+        LoadAllNotification();
+      }
+    });
+  }, [ws]);
 
   async function respondToFollowRequest(followerID: number, accept: boolean) {
     const actionID = `follow-${followerID}`;

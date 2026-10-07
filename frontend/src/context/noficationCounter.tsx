@@ -49,18 +49,6 @@ export function NotificationCounter({
           setMessagesCount((prev) => prev + 1);
         }
       }
-      if (e.type == "message") {
-        console.log("here message ", e.type);
-
-        const user_id = await (async () => {
-          const res = await authService.me();
-          return res.data.id;
-        })();
-
-        // if (e.receiver_id == user_id) {
-        setMessagesCount((prev) => prev + 1);
-        // }
-      }
     });
   }, [ws]);
 

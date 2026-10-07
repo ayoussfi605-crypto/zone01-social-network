@@ -69,7 +69,9 @@ export default function GroupDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [postDraft, setPostDraft] = useState("");
-  const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>(
+    {},
+  );
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventTime, setEventTime] = useState("");
@@ -94,7 +96,9 @@ export default function GroupDetailPage() {
       setError("");
       try {
         const availableGroups = await groupService.browseGroups();
-        const currentGroup = availableGroups.find((item) => item.id === groupID);
+        const currentGroup = availableGroups.find(
+          (item) => item.id === groupID,
+        );
         if (!currentGroup) {
           throw new Error("Group not found");
         }
@@ -435,22 +439,9 @@ export default function GroupDetailPage() {
 
   return (
     <main className="min-h-screen bg-white pb-24 text-zinc-900">
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-3 px-4">
-          <Link
-            href="/groups"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#6B7280] hover:text-black"
-          >
-            <ArrowLeft size={17} /> Groups
-          </Link>
-          <h1 className="truncate text-sm font-bold">{group.title}</h1>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#F3F4F6] px-3 py-1.5 text-xs font-bold text-[#262626]">
-            <Users size={14} /> {group.member_count}
-          </span>
-        </div>
-      </header>
+      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white"></header>
 
-      <div className="mx-auto max-w-3xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-6">
         {error && (
           <p
             role="alert"
@@ -629,14 +620,13 @@ export default function GroupDetailPage() {
                               </p>
                             </div>
                           </div>
-                          <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-[#262626]">
+                          <p className="mt-4 whitespace-pre-wrap wrap-break-word text-sm leading-6 text-[#262626]">
                             {post.content}
                           </p>
 
                           <div className="mt-5 border-t border-zinc-200 pt-4">
                             <p className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-[#6B7280]">
-                              <MessageCircle size={14} />{" "}
-                              {post.comments.length}{" "}
+                              <MessageCircle size={14} /> {post.comments.length}{" "}
                               {post.comments.length === 1
                                 ? "comment"
                                 : "comments"}
@@ -655,7 +645,7 @@ export default function GroupDetailPage() {
                                       {formatDate(comment.created_at)}
                                     </span>
                                   </div>
-                                  <p className="mt-1 whitespace-pre-wrap break-words text-sm text-[#262626]">
+                                  <p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm text-[#262626]">
                                     {comment.content}
                                   </p>
                                 </li>
@@ -742,7 +732,9 @@ export default function GroupDetailPage() {
                     </label>
                     <button
                       type="submit"
-                      disabled={busy === "event" || !eventTitle.trim() || !eventTime}
+                      disabled={
+                        busy === "event" || !eventTitle.trim() || !eventTime
+                      }
                       className="w-full rounded-xl bg-black px-4 py-2.5 text-sm font-bold text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
                     >
                       <CirclePlus size={15} className="mr-1 inline" />
@@ -838,9 +830,7 @@ export default function GroupDetailPage() {
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#C2DCFB] text-xs font-bold text-[#111827]">
                           {member.avatar_path ? (
                             <img
-                              src={profileService.avatarURL(
-                                member.avatar_path,
-                              )}
+                              src={profileService.avatarURL(member.avatar_path)}
                               alt=""
                               className="h-full w-full object-cover"
                             />
@@ -973,10 +963,7 @@ export default function GroupDetailPage() {
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                initials(
-                                  request.first_name,
-                                  request.last_name,
-                                )
+                                initials(request.first_name, request.last_name)
                               )}
                             </span>
                             <p className="min-w-0 flex-1 truncate text-sm font-semibold">
@@ -1021,9 +1008,7 @@ export default function GroupDetailPage() {
                     <MessageCircle size={18} />
                     <div>
                       <h2 className="text-sm font-bold">Group chat</h2>
-                      <p className="text-[11px] text-[#6B7280]">
-                        Members only
-                      </p>
+                      <p className="text-[11px] text-[#6B7280]">Members only</p>
                     </div>
                   </div>
                   <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#6B7280]">
@@ -1051,7 +1036,7 @@ export default function GroupDetailPage() {
                             {ownMessage ? "You" : message.sender_name}
                           </span>
                           <p
-                            className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${
+                            className={`max-w-[85%] whitespace-pre-wrap wrap-break-word rounded-2xl px-3 py-2 text-sm ${
                               ownMessage
                                 ? "bg-[#E5E7EB] text-[#262626]"
                                 : "bg-[#C2DCFB] text-[#111827]"
