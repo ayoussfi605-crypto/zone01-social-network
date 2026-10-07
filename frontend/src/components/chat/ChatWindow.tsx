@@ -51,6 +51,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
     }));
     return [...mappedUsers];
   }, [chatUsers]);
+  console.log(contacts);
 
   function HandleGetMessages(id: string) {
     ChatService.getMessages(id).then((res) => {
@@ -147,30 +148,44 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                           {el.name ? el.name : el.fullName.split(" ")[0]}
                         </h3>
                       </div>
-                      <p className="text-[12px] whitespace-nowrap">{el.time}</p>
                     </div>
                     <div className="flex justify-start items-center gap-5">
-                      <p className="text-[12px] text-[#6B7280] truncate">
-                        {el.lastMessage}
+                      <p className="text-[12px] flex justify-center gap-2 text-[#6B7280] truncate">
+                        <p className="text-[12px] whitespace-nowrap text-black">
+                          {el.time}
+                        </p>
+                        <p className="text-[12px] whitespace-nowrap">
+                          {el.lastMessage + "heoo"}
+                        </p>
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end min-w-[72px]">
+                  <div className="flex flex-col gap-1 items-center justify-end min-w-[72px]">
                     {
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
-                          el.online
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-slate-200 bg-slate-100 text-slate-500"
-                        }`}
-                      >
+                      <div className="flex flex-col justify-center items-end gap-1 ">
                         <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            el.online ? "bg-emerald-500" : "bg-slate-400"
+                          className={`inline-flex w-fit items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium border-slate-200 bg-slate-100 text-slate-500`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full bg-slate-400`}
+                          />
+                          {el.unread}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
+                            el.online
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-slate-200 bg-slate-100 text-slate-500"
                           }`}
-                        />
-                        {el.online ? "Online" : "Offline"}
-                      </span>
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              el.online ? "bg-emerald-500" : "bg-slate-400"
+                            }`}
+                          />
+                          {el.online ? "Online" : "Offline"}
+                        </span>
+                      </div>
                     }
                   </div>
                 </div>

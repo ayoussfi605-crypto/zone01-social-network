@@ -165,7 +165,7 @@ export default function DiscussionWindow({
                 </span>
 
                 <div
-                  className={`p-3 max-w-[75%] rounded-2xl text-sm leading-relaxed break-words ${
+                  className={`p-3 max-w-[75%] rounded-2xl text-sm leading-relaxed wrap-break-word ${
                     isMe
                       ? "bg-[#E5E7EB] text-[#262626] rounded-br-xs"
                       : "bg-[#C2DCFB] text-[#111827] border border-[#C2DCFB] rounded-bl-xs"

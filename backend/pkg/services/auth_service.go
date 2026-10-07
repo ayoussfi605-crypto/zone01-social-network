@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -33,6 +34,7 @@ func RegisterUser(db *sql.DB, email, password, firstName, lastName, dob, avatarP
 	if err == nil && existing != nil {
 		return nil, errors.New("email already registered")
 	}
+	fmt.Println("avatare ", avatarPath)
 
 	// 3. Hash password with bcrypt (helper in utils)
 	hash, err := utils.HashPassword(password)
@@ -51,6 +53,7 @@ func RegisterUser(db *sql.DB, email, password, firstName, lastName, dob, avatarP
 		Nickname:     nickname,
 		AboutMe:      aboutMe,
 	}
+	fmt.Println("u ", u)
 	id, err := repository.CreateUser(db, u)
 	if err != nil {
 		return nil, err

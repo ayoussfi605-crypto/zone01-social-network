@@ -63,6 +63,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		email, password, firstName, lastName, dob, nickname, aboutMe = body.Email, body.Password, body.FirstName, body.LastName, body.Dob, body.Nickname, body.AboutMe
 	}
 
+	if avatarPath == "" {
+		avatarPath = "/media/default.webp"
+	}
+	fmt.Println(avatarPath)
+
 	user, err := services.RegisterUser(DB, email, password, firstName, lastName, dob, avatarPath, nickname, aboutMe)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
