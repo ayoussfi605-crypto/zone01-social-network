@@ -36,7 +36,9 @@ export default function DashboardSidebar() {
   if (pathname == "/notifications") {
     notifications.resetNotifications();
   }
-  console.log(notifications.notifications);
+  if (pathname == "/chat") {
+    notifications.resetMessages();
+  }
 
   return (
     <aside className="sticky top-0 hidden h-screen flex-col border-r border-zinc-200 bg-white px-5 py-7 md:flex">
@@ -70,6 +72,11 @@ export default function DashboardSidebar() {
               {label === "Notifications" && notifications.notifications > 0 && (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
                   {notifications.notifications}
+                </span>
+              )}
+              {label === "Messages" && notifications.messagesCount > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
+                  {notifications.messagesCount}
                 </span>
               )}
             </Link>

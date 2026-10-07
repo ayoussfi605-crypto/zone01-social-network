@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bell, CheckCheck, Users } from "lucide-react";
+import { CheckCheck, Users } from "lucide-react";
 import { groupService } from "@/src/services/groupService";
 import { notificationService } from "@/src/services/notificationService";
 import { profileService } from "@/src/services/profileService";
@@ -228,7 +228,6 @@ export default function NotificationsPage() {
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
             Socil Network
           </Link>
-          
         </div>
         <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3">
           {(["All", "Unread"] as const).map((tab) => (

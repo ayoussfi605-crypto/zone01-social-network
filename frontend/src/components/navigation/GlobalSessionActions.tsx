@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { authService } from "@/src/services/authService";
-import NotificationBell from "./NotificationBell";
+
 
 export default function GlobalSessionActions() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function GlobalSessionActions() {
 
   return (
     <div className="fixed right-3 top-3 z-50 flex items-center gap-2 md:right-5 md:top-4">
-      <NotificationBell />
+
       <button
         type="button"
         onClick={() => void logout()}
