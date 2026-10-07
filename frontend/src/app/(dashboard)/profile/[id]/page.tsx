@@ -74,7 +74,7 @@ export default function UserProfilePage() {
           onUserChange={() => undefined}
           onFollowStatusChange={setStatus}
         />
-        {!isRestricted && (
+        {!isRestricted && profile.stats && (
           <section
             aria-label="Profile relationships"
             className="grid grid-cols-2 rounded-2xl border border-zinc-200 bg-white text-center"

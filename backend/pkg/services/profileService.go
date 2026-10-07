@@ -27,10 +27,6 @@ func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID 
 	if err != nil {
 		return nil, err
 	}
-	stats, err := s.userRepo.GetProfileStats(ctx, targetID)
-	if err != nil {
-		return nil, err
-	}
 
 	status := "none"
 	if viewerID > 0 && viewerID != targetID {
@@ -47,9 +43,17 @@ func (s *profileService) GetUserProfile(ctx context.Context, viewerID, targetID 
 			FirstName:  user.FirstName,
 			LastName:   user.LastName,
 			AvatarPath: user.AvatarPath,
-			AboutMe:    user.AboutMe,
 			IsPrivate:  user.IsPrivate,
 		}
+	}
+
+	var stats *models.ProfileStats
+	if !restricted {
+		profileStats, err := s.userRepo.GetProfileStats(ctx, targetID)
+		if err != nil {
+			return nil, err
+		}
+		stats = &profileStats
 	}
 
 	return &models.UserProfile{

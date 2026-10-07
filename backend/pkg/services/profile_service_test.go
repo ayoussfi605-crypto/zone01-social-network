@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"social-network-network/pkg/repository"
@@ -10,7 +12,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestGetUserProfilePreservesBioForRestrictedProfile(t *testing.T) {
+func TestGetUserProfileHidesRestrictedProfileDetailsAndStats(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatal(err)
@@ -67,8 +69,40 @@ func TestGetUserProfilePreservesBioForRestrictedProfile(t *testing.T) {
 	if !profile.Restricted {
 		t.Fatal("profile should be restricted for a non-follower")
 	}
-	if profile.User.AboutMe != "Building thoughtful products." {
-		t.Fatalf("AboutMe = %q, want selected user's bio", profile.User.AboutMe)
+	if profile.User.AboutMe != "" {
+		t.Fatalf("AboutMe = %q, want bio to be hidden", profile.User.AboutMe)
+	}
+	if profile.User.Email != "" || profile.User.Dob != "" || profile.User.Nickname != "" || profile.User.CreatedAt != "" {
+		t.Fatalf("restricted profile exposed private details: %+v", profile.User)
+	}
+	if profile.Stats != nil {
+		t.Fatalf("Stats = %+v, want stats omitted for a restricted profile", profile.Stats)
+	}
+	response, err := json.Marshal(profile)
+	if err != nil {
+		t.Fatalf("marshal restricted profile: %v", err)
+	}
+	for _, privateValue := range []string{"target@example.com", "1990-01-01", "target", "Building thoughtful products.", `"stats"`} {
+		if strings.Contains(string(response), privateValue) {
+			t.Errorf("restricted profile response contains private value %q: %s", privateValue, response)
+		}
+	}
+
+	if _, err := db.Exec(`INSERT INTO followers (follower_id, followed_id, status) VALUES (3, 2, 'accepted')`); err != nil {
+		t.Fatal(err)
+	}
+	acceptedProfile, err := profileService.GetUserProfile(context.Background(), 3, 2)
+	if err != nil {
+		t.Fatalf("GetUserProfile() for accepted follower error = %v", err)
+	}
+	if acceptedProfile.Restricted {
+		t.Fatal("profile should be visible to an accepted follower")
+	}
+	if acceptedProfile.User.AboutMe != "Building thoughtful products." {
+		t.Fatalf("accepted follower AboutMe = %q, want selected user's bio", acceptedProfile.User.AboutMe)
+	}
+	if acceptedProfile.Stats == nil {
+		t.Fatal("accepted follower should receive profile stats")
 	}
 }
 

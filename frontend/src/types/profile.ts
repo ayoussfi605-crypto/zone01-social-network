@@ -12,7 +12,7 @@ export interface UserProfile {
   user: User;
   restricted: boolean;
   follow_status: FollowStatus;
-  stats: ProfileStats;
+  stats?: ProfileStats;
 }
 
 export interface FollowerSummary {

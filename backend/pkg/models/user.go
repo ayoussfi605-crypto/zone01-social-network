@@ -41,8 +41,8 @@ type ProfileStats struct {
 }
 
 type UserProfile struct {
-	User         *User        `json:"user"`
-	Restricted   bool         `json:"restricted"`
-	FollowStatus string       `json:"follow_status"`
-	Stats        ProfileStats `json:"stats"`
+	User         *User         `json:"user"`
+	Restricted   bool          `json:"restricted"`
+	FollowStatus string        `json:"follow_status"`
+	Stats        *ProfileStats `json:"stats,omitempty"`
 }
