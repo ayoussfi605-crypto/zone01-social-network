@@ -47,10 +47,9 @@ export default function MyProfilePage() {
         });
         const ownPosts = await postService.getUserPosts(currentUser.id);
         if (active) setPosts(ownPosts);
-        const savedBio = window.localStorage.getItem("vibe.profile.bio");
-        const nextBio = savedBio ?? currentUser.about_me ?? defaultBio;
-        setBio(nextBio);
-        setDraftBio(nextBio);
+        const profileBio = currentUser.about_me ?? "";
+        setBio(profileBio);
+        setDraftBio(profileBio);
       } catch (reason: unknown) {
         if (!active) return;
         const message =
@@ -302,8 +301,7 @@ export default function MyProfilePage() {
                   draftIsPrivate,
                 );
                 setUser(updatedUser);
-                setBio(nextBio);
-                localStorage.setItem("vibe.profile.bio", nextBio);
+                setBio(updatedUser.about_me ?? "");
                 setEditing(false);
               } catch (reason: unknown) {
                 setEditError(
