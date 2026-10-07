@@ -26,6 +26,7 @@ func Auth(db *sql.DB, next http.Handler) http.Handler {
 		}
 		user, err := services.ValidateSession(db, cookie.Value)
 		if err != nil {
+
 			http.Error(w, "not logged in", http.StatusUnauthorized)
 			return
 		}

@@ -3,10 +3,12 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/models"
 	"social-network-network/pkg/repository"
 	"social-network-network/pkg/services"
 	"social-network-network/pkg/utils"
@@ -16,12 +18,6 @@ import (
 var DB *sql.DB
 
 // ---- helpers ----
-
-func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
 
 // ---- POST /api/auth/register ----
 
@@ -72,7 +68,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	writeJSON(w, http.StatusCreated, user)
+
+	res := utils.ResposAPI{
+		Success: true,
+		Message: "User Created",
+		Data:    user,
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, res)
 }
 
 // ---- POST /api/auth/login ----
@@ -106,7 +109,20 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	writeJSON(w, http.StatusOK, user)
+	fmt.Println("all done ", token)
+	type resposne struct {
+		User  *models.User `json:"user"`
+		Token string       `json:"token"`
+	}
+	res := utils.ResposAPI{
+		Success: true,
+		Data: resposne{
+			User:  user,
+			Token: token,
+		},
+	}
+
+	utils.WriteJSON(w, http.StatusOK, res)
 }
 
 // ---- POST /api/auth/logout ----
@@ -128,7 +144,9 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 	})
-	writeJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{
+		Message: "logged out",
+	})
 }
 
 // ---- GET /api/auth/me (needs Auth) ----
@@ -138,8 +156,10 @@ func Me(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
 	user := middleware.GetUser(r)
-	writeJSON(w, http.StatusOK, user)
+
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Data: user})
 }
 
 // ---- PUT /api/users/privacy (needs Auth) ----
@@ -162,5 +182,5 @@ func UpdatePrivacy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.IsPrivate = body.IsPrivate
-	writeJSON(w, http.StatusOK, user)
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Data: user})
 }

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     dob TEXT NOT NULL,
-    avatar_path TEXT,
+    avatar_path TEXT DEFAULT "/media/default.webp",
     nickname TEXT,
     about_me TEXT,
     is_private INTEGER DEFAULT 0,
