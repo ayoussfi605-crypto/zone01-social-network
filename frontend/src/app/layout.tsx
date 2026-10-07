@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 
 import "./globals.css";
 import { WsProdider } from "../context/WebSocketConetext";
+import { NotificationCounter } from "../context/noficationCounter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.className}  h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <WsProdider>{children}</WsProdider>
+        <WsProdider>
+          <NotificationCounter>{children}</NotificationCounter>
+        </WsProdider>
       </body>
     </html>
   );

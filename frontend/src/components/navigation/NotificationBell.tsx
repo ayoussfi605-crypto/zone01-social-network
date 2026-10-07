@@ -7,6 +7,7 @@ import { Bell, CheckCheck } from "lucide-react";
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { notificationService } from "@/src/services/notificationService";
 import type { AppNotification } from "@/src/types/notification";
+import { useNotifications } from "@/src/context/noficationCounter";
 
 function targetFor(notification: AppNotification) {
   switch (notification.type) {
@@ -49,6 +50,18 @@ export default function NotificationBell() {
 
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  const ws = useWebSocket();
+
+  const notifications = useNotifications();
+
+  useEffect(() => {
+    return ws.receiveMessage((e) => {
+      if (e.type === "notification") {
+        notifications.addNotification();
+      }
+    });
+  }, [ws, notifications.addNotification]);
+
   const refreshCount = useCallback(() => {
     notificationService
       .unreadCount()
@@ -84,7 +97,10 @@ export default function NotificationBell() {
   useEffect(() => {
     if (!open) return;
     function onClick(event: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -156,7 +172,9 @@ export default function NotificationBell() {
           </div>
 
           {loading ? (
-            <p className="px-4 py-6 text-center text-sm text-zinc-500">Loading…</p>
+            <p className="px-4 py-6 text-center text-sm text-zinc-500">
+              Loading…
+            </p>
           ) : items.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-zinc-500">
               No notifications yet.

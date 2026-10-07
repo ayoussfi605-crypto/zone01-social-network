@@ -228,8 +228,7 @@ export default function NotificationsPage() {
           <Link href="/" className="text-lg font-black tracking-[0.18em]">
             Socil Network
           </Link>
-          <h1 className="text-sm font-bold">Notifications</h1>
-          <Bell size={19} />
+          
         </div>
         <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3">
           {(["All", "Unread"] as const).map((tab) => (
@@ -530,42 +529,6 @@ export default function NotificationsPage() {
             )}
           </section>
         </div>
-
-        <aside className="h-fit rounded-2xl border border-zinc-200 bg-white p-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-500">
-            Around the community
-          </p>
-          <h2 className="mt-1 text-lg font-bold">Trending Socil Networks</h2>
-          <ul className="mt-4 space-y-3">
-            {[
-              { tag: "#Minimalism", category: "DESIGN", color: "bg-[#F3F4F6]" },
-              {
-                tag: "#Socil NetworkWeb",
-                category: "TECH",
-                color: "bg-[#C2DCFB]",
-              },
-              { tag: "#DigitalZen", category: "LIFE", color: "bg-[#E5E7EB]" },
-            ].map((trend) => (
-              <li
-                key={trend.tag}
-                className={`flex items-center justify-between rounded-xl px-3 py-3 ${trend.color}`}
-              >
-                <span className="text-sm font-bold text-[#111827]">
-                  {trend.tag}
-                </span>
-                <span className="text-[9px] font-bold tracking-widest text-[#262626]">
-                  {trend.category}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <Link
-            href="/followers"
-            className="mt-5 inline-block text-xs font-semibold text-[#262626] underline underline-offset-4"
-          >
-            Find your people
-          </Link>
-        </aside>
       </div>
     </main>
   );
