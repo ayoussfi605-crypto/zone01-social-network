@@ -13,17 +13,14 @@ import type { User } from "@/src/types/user";
 
 type Relationship = "followers" | "following";
 
-const defaultBio =
-  "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
-
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState({ post_count: 0, follower_count: 0, following_count: 0 });
   const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [bio, setBio] = useState(defaultBio);
-  const [draftBio, setDraftBio] = useState(defaultBio);
+  const [bio, setBio] = useState("");
+  const [draftBio, setDraftBio] = useState("");
   const [draftIsPrivate, setDraftIsPrivate] = useState(false);
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -46,8 +43,7 @@ export default function MyProfilePage() {
         });
         const ownPosts = await postService.getUserPosts(currentUser.id);
         if (active) setPosts(ownPosts);
-        const savedBio = window.localStorage.getItem("vibe.profile.bio");
-        const nextBio = savedBio ?? currentUser.about_me ?? defaultBio;
+        const nextBio = currentUser.about_me ?? "";
         setBio(nextBio);
         setDraftBio(nextBio);
       } catch (reason: unknown) {
@@ -74,7 +70,7 @@ export default function MyProfilePage() {
 
   const firstName = user?.first_name ?? "";
   const lastName = user?.last_name ?? "";
-  const handle = user?.nickname
+  const handle = user?.nickname ?? "";
 
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
