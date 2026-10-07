@@ -13,9 +13,6 @@ import type { User } from "@/src/types/user";
 
 type Relationship = "followers" | "following";
 
-const defaultBio =
-  "Architecting digital experiences and chasing the perfect minimalist aesthetic. Always vibing with new ideas.";
-
 export default function MyProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -26,8 +23,8 @@ export default function MyProfilePage() {
   });
   const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [bio, setBio] = useState(defaultBio);
-  const [draftBio, setDraftBio] = useState(defaultBio);
+  const [bio, setBio] = useState("");
+  const [draftBio, setDraftBio] = useState("");
   const [draftIsPrivate, setDraftIsPrivate] = useState(false);
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
@@ -50,9 +47,7 @@ export default function MyProfilePage() {
         });
         const ownPosts = await postService.getUserPosts(currentUser.id);
         if (active) setPosts(ownPosts);
-        const savedBio = window.localStorage.getItem(
-          "Socil Network.profile.bio",
-        );
+        const savedBio = window.localStorage.getItem("vibe.profile.bio");
         const nextBio = savedBio ?? currentUser.about_me ?? defaultBio;
         setBio(nextBio);
         setDraftBio(nextBio);
@@ -80,9 +75,8 @@ export default function MyProfilePage() {
 
   const firstName = user?.first_name ?? "";
   const lastName = user?.last_name ?? "";
-  const handle = user?.nickname
-    ? user.nickname.replace(/^@/, "").toUpperCase()
-    : "";
+  const handle = user?.nickname ?? "";
+
   const avatar = user?.avatar_path
     ? profileService.avatarURL(user.avatar_path)
     : "";
@@ -166,11 +160,11 @@ export default function MyProfilePage() {
               <h1 className="text-2xl font-bold">
                 {firstName} {lastName}
               </h1>
-              <p className="mt-0.5 text-sm font-semibold tracking-wide text-[#6B7280]">
-                @{handle}
+              <p className="mt-1 text-sm font-medium text-indigo-600">
+                @{handle ? handle.replace(/^@/, "") : "vibeuser"}
               </p>
               <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6B7280]">
-                Creative Director · NYC
+                {user.is_private ? "🔒 Private profile" : "🌍 Public profile"}
               </p>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#262626]">
                 {bio}
@@ -286,14 +280,14 @@ export default function MyProfilePage() {
               setSavingProfile(true);
               setEditError("");
               try {
-                const updatedUser =
-                  draftIsPrivate === user.is_private
-                    ? user
-                    : await profileService.updatePrivacy(draftIsPrivate);
-                setUser(updatedUser);
                 const nextBio = draftBio.trim();
+                const updatedUser = await profileService.updateProfile(
+                  nextBio,
+                  draftIsPrivate,
+                );
+                setUser(updatedUser);
                 setBio(nextBio);
-                localStorage.setItem("Socil Network.profile.bio", nextBio);
+                localStorage.setItem("vibe.profile.bio", nextBio);
                 setEditing(false);
               } catch (reason: unknown) {
                 setEditError(

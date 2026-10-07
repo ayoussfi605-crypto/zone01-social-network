@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"social-network-network/pkg/middleware"
+	"social-network-network/pkg/repository"
 	"social-network-network/pkg/services"
 	"social-network-network/pkg/utils"
 	ws "social-network-network/pkg/websocket"
@@ -77,4 +79,26 @@ func (h *ProfileHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request
 		return
 	}
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: profile})
+}
+
+func (h *ProfileHandler) HandleUpdateProfile(w http.ResponseWriter, r *http.Request) {
+	user := middleware.GetUser(r)
+	var body struct {
+		AboutMe   string `json:"about_me"`
+		IsPrivate bool   `json:"is_private"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ResposAPI{Success: false, Eroor: "invalid request"})
+		return
+	}
+	if err := repository.UpdateProfile(DB, user.Id, body.AboutMe, body.IsPrivate); err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.ResposAPI{Success: false, Eroor: "could not update profile"})
+		return
+	}
+	updatedUser, err := repository.GetUserByID(DB, user.Id)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.ResposAPI{Success: false, Eroor: "could not load updated profile"})
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: updatedUser})
 }

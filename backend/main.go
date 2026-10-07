@@ -69,6 +69,7 @@ func main() {
 	mux.Handle("GET /api/users/{id}/following", middleware.Auth(db, http.HandlerFunc(followerHandler.HandleGetFollowing)))
 	mux.Handle("GET /api/users/discover", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleDiscoverUsers)))
 	mux.Handle("GET /api/users/{id}/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleGetProfile)))
+	mux.Handle("PUT /api/users/profile", middleware.Auth(db, http.HandlerFunc(profileHandler.HandleUpdateProfile)))
 
 	// group routes
 	groupRepo := repository.NewGroupRepository(db)

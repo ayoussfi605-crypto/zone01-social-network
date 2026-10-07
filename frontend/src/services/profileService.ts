@@ -61,6 +61,11 @@ export const profileService = {
   getCurrentUser: () => profileApi<User>("/api/auth/me"),
   getProfile: (id: number | string) =>
     profileApi<UserProfile>(`/api/users/${id}/profile`),
+  updateProfile: (aboutMe: string, isPrivate: boolean) =>
+    profileApi<User>("/api/users/profile", {
+      method: "PUT",
+      body: JSON.stringify({ about_me: aboutMe, is_private: isPrivate }),
+    }),
   updatePrivacy: (isPrivate: boolean) =>
     profileApi<User>("/api/users/privacy", {
       method: "PUT",

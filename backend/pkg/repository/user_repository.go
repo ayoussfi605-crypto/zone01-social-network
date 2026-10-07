@@ -108,6 +108,32 @@ func GetUserByID(db *sql.DB, id int) (*models.User, error) {
 	return scanUser(row)
 }
 
+// UpdateProfile persists the current user's bio and privacy setting.
+func UpdateProfile(db *sql.DB, userID int, aboutMe string, isPrivate bool) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(
+		`UPDATE users SET about_me = ?, is_private = ? WHERE id = ?`,
+		aboutMe, boolToInt(isPrivate), userID,
+	); err != nil {
+		return err
+	}
+	if !isPrivate {
+		if _, err := tx.Exec(`
+			UPDATE followers
+			SET status = 'accepted'
+			WHERE followed_id = ? AND status = 'pending'
+		`, userID); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 // UpdatePrivacy switches profile public/private and automatically grants
 // previously pending followers when the profile becomes public.
 func UpdatePrivacy(db *sql.DB, userID int, isPrivate bool) error {
