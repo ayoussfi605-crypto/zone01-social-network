@@ -57,6 +57,30 @@ export default function ProfileHeader({
               {user.about_me}
             </p>
           )}
+          {(user.email || user.dob) && (
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              {user.email && (
+                <div>
+                  <dt className="text-xs font-semibold text-zinc-500">
+                    Email
+                  </dt>
+                  <dd className="mt-1 break-words text-zinc-800">
+                    {user.email}
+                  </dd>
+                </div>
+              )}
+              {user.dob && (
+                <div>
+                  <dt className="text-xs font-semibold text-zinc-500">
+                    Date of birth
+                  </dt>
+                  <dd className="mt-1 text-zinc-800">
+                    <time dateTime={user.dob}>{user.dob}</time>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {isOwner ? (
               <PrivacyToggle user={user} onChange={onUserChange} />

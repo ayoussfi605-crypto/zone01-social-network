@@ -169,6 +169,22 @@ export default function MyProfilePage() {
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#262626]">
                 {bio}
               </p>
+              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs font-semibold text-[#6B7280]">
+                    Email
+                  </dt>
+                  <dd className="mt-1 break-words">{user.email}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-[#6B7280]">
+                    Date of birth
+                  </dt>
+                  <dd className="mt-1">
+                    <time dateTime={user.dob}>{user.dob}</time>
+                  </dd>
+                </div>
+              </dl>
             </div>
 
             <div className="mt-6 grid grid-cols-3 border-t border-zinc-200 pt-4 text-center">
