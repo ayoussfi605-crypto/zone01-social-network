@@ -86,6 +86,7 @@ export default function ProfileHeader({
               <PrivacyToggle user={user} onChange={onUserChange} />
             ) : (
               <FollowButton
+                key={user.id}
                 userId={user.id}
                 initialStatus={followStatus}
                 onStatusChange={onFollowStatusChange}
