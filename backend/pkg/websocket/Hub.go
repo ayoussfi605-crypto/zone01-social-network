@@ -214,14 +214,14 @@ func (c *Client) ReadPump() {
 		fmt.Println("payloas", string(payload))
 		if err != nil {
 			fmt.Println("read error:", err)
-			break
+			continue
 		}
 
 		var msg message
 		err = json.Unmarshal(payload, &msg)
 		if err != nil {
 			fmt.Println("unmarshal error:", err)
-			break
+			continue
 		}
 		if msg.Type == "message_group" {
 			if err := c.ChatServices.SaveGroupMessage(c.UserId, msg.GroupID, msg.Message); err != nil {
