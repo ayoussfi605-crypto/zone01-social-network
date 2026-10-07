@@ -51,7 +51,10 @@ func (h *PostHandler) HandleGetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	viewer := middleware.GetUser(r)
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	var limit int
+	if n, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+		limit = n
+	}
 	posts, err := h.postService.GetFeed(r.Context(), viewer.Id, limit)
 	if err != nil {
 		writePostResponse(w, http.StatusInternalServerError, false, "", "could not load feed", nil)
@@ -153,7 +156,10 @@ func (h *PostHandler) HandleGetUserPosts(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	viewer := middleware.GetUser(r)
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	var limit int
+	if n, err := strconv.Atoi(r.URL.Query().Get("limit")); err == nil {
+		limit = n
+	}
 	posts, err := h.postService.GetPostsByAuthor(r.Context(), viewer.Id, authorID, limit)
 	if err != nil {
 		writePostResponse(w, http.StatusInternalServerError, false, "", "could not load posts", nil)

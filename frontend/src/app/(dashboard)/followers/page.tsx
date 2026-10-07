@@ -284,7 +284,7 @@ export default function FollowersPage() {
 
   return (
     <main className="min-h-screen bg-white pb-24 text-zinc-900">
-      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
+      <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white session-actions-gap">
         <div className="mx-auto max-w-xl px-4 pb-3 pt-4">
           <div className="mb-4 flex items-center justify-between">
             <div>

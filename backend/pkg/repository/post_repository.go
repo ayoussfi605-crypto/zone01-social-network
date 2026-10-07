@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"social-network-network/pkg/models"
 )
@@ -271,7 +272,8 @@ func (r *postRepository) ListAllowedUserIDs(ctx context.Context, postID int) ([]
 	return ids, rows.Err()
 }
 
-// collectPosts drains rows into posts and attaches comments to each post.
+// collectPosts drains rows into posts and attaches comments to each post
+// using batch queries to avoid N+1 database calls.
 func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows) ([]models.Post, error) {
 	defer rows.Close()
 
@@ -300,12 +302,125 @@ func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows) ([]mo
 		return nil, fmt.Errorf("close post rows: %w", err)
 	}
 
+	if len(posts) == 0 {
+		return posts, nil
+	}
+
+	// Collect IDs for batch queries.
+	postIDs := make([]int, len(posts))
+	var privatePostIDs []int
+	for i, p := range posts {
+		postIDs[i] = p.ID
+		if p.Privacy == "private" {
+			privatePostIDs = append(privatePostIDs, p.ID)
+		}
+	}
+
+	// One query for all comments instead of one per post.
+	commentsByPost, err := r.batchGetComments(ctx, postIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// One query for all private-post permissions instead of one per private post.
+	allowedByPost, err := r.batchGetAllowedUserIDs(ctx, privatePostIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	for i := range posts {
-		if err := r.decoratePost(ctx, &posts[i]); err != nil {
-			return nil, err
+		comments := commentsByPost[posts[i].ID]
+		if comments == nil {
+			comments = []models.Comment{}
+		}
+		posts[i].Comments = comments
+		posts[i].CommentCount = len(comments)
+		if posts[i].Privacy == "private" {
+			posts[i].AllowedUserIDs = allowedByPost[posts[i].ID]
 		}
 	}
 	return posts, nil
+}
+
+// batchGetComments fetches all comments for the given post IDs in a single query.
+func (r *postRepository) batchGetComments(ctx context.Context, postIDs []int) (map[int][]models.Comment, error) {
+	if len(postIDs) == 0 {
+		return map[int][]models.Comment{}, nil
+	}
+
+	placeholders := make([]string, len(postIDs))
+	args := make([]any, len(postIDs))
+	for i, id := range postIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT c.id, c.post_id, c.author_id,
+		       TRIM(u.first_name || ' ' || u.last_name), COALESCE(u.avatar_path, ''),
+		       c.content, COALESCE(c.image_path, ''), c.created_at
+		FROM comments c JOIN users u ON u.id = c.author_id
+		WHERE c.post_id IN (`+strings.Join(placeholders, ",")+`)
+		ORDER BY c.post_id, c.created_at ASC, c.id ASC
+	`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("batch load comments: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[int][]models.Comment)
+	for rows.Next() {
+		var comment models.Comment
+		if err := rows.Scan(
+			&comment.ID,
+			&comment.PostID,
+			&comment.AuthorID,
+			&comment.AuthorName,
+			&comment.AuthorAvatar,
+			&comment.Content,
+			&comment.ImagePath,
+			&comment.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan comment: %w", err)
+		}
+		result[comment.PostID] = append(result[comment.PostID], comment)
+	}
+	return result, rows.Err()
+}
+
+// batchGetAllowedUserIDs fetches post_permissions for a set of private posts
+// in a single query.
+func (r *postRepository) batchGetAllowedUserIDs(ctx context.Context, postIDs []int) (map[int][]int, error) {
+	if len(postIDs) == 0 {
+		return map[int][]int{}, nil
+	}
+
+	placeholders := make([]string, len(postIDs))
+	args := make([]any, len(postIDs))
+	for i, id := range postIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT post_id, user_id FROM post_permissions
+		WHERE post_id IN (`+strings.Join(placeholders, ",")+`)
+		ORDER BY post_id, user_id
+	`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("batch load post permissions: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[int][]int)
+	for rows.Next() {
+		var postID, userID int
+		if err := rows.Scan(&postID, &userID); err != nil {
+			return nil, fmt.Errorf("scan post permission: %w", err)
+		}
+		result[postID] = append(result[postID], userID)
+	}
+	return result, rows.Err()
 }
 
 // decoratePost fills in the comment list and, for private posts, the list of
