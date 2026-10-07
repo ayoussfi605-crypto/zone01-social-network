@@ -67,38 +67,46 @@ func (r *chatRepository) GetChatUsers(
 	userId int,
 ) ([]ChatUsers, error) {
 	query := `
-SELECT
-    users.id,
-    COALESCE(users.nickname, '') AS name,
-    COALESCE(users.first_name || ' ' || users.last_name, '') AS full_name,
-    COALESCE('@' || users.nickname, '') AS handle,
-    COALESCE(users.avatar_path, '') AS avatar,
-    COALESCE(
-        (SELECT strftime('%H:%M', messages.created_at)
-         FROM messages
-         WHERE (messages.sender_id = users.id OR messages.recipient_id = users.id)
-         ORDER BY messages.created_at DESC
-         LIMIT 1),
-        ''
-    ) AS time,
-    COALESCE(
-        (SELECT messages.content
-         FROM messages
-         WHERE (messages.sender_id = users.id OR messages.recipient_id = users.id)
-         ORDER BY messages.created_at DESC
-         LIMIT 1),
-        ''
-    ) AS last_message,
-    0 AS unread,
-    0 AS online
-FROM users
-INNER JOIN followers
-    ON users.id = followers.followed_id
-WHERE followers.status = 'accepted'
-  AND followers.follower_id = ?;
-`
+    SELECT
+        u.id,
+        COALESCE(u.nickname, '') AS name,
+        COALESCE(u.first_name || ' ' || u.last_name, '') AS full_name,
+        COALESCE('@' || u.nickname, '') AS handle,
+        COALESCE(u.avatar_path, '') AS avatar,
+        
+        COALESCE(last_msg.content, '') AS last_message,
+        COALESCE(strftime('%H:%M', last_msg.created_at), '') AS time,
+        
+        (
+            SELECT COUNT(*)
+            FROM messages
+            WHERE sender_id = u.id
+              AND recipient_id = ?
+              AND read_at IS NULL
+        ) AS unread_count,
+        
+        0 AS online
 
-	rows, err := r.db.Query(query, userId)
+    FROM users u
+    INNER JOIN followers f 
+        ON u.id = f.followed_id
+
+
+    LEFT JOIN messages last_msg 
+        ON last_msg.id = (
+            SELECT id 
+            FROM messages 
+            WHERE (sender_id = u.id AND recipient_id = ?) 
+               OR (sender_id = ? AND recipient_id = u.id)
+            ORDER BY created_at DESC 
+            LIMIT 1
+        )
+
+    WHERE f.follower_id = ?
+      AND f.status = 'accepted';
+    `
+
+	rows, err := r.db.Query(query, userId, userId, userId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +123,8 @@ WHERE followers.status = 'accepted'
 			&u.FullName,
 			&u.Handle,
 			&u.Avatar,
-			&u.Time,
 			&u.LastMessage,
+			&u.Time,
 			&u.Unread,
 			&u.Online,
 		); err != nil {
