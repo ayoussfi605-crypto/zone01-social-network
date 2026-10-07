@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"social-network-network/pkg/models"
 )
@@ -74,6 +75,7 @@ func (r *profileUserRepository) DiscoverUsers(ctx context.Context, viewerID int,
 
 // CreateUser inserts a new user. Returns new user id.
 func CreateUser(db *sql.DB, u models.User) (int64, error) {
+	fmt.Println("avatare inserted", u.AvatarPath)
 	result, err := db.Exec(
 		`INSERT INTO users (email, password_hash, first_name, last_name, dob, avatar_path, nickname, about_me, is_private)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
