@@ -14,6 +14,7 @@ var (
 	ErrInvalidComment     = errors.New("comment must contain text or an image (max 1000 characters)")
 	ErrInvalidPostPrivacy = errors.New("post privacy must be public, almost_private or private")
 	ErrPrivateNeedsPeople = errors.New("private posts need at least one allowed follower")
+	ErrFollowersOnly      = errors.New("private posts can only be shared with accepted followers")
 	ErrPostNotVisible     = errors.New("post not found or not visible to you")
 	ErrNotPostAuthor      = errors.New("only the author can delete this post")
 )
@@ -61,6 +62,9 @@ func (s *postService) CreatePost(ctx context.Context, authorID int, content, ima
 		allowedUserIDs = cleanIDs(allowedUserIDs, authorID)
 		if len(allowedUserIDs) == 0 {
 			return nil, ErrPrivateNeedsPeople
+		}
+		if err := s.repository.ValidateFollowers(ctx, authorID, allowedUserIDs); err != nil {
+			return nil, ErrFollowersOnly
 		}
 	} else {
 		allowedUserIDs = nil

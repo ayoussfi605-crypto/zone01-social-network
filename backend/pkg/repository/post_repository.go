@@ -19,6 +19,7 @@ type PostRepository interface {
 	CanViewPost(ctx context.Context, postID, viewerID int) (bool, error)
 	DeletePost(ctx context.Context, postID, authorID int) error
 	ListAllowedUserIDs(ctx context.Context, postID int) ([]int, error)
+	ValidateFollowers(ctx context.Context, authorID int, userIDs []int) error
 }
 
 type postRepository struct {
@@ -70,7 +71,13 @@ func (r *postRepository) CreatePost(ctx context.Context, authorID int, content, 
 		image = imagePath
 	}
 
-	result, err := r.db.ExecContext(ctx, `
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("begin create post tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(ctx, `
 		INSERT INTO posts (author_id, content, image_path, privacy)
 		VALUES (?, ?, ?, ?)
 	`, authorID, content, image, privacy)
@@ -84,7 +91,7 @@ func (r *postRepository) CreatePost(ctx context.Context, authorID int, content, 
 
 	if privacy == "private" {
 		for _, userID := range allowedUserIDs {
-			if _, err := r.db.ExecContext(ctx, `
+			if _, err := tx.ExecContext(ctx, `
 				INSERT OR IGNORE INTO post_permissions (post_id, user_id) VALUES (?, ?)
 			`, postID, userID); err != nil {
 				return nil, fmt.Errorf("grant post permission: %w", err)
@@ -92,7 +99,40 @@ func (r *postRepository) CreatePost(ctx context.Context, authorID int, content, 
 		}
 	}
 
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit create post tx: %w", err)
+	}
+
 	return r.GetPostByID(ctx, int(postID))
+}
+
+func (r *postRepository) ValidateFollowers(ctx context.Context, authorID int, userIDs []int) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+	placeholders := make([]string, len(userIDs))
+	args := make([]any, 0, len(userIDs)+1)
+	args = append(args, authorID)
+	for i, id := range userIDs {
+		placeholders[i] = "?"
+		args = append(args, id)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT COUNT(DISTINCT follower_id)
+		FROM followers
+		WHERE followed_id = ? AND status = 'accepted' AND follower_id IN (%s)
+	`, strings.Join(placeholders, ","))
+
+	var count int
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&count); err != nil {
+		return fmt.Errorf("validate followers: %w", err)
+	}
+
+	if count != len(userIDs) {
+		return fmt.Errorf("one or more users are not accepted followers")
+	}
+	return nil
 }
 
 func (r *postRepository) CreateComment(ctx context.Context, postID, authorID int, content, imagePath string) (*models.Comment, error) {

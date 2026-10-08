@@ -273,7 +273,8 @@ func writePostServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, services.ErrInvalidPost),
 		errors.Is(err, services.ErrInvalidComment),
 		errors.Is(err, services.ErrInvalidPostPrivacy),
-		errors.Is(err, services.ErrPrivateNeedsPeople):
+		errors.Is(err, services.ErrPrivateNeedsPeople),
+		errors.Is(err, services.ErrFollowersOnly):
 		status, message = http.StatusBadRequest, err.Error()
 	case errors.Is(err, sql.ErrNoRows):
 		status, message = http.StatusNotFound, "post not found"
