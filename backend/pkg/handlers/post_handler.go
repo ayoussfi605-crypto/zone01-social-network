@@ -104,50 +104,6 @@ func (h *PostHandler) HandleDeletePost(w http.ResponseWriter, r *http.Request) {
 	writePostResponse(w, http.StatusOK, true, "post deleted", "", map[string]string{"status": "deleted"})
 }
 
-// GET /api/posts/{postID}/comments
-func (h *PostHandler) HandleGetComments(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writePostResponse(w, http.StatusMethodNotAllowed, false, "", "method not allowed", nil)
-		return
-	}
-	postID, ok := postPathID(w, r)
-	if !ok {
-		return
-	}
-	viewer := middleware.GetUser(r)
-	comments, err := h.postService.GetComments(r.Context(), viewer.Id, postID)
-	if err != nil {
-		writePostServiceError(w, err)
-		return
-	}
-	writePostResponse(w, http.StatusOK, true, "", "", comments)
-}
-
-// POST /api/posts/{postID}/comments
-func (h *PostHandler) HandleCreateComment(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writePostResponse(w, http.StatusMethodNotAllowed, false, "", "method not allowed", nil)
-		return
-	}
-	postID, ok := postPathID(w, r)
-	if !ok {
-		return
-	}
-	body, imagePath, err := parseCommentBody(r)
-	if err != nil {
-		writePostResponse(w, http.StatusBadRequest, false, "", err.Error(), nil)
-		return
-	}
-
-	viewer := middleware.GetUser(r)
-	comment, err := h.postService.CreateComment(r.Context(), viewer.Id, postID, body.Content, imagePath)
-	if err != nil {
-		writePostServiceError(w, err)
-		return
-	}
-	writePostResponse(w, http.StatusCreated, true, "comment created", "", comment)
-}
-
 // GET /api/users/{id}/posts
 func (h *PostHandler) HandleGetUserPosts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -223,27 +179,6 @@ func validateImageURL(rawURL string) (string, error) {
 	return rawURL, nil
 }
 
-func parseCommentBody(r *http.Request) (models.CreatePostRequest, string, error) {
-	var body models.CreatePostRequest
-
-	if strings.Contains(r.Header.Get("Content-Type"), "multipart/form-data") {
-		if err := r.ParseMultipartForm(10 << 20); err != nil {
-			return body, "", errors.New("invalid form data (max 10MB)")
-		}
-		body.Content = r.FormValue("content")
-		imagePath, err := saveUploadedImage(r, "image")
-		if err != nil {
-			return body, "", err
-		}
-		return body, imagePath, nil
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		return body, "", errors.New("invalid request body")
-	}
-	return body, "", nil
-}
-
 func saveUploadedImage(r *http.Request, field string) (string, error) {
 	file, header, err := r.FormFile(field)
 	if err != nil {
@@ -293,12 +228,13 @@ func writePostServiceError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
 	message := "post request failed"
 	switch {
+	case errors.Is(err, services.ErrPostNotFound):
+		status, message = http.StatusNotFound, services.ErrPostNotFound.Error()
 	case errors.Is(err, services.ErrPostNotVisible):
 		status, message = http.StatusForbidden, services.ErrPostNotVisible.Error()
 	case errors.Is(err, services.ErrNotPostAuthor):
 		status, message = http.StatusForbidden, services.ErrNotPostAuthor.Error()
 	case errors.Is(err, services.ErrInvalidPost),
-		errors.Is(err, services.ErrInvalidComment),
 		errors.Is(err, services.ErrInvalidPostPrivacy),
 		errors.Is(err, services.ErrPrivateNeedsPeople),
 		errors.Is(err, services.ErrFollowersOnly):

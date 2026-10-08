@@ -11,11 +11,10 @@ import (
 
 type PostRepository interface {
 	CreatePost(ctx context.Context, authorID int, content, imagePath, privacy string, allowedUserIDs []int) (*models.Post, error)
-	CreateComment(ctx context.Context, postID, authorID int, content, imagePath string) (*models.Comment, error)
-	GetComments(ctx context.Context, postID int) ([]models.Comment, error)
 	GetPostByID(ctx context.Context, postID int) (*models.Post, error)
 	GetFeed(ctx context.Context, viewerID, limit int) ([]models.Post, error)
 	GetPostsByAuthor(ctx context.Context, authorID, viewerID, limit int) ([]models.Post, error)
+	PostExists(ctx context.Context, postID int) (bool, error)
 	CanViewPost(ctx context.Context, postID, viewerID int) (bool, error)
 	DeletePost(ctx context.Context, postID, authorID int) error
 	ListAllowedUserIDs(ctx context.Context, postID int) ([]int, error)
@@ -23,11 +22,15 @@ type PostRepository interface {
 }
 
 type postRepository struct {
-	db *sql.DB
+	db       *sql.DB
+	comments CommentRepository
 }
 
 func NewPostRepository(db *sql.DB) PostRepository {
-	return &postRepository{db: db}
+	return &postRepository{
+		db:       db,
+		comments: NewCommentRepository(db),
+	}
 }
 
 // visibilityPredicate is the shared rule for who is allowed to see a post.
@@ -142,79 +145,13 @@ func (r *postRepository) ValidateFollowers(ctx context.Context, authorID int, us
 	return nil
 }
 
-func (r *postRepository) CreateComment(ctx context.Context, postID, authorID int, content, imagePath string) (*models.Comment, error) {
-	var image any
-	if imagePath != "" {
-		image = imagePath
-	}
-
-	result, err := r.db.ExecContext(ctx, `
-		INSERT INTO comments (post_id, author_id, content, image_path)
-		VALUES (?, ?, ?, ?)
-	`, postID, authorID, content, image)
+func (r *postRepository) PostExists(ctx context.Context, postID int) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM posts WHERE id = ?)`, postID).Scan(&exists)
 	if err != nil {
-		return nil, fmt.Errorf("create comment: %w", err)
+		return false, fmt.Errorf("check post exists: %w", err)
 	}
-	commentID, err := result.LastInsertId()
-	if err != nil {
-		return nil, fmt.Errorf("read new comment id: %w", err)
-	}
-
-	var comment models.Comment
-	err = r.db.QueryRowContext(ctx, `
-		SELECT c.id, c.post_id, c.author_id,
-		       TRIM(u.first_name || ' ' || u.last_name), COALESCE(u.avatar_path, ''),
-		       c.content, COALESCE(c.image_path, ''), c.created_at
-		FROM comments c JOIN users u ON u.id = c.author_id
-		WHERE c.id = ?
-	`, commentID).Scan(
-		&comment.ID,
-		&comment.PostID,
-		&comment.AuthorID,
-		&comment.AuthorName,
-		&comment.AuthorAvatar,
-		&comment.Content,
-		&comment.ImagePath,
-		&comment.CreatedAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("load created comment: %w", err)
-	}
-	return &comment, nil
-}
-
-func (r *postRepository) GetComments(ctx context.Context, postID int) ([]models.Comment, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT c.id, c.post_id, c.author_id,
-		       TRIM(u.first_name || ' ' || u.last_name), COALESCE(u.avatar_path, ''),
-		       c.content, COALESCE(c.image_path, ''), c.created_at
-		FROM comments c JOIN users u ON u.id = c.author_id
-		WHERE c.post_id = ?
-		ORDER BY c.created_at ASC, c.id ASC
-	`, postID)
-	if err != nil {
-		return nil, fmt.Errorf("load comments: %w", err)
-	}
-	defer rows.Close()
-
-	comments := make([]models.Comment, 0)
-	for rows.Next() {
-		var comment models.Comment
-		if err := rows.Scan(
-			&comment.ID,
-			&comment.PostID,
-			&comment.AuthorID,
-			&comment.AuthorName,
-			&comment.AuthorAvatar,
-			&comment.Content,
-			&comment.ImagePath,
-			&comment.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan comment: %w", err)
-		}
-		comments = append(comments, comment)
-	}
-	return comments, rows.Err()
+	return exists, nil
 }
 
 func (r *postRepository) GetPostByID(ctx context.Context, postID int) (*models.Post, error) {
@@ -364,7 +301,7 @@ func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows, viewe
 	}
 
 	// One query for all comments instead of one per post.
-	commentsByPost, err := r.batchGetComments(ctx, postIDs)
+	commentsByPost, err := r.comments.BatchGetComments(ctx, postIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -387,52 +324,6 @@ func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows, viewe
 		}
 	}
 	return posts, nil
-}
-
-// batchGetComments fetches all comments for the given post IDs in a single query.
-func (r *postRepository) batchGetComments(ctx context.Context, postIDs []int) (map[int][]models.Comment, error) {
-	if len(postIDs) == 0 {
-		return map[int][]models.Comment{}, nil
-	}
-
-	placeholders := make([]string, len(postIDs))
-	args := make([]any, len(postIDs))
-	for i, id := range postIDs {
-		placeholders[i] = "?"
-		args[i] = id
-	}
-
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT c.id, c.post_id, c.author_id,
-		       TRIM(u.first_name || ' ' || u.last_name), COALESCE(u.avatar_path, ''),
-		       c.content, COALESCE(c.image_path, ''), c.created_at
-		FROM comments c JOIN users u ON u.id = c.author_id
-		WHERE c.post_id IN (`+strings.Join(placeholders, ",")+`)
-		ORDER BY c.post_id, c.created_at ASC, c.id ASC
-	`, args...)
-	if err != nil {
-		return nil, fmt.Errorf("batch load comments: %w", err)
-	}
-	defer rows.Close()
-
-	result := make(map[int][]models.Comment)
-	for rows.Next() {
-		var comment models.Comment
-		if err := rows.Scan(
-			&comment.ID,
-			&comment.PostID,
-			&comment.AuthorID,
-			&comment.AuthorName,
-			&comment.AuthorAvatar,
-			&comment.Content,
-			&comment.ImagePath,
-			&comment.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan comment: %w", err)
-		}
-		result[comment.PostID] = append(result[comment.PostID], comment)
-	}
-	return result, rows.Err()
 }
 
 // batchGetAllowedUserIDs fetches post_permissions for a set of private posts
@@ -473,7 +364,7 @@ func (r *postRepository) batchGetAllowedUserIDs(ctx context.Context, postIDs []i
 // decoratePost fills in the comment list and, for private posts, the list of
 // users the author allowed to see it.
 func (r *postRepository) decoratePost(ctx context.Context, post *models.Post) error {
-	comments, err := r.GetComments(ctx, post.ID)
+	comments, err := r.comments.GetComments(ctx, post.ID)
 	if err != nil {
 		return err
 	}

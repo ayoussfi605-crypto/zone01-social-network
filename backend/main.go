@@ -102,9 +102,14 @@ func main() {
 	mux.Handle("POST /api/posts", middleware.Auth(db, http.HandlerFunc(postHandler.HandleCreatePost)))
 	mux.Handle("GET /api/posts/{postID}", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetPost)))
 	mux.Handle("DELETE /api/posts/{postID}", middleware.Auth(db, http.HandlerFunc(postHandler.HandleDeletePost)))
-	mux.Handle("GET /api/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetComments)))
-	mux.Handle("POST /api/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(postHandler.HandleCreateComment)))
 	mux.Handle("GET /api/users/{id}/posts", middleware.Auth(db, http.HandlerFunc(postHandler.HandleGetUserPosts)))
+
+	// comment routes
+	commentRepo := repository.NewCommentRepository(db)
+	commentService := services.NewCommentService(commentRepo, postRepo)
+	commentHandler := handlers.NewCommentHandler(commentService)
+	mux.Handle("GET /api/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(commentHandler.HandleGetComments)))
+	mux.Handle("POST /api/posts/{postID}/comments", middleware.Auth(db, http.HandlerFunc(commentHandler.HandleCreateComment)))
 
 	// chat routes
 	chatrepo := repository.NewChatRepository(db)
