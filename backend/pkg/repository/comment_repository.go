@@ -23,7 +23,18 @@ func NewCommentRepository(db *sql.DB) CommentRepository {
 	return &commentRepository{db: db}
 }
 
-const commentSelectColumns = `
+// scan a single comment row
+func scanComment(sc interface{ Scan(...any) error }) (models.Comment, error) {
+	var c models.Comment
+	err := sc.Scan(
+		&c.ID, &c.PostID, &c.AuthorID,
+		&c.AuthorName, &c.AuthorAvatar, &c.AuthorNickname,
+		&c.Content, &c.ImagePath, &c.CreatedAt,
+	)
+	return c, err
+}
+
+const commentColumns = `
 	c.id, c.post_id, c.author_id,
 	TRIM(u.first_name || ' ' || u.last_name),
 	COALESCE(u.avatar_path, ''),
@@ -32,16 +43,18 @@ const commentSelectColumns = `
 	COALESCE(c.image_path, ''),
 	c.created_at`
 
+const commentJoin = `FROM comments c JOIN users u ON u.id = c.author_id`
+
 func (r *commentRepository) CreateComment(ctx context.Context, postID, authorID int, content, imagePath string) (*models.Comment, error) {
 	var image any
 	if imagePath != "" {
 		image = imagePath
 	}
 
-	result, err := r.db.ExecContext(ctx, `
-		INSERT INTO comments (post_id, author_id, content, image_path)
-		VALUES (?, ?, ?, ?)
-	`, postID, authorID, content, image)
+	result, err := r.db.ExecContext(ctx,
+		`INSERT INTO comments (post_id, author_id, content, image_path) VALUES (?, ?, ?, ?)`,
+		postID, authorID, content, image,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create comment: %w", err)
 	}
@@ -50,35 +63,23 @@ func (r *commentRepository) CreateComment(ctx context.Context, postID, authorID 
 		return nil, fmt.Errorf("read new comment id: %w", err)
 	}
 
-	var comment models.Comment
-	err = r.db.QueryRowContext(ctx, `
-		SELECT `+commentSelectColumns+`
-		FROM comments c JOIN users u ON u.id = c.author_id
-		WHERE c.id = ?
-	`, commentID).Scan(
-		&comment.ID,
-		&comment.PostID,
-		&comment.AuthorID,
-		&comment.AuthorName,
-		&comment.AuthorAvatar,
-		&comment.AuthorNickname,
-		&comment.Content,
-		&comment.ImagePath,
-		&comment.CreatedAt,
+	row := r.db.QueryRowContext(ctx,
+		`SELECT `+commentColumns+` `+commentJoin+` WHERE c.id = ?`, commentID,
 	)
+	c, err := scanComment(row)
 	if err != nil {
 		return nil, fmt.Errorf("load created comment: %w", err)
 	}
-	return &comment, nil
+	return &c, nil
 }
 
 func (r *commentRepository) GetComments(ctx context.Context, postID int) ([]models.Comment, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT `+commentSelectColumns+`
-		FROM comments c JOIN users u ON u.id = c.author_id
-		WHERE c.post_id = ?
-		ORDER BY c.created_at ASC, c.id ASC
-	`, postID)
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT `+commentColumns+` `+commentJoin+`
+		 WHERE c.post_id = ?
+		 ORDER BY c.created_at ASC, c.id ASC`,
+		postID,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load comments: %w", err)
 	}
@@ -86,21 +87,11 @@ func (r *commentRepository) GetComments(ctx context.Context, postID int) ([]mode
 
 	comments := make([]models.Comment, 0)
 	for rows.Next() {
-		var comment models.Comment
-		if err := rows.Scan(
-			&comment.ID,
-			&comment.PostID,
-			&comment.AuthorID,
-			&comment.AuthorName,
-			&comment.AuthorAvatar,
-			&comment.AuthorNickname,
-			&comment.Content,
-			&comment.ImagePath,
-			&comment.CreatedAt,
-		); err != nil {
+		c, err := scanComment(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan comment: %w", err)
 		}
-		comments = append(comments, comment)
+		comments = append(comments, c)
 	}
 	return comments, rows.Err()
 }
@@ -110,19 +101,13 @@ func (r *commentRepository) BatchGetComments(ctx context.Context, postIDs []int)
 		return map[int][]models.Comment{}, nil
 	}
 
-	placeholders := make([]string, len(postIDs))
-	args := make([]any, len(postIDs))
-	for i, id := range postIDs {
-		placeholders[i] = "?"
-		args[i] = id
-	}
-
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT `+commentSelectColumns+`
-		FROM comments c JOIN users u ON u.id = c.author_id
-		WHERE c.post_id IN (`+strings.Join(placeholders, ",")+`)
-		ORDER BY c.post_id, c.created_at ASC, c.id ASC
-	`, args...)
+	ph, args := placeholders(postIDs)
+	rows, err := r.db.QueryContext(ctx,
+		`SELECT `+commentColumns+` `+commentJoin+`
+		 WHERE c.post_id IN (`+ph+`)
+		 ORDER BY c.post_id, c.created_at ASC, c.id ASC`,
+		args...,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("batch load comments: %w", err)
 	}
@@ -130,21 +115,22 @@ func (r *commentRepository) BatchGetComments(ctx context.Context, postIDs []int)
 
 	result := make(map[int][]models.Comment)
 	for rows.Next() {
-		var comment models.Comment
-		if err := rows.Scan(
-			&comment.ID,
-			&comment.PostID,
-			&comment.AuthorID,
-			&comment.AuthorName,
-			&comment.AuthorAvatar,
-			&comment.AuthorNickname,
-			&comment.Content,
-			&comment.ImagePath,
-			&comment.CreatedAt,
-		); err != nil {
+		c, err := scanComment(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan comment: %w", err)
 		}
-		result[comment.PostID] = append(result[comment.PostID], comment)
+		result[c.PostID] = append(result[c.PostID], c)
 	}
 	return result, rows.Err()
+}
+
+// placeholders builds "?,?,?"
+func placeholders(ids []int) (string, []any) {
+	ph := make([]string, len(ids))
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		ph[i] = "?"
+		args[i] = id
+	}
+	return strings.Join(ph, ","), args
 }
