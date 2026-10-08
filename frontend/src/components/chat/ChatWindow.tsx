@@ -160,6 +160,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                       </p>
                     </div>
                   </div>
+               
                   <div className="flex flex-col gap-1 items-center justify-end min-w-[72px]">
                     {
                       <div className="flex flex-col justify-center items-end gap-1 ">
