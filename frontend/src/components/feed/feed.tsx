@@ -9,6 +9,7 @@ import {
   MessageCircle,
   MoreHorizontal,
   Plus,
+  Trash2,
   UserRound,
   Users,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import DashboardSidebar from "@/src/components/navigation/DashboardSidebar";
 import type { SocialPost } from "@/src/types/social";
 import { postService } from "@/src/services/postService";
 import { profileService } from "@/src/services/profileService";
+import DeletePostDialog from "@/src/components/posts/DeletePostDialog";
 
 const suggestedPeople = [
   {
@@ -68,6 +70,8 @@ export default function FeedPage() {
     firstName: string;
     avatar: string;
   } | null>(null);
+  const [menuPostID, setMenuPostID] = useState<string | null>(null);
+  const [deletePostID, setDeletePostID] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -196,25 +200,54 @@ export default function FeedPage() {
                           {post.author.name}
                         </Link>
                         <p className="truncate text-xs text-zinc-500">
-                          {post.location || post.author.handle} ·{" "}
+                          {post.author.handle} ·{" "}
                           {timeLabel(post.createdAt)}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        aria-label="More post options"
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-600"
-                      >
-                        <MoreHorizontal size={20} />
-                      </button>
+                      {post.author.id === me?.id && (
+                        <div className="relative">
+                          <button
+                            type="button"
+                            aria-label="More post options"
+                            aria-haspopup="menu"
+                            aria-expanded={menuPostID === post.id}
+                            onClick={() =>
+                              setMenuPostID((current) =>
+                                current === post.id ? null : post.id,
+                              )
+                            }
+                            className="flex h-9 w-9 items-center justify-center rounded-full text-zinc-600 hover:bg-[#F3F4F6]"
+                          >
+                            <MoreHorizontal size={20} />
+                          </button>
+                          {menuPostID === post.id && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg"
+                            >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuPostID(null);
+                                  setDeletePostID(post.id);
+                                }}
+                                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-[#111827] hover:bg-[#F3F4F6]"
+                              >
+                                <Trash2 size={15} /> Delete post
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {post.images[0] && (
+                    {post.image && (
                       <Link
                         href={`/posts/${post.id}`}
                         className="block bg-[#E5E7EB]"
                       >
                         <img
-                          src={post.images[0]}
+                          src={post.image}
                           alt={post.caption}
                           className="aspect-[4/4.4] w-full object-cover"
                         />
@@ -364,6 +397,18 @@ export default function FeedPage() {
         <Plus size={24} />
       </Link>
       <MobileBottomNav active="feed" />
+      {deletePostID && (
+        <DeletePostDialog
+          postID={deletePostID}
+          onCancel={() => setDeletePostID(null)}
+          onDeleted={() => {
+            setPosts((current) =>
+              current.filter((post) => post.id !== deletePostID),
+            );
+            setDeletePostID(null);
+          }}
+        />
+      )}
     </main>
   );
 }

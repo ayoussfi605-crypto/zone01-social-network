@@ -249,12 +249,16 @@ export default function MyProfilePage() {
                   href={`/posts/${post.id}`}
                   className="group relative block aspect-square overflow-hidden bg-[#E5E7EB]"
                 >
-                  {post.images[0] && (
+                  {post.image ? (
                     <img
-                      src={post.images[0]}
+                      src={post.image}
                       alt={post.caption}
                       className="h-full w-full object-cover"
                     />
+                  ) : (
+                    <span className="flex h-full items-center justify-center p-3 text-center text-xs leading-5 text-[#262626] [overflow-wrap:anywhere]">
+                      <span className="line-clamp-5">{post.caption}</span>
+                    </span>
                   )}
                   <span className="absolute inset-0 hidden items-center justify-center gap-3 bg-[#111827] text-sm font-bold text-white group-hover:flex">
                     <span className="inline-flex items-center gap-1">

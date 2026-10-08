@@ -9,7 +9,6 @@ import { API_URL, profileService } from "./profileService";
 
 type Envelope<T> = { data: T };
 
-// Neutral placeholder for users without an uploaded avatar.
 const FALLBACK_AVATAR =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
@@ -25,8 +24,6 @@ function avatarURL(path: string) {
   return path ? profileService.avatarURL(path) : FALLBACK_AVATAR;
 }
 
-// image_path may be a stored /media/... path or an absolute remote URL
-// chosen from the composer's quick-pick gallery.
 function imageURL(path: string) {
   if (!path) return "";
   return /^https?:\/\//.test(path) ? path : profileService.avatarURL(path);
@@ -72,8 +69,7 @@ export function toSocialPost(post: ApiPost): SocialPost {
       post.author_nickname,
     ),
     caption: post.content,
-    images: post.image_path ? [imageURL(post.image_path)] : [],
-    location: "",
+    image: imageURL(post.image_path),
     privacy: post.privacy,
     audienceIDs: post.allowed_user_ids ?? [],
     createdAt: post.created_at,
@@ -122,7 +118,6 @@ export type NewPostInput = {
   privacy: PostPrivacy;
   allowedUserIDs?: number[];
   image?: File | null;
-  imageUrl?: string;
 };
 
 export const postService = {
@@ -153,8 +148,6 @@ export const postService = {
     }
     if (input.image) {
       form.append("image", input.image);
-    } else if (input.imageUrl) {
-      form.append("image_url", input.imageUrl);
     }
     return postApi<Envelope<ApiPost>>("/api/posts", {
       method: "POST",

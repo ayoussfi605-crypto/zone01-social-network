@@ -2,13 +2,13 @@
 
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Heart,
   ImagePlus,
-  MapPin,
   Send,
+  Trash2,
   UserRound,
   X,
 } from "lucide-react";
@@ -17,6 +17,7 @@ import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
+import DeletePostDialog from "@/src/components/posts/DeletePostDialog";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -25,6 +26,8 @@ function formatDate(value: string) {
 
 export default function PostDetailsPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [post, setPost] = useState<SocialPost | null>(null);
   const [comment, setComment] = useState("");
   const [commentFile, setCommentFile] = useState<File | null>(null);
@@ -143,26 +146,26 @@ export default function PostDetailsPage() {
               {post.author.handle} · {formatDate(post.createdAt)}
             </p>
           </div>
-          {post.location && (
-            <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
-              <MapPin size={13} />
-              {post.location}
-            </span>
+          {currentUser?.id === post.author.id && (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-[#262626] hover:bg-[#F3F4F6]"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
           )}
         </div>
 
-        {post.images.map((image, index) => (
-          <div
-            key={`${post.id}-${index}`}
-            className="flex max-h-[70dvh] items-center justify-center bg-black"
-          >
+        {post.image && (
+          <div className="flex max-h-[70dvh] items-center justify-center bg-black">
             <img
-              src={image}
+              src={post.image}
               alt={post.caption || "Post attachment"}
               className="max-h-[70dvh] w-full object-contain"
             />
           </div>
-        ))}
+        )}
 
         <div className="px-4 py-4">
           <div className="flex items-center gap-4">
@@ -310,6 +313,13 @@ export default function PostDetailsPage() {
           </button>
         </div>
       </form>
+      {confirmDelete && (
+        <DeletePostDialog
+          postID={post.id}
+          onCancel={() => setConfirmDelete(false)}
+          onDeleted={() => router.replace("/")}
+        />
+      )}
     </main>
   );
 }

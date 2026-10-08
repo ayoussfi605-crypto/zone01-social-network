@@ -133,10 +133,10 @@ export default function UserProfilePage() {
                     href={`/posts/${post.id}`}
                     className="aspect-square overflow-hidden bg-[#E5E7EB]"
                   >
-                    {post.images[0] ? (
+                    {post.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={post.images[0]}
+                        src={post.image}
                         alt={post.caption}
                         className="h-full w-full object-cover"
                       />

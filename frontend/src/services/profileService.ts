@@ -9,6 +9,16 @@ import type { User } from "../types/user";
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+export type HttpError = Error & { status?: number };
+
+function withStatus(error: Error, status: number): HttpError {
+  return Object.assign(error, { status });
+}
+
+export function isUnauthorized(error: unknown) {
+  return (error as HttpError | null)?.status === 401;
+}
+
 async function profileApi<T>(
   path: string,
   options: RequestInit = {},
@@ -33,7 +43,10 @@ async function profileApi<T>(
   if (typeof payload === "object" && payload !== null && "success" in payload) {
     const envelope = payload as { success?: boolean; data?: unknown; error?: string; message?: string };
     if (envelope.success === false && (!response.ok || envelope.error)) {
-      throw new Error(envelope.error || envelope.message || `Profile request failed (HTTP ${response.status})`);
+      throw withStatus(
+        new Error(envelope.error || envelope.message || `Profile request failed (HTTP ${response.status})`),
+        response.status,
+      );
     }
     if ("data" in envelope && response.ok) {
       payload = envelope.data;
@@ -48,7 +61,7 @@ async function profileApi<T>(
         : typeof payload === "object" && payload !== null && "message" in payload
           ? String(payload.message)
           : `Profile request failed (HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ""})`;
-    throw new Error(message);
+    throw withStatus(new Error(message), response.status);
   }
   return payload as T;
 }

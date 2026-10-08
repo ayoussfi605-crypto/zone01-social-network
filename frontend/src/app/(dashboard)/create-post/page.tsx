@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { profileService } from "@/src/services/profileService";
+import { isUnauthorized, profileService } from "@/src/services/profileService";
 import type { FollowerSummary } from "@/src/types/profile";
 import { postService } from "@/src/services/postService";
 import type { PostPrivacy } from "@/src/types/social";
@@ -76,15 +76,20 @@ export default function CreatePostPage() {
         });
         const ownFollowers = await profileService.getFollowers(currentUser.id);
         if (active) setFollowers(ownFollowers);
-      } catch {
-        if (active) setError("Could not load your profile.");
+      } catch (reason: unknown) {
+        if (!active) return;
+        if (isUnauthorized(reason)) {
+          router.replace("/login");
+          return;
+        }
+        setError("Could not load your profile.");
       }
     }
     void loadAuthor();
     return () => {
       active = false;
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!image) return;

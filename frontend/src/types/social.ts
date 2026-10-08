@@ -19,12 +19,9 @@ export type SocialPost = {
   id: string;
   author: SocialPerson;
   caption: string;
-  images: string[];
-  location: string;
+  image: string;
   privacy: PostPrivacy;
   audienceIDs: number[];
-  category?: string;
-  tags?: string[];
   createdAt: string;
   likes: number;
   liked: boolean;
