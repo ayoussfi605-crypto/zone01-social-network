@@ -247,13 +247,6 @@ export default function FeedPage() {
                             <MessageCircle size={22} />
                           </Link>
                         </div>
-                        <button
-                          type="button"
-                          aria-label="Save post"
-                          className="text-[#262626]"
-                        >
-                          <Bookmark size={21} />
-                        </button>
                       </div>
                       <p className="mt-2 text-sm font-bold">
                         {post.likes.toLocaleString()} likes
