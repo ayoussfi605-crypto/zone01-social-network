@@ -211,11 +211,11 @@ func (c *Client) ReadPump() {
 	for {
 
 		_, payload, err := c.Conn.ReadMessage()
-		fmt.Println("payloas", string(payload))
 		if err != nil {
 			fmt.Println("read error:", err)
-			continue
+			break
 		}
+		fmt.Println("payloas", string(payload))
 
 		var msg message
 		err = json.Unmarshal(payload, &msg)
