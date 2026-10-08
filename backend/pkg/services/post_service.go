@@ -7,6 +7,7 @@ import (
 
 	"social-network-network/pkg/models"
 	"social-network-network/pkg/repository"
+	"social-network-network/pkg/utils"
 )
 
 var (
@@ -153,7 +154,18 @@ func (s *postService) DeletePost(ctx context.Context, viewerID, postID int) erro
 	if post.AuthorID != viewerID {
 		return ErrNotPostAuthor
 	}
-	return s.repository.DeletePost(ctx, postID, viewerID)
+	if err := s.repository.DeletePost(ctx, postID, viewerID); err != nil {
+		return err
+	}
+	if post.ImagePath != "" {
+		utils.DeleteMediaFile(post.ImagePath)
+	}
+	for _, comment := range post.Comments {
+		if comment.ImagePath != "" {
+			utils.DeleteMediaFile(comment.ImagePath)
+		}
+	}
+	return nil
 }
 
 // cleanIDs removes invalid ids, the author, and duplicates while keeping order.

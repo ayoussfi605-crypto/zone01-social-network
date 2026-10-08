@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -38,6 +39,9 @@ func (h *PostHandler) HandleCreatePost(w http.ResponseWriter, r *http.Request) {
 	viewer := middleware.GetUser(r)
 	post, err := h.postService.CreatePost(r.Context(), viewer.Id, body.Content, imagePath, body.Privacy, body.AllowedUserIDs)
 	if err != nil {
+		if imagePath != "" {
+			utils.DeleteMediaFile(imagePath)
+		}
 		writePostServiceError(w, err)
 		return
 	}
@@ -185,7 +189,14 @@ func parsePostBody(r *http.Request) (models.CreatePostRequest, string, error) {
 		}
 		// Composer quick-picks send a remote image URL instead of a file.
 		if imagePath == "" {
-			imagePath = strings.TrimSpace(r.FormValue("image_url"))
+			rawURL := strings.TrimSpace(r.FormValue("image_url"))
+			if rawURL != "" {
+				validatedURL, err := validateImageURL(rawURL)
+				if err != nil {
+					return body, "", err
+				}
+				imagePath = validatedURL
+			}
 		}
 		return body, imagePath, nil
 	}
@@ -193,7 +204,23 @@ func parsePostBody(r *http.Request) (models.CreatePostRequest, string, error) {
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		return body, "", errors.New("invalid request body")
 	}
-	return body, "", nil
+	var imagePath string
+	if rawURL := strings.TrimSpace(body.ImageURL); rawURL != "" {
+		validatedURL, err := validateImageURL(rawURL)
+		if err != nil {
+			return body, "", err
+		}
+		imagePath = validatedURL
+	}
+	return body, imagePath, nil
+}
+
+func validateImageURL(rawURL string) (string, error) {
+	parsed, err := url.ParseRequestURI(rawURL)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
+		return "", errors.New("image_url must be a valid http or https URL")
+	}
+	return rawURL, nil
 }
 
 func parseCommentBody(r *http.Request) (models.CreatePostRequest, string, error) {
@@ -227,7 +254,7 @@ func saveUploadedImage(r *http.Request, field string) (string, error) {
 	}
 	defer file.Close()
 
-	filename, err := utils.ValidateAndSaveImage(file, header, "./media")
+	filename, err := utils.ValidateAndSaveImage(file, header, utils.ResolveMediaDir())
 	if err != nil {
 		return "", err
 	}

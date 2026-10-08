@@ -11,6 +11,7 @@ import (
 	"social-network-network/pkg/middleware"
 	"social-network-network/pkg/repository"
 	"social-network-network/pkg/services"
+	"social-network-network/pkg/utils"
 	ws "social-network-network/pkg/websocket"
 )
 
@@ -35,7 +36,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Public routes
-	mux.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir("./media"))))
+	mux.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir(utils.ResolveMediaDir()))))
 	mux.HandleFunc("/api/auth/register", handlers.Register)
 	mux.HandleFunc("/api/auth/login", handlers.Login)
 	mux.HandleFunc("/api/auth/logout", handlers.Logout)
