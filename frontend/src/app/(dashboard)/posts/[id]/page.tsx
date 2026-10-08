@@ -3,11 +3,18 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Heart, ImagePlus, MapPin, Send, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  ImagePlus,
+  MapPin,
+  Send,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
-import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 
@@ -22,6 +29,7 @@ export default function PostDetailsPage() {
   const [comment, setComment] = useState("");
   const [commentFile, setCommentFile] = useState<File | null>(null);
   const [commentPreview, setCommentPreview] = useState("");
+
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [commentError, setCommentError] = useState("");
@@ -199,7 +207,7 @@ export default function PostDetailsPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-5 text-[#262626]">
                       <span className="mr-2 font-bold">
-                        {item.author.handle}
+                        {item.author.name}
                       </span>
                       {item.text}
                     </p>
@@ -251,15 +259,17 @@ export default function PostDetailsPage() {
           </div>
         )}
         <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-3">
-          <img
-            src={
-              currentUser?.avatar_path
-                ? profileService.avatarURL(currentUser.avatar_path)
-                : SELF.avatar
-            }
-            alt=""
-            className="h-9 w-9 rounded-full object-cover"
-          />
+          {currentUser?.avatar_path ? (
+            <img
+              src={profileService.avatarURL(currentUser.avatar_path)}
+              alt=""
+              className="h-9 w-9 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C2DCFB] text-[#4B5563]">
+              <UserRound size={18} aria-hidden="true" />
+            </span>
+          )}
           <input
             value={comment}
             onChange={(event) => setComment(event.target.value)}

@@ -10,18 +10,17 @@ import {
   MessageCircle,
   MoreHorizontal,
   Plus,
+  UserRound,
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import MobileBottomNav from "../navigation/MobileBottomNav";
 import DashboardSidebar from "@/src/components/navigation/DashboardSidebar";
-import { SELF } from "@/src/utils/socialPosts";
 import type { SocialPost } from "@/src/types/social";
 import { postService } from "@/src/services/postService";
 import { profileService } from "@/src/services/profileService";
 
-const stories = [
-  SELF,
+const suggestedPeople = [
   {
     id: 2,
     name: "Noah Bennett",
@@ -53,9 +52,23 @@ function timeLabel(value: string) {
   return hours < 24 ? `${hours}h` : `${Math.floor(hours / 24)}d`;
 }
 
+function Avatar({ src }: { src?: string }) {
+  return src ? (
+    <img src={src} alt="" className="h-full w-full object-cover" />
+  ) : (
+    <span className="flex h-full w-full items-center justify-center bg-[#C2DCFB] text-[#4B5563]">
+      <UserRound size={20} aria-hidden="true" />
+    </span>
+  );
+}
+
 export default function FeedPage() {
   const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [currentUserID, setCurrentUserID] = useState<number | null>(null);
+  const [me, setMe] = useState<{
+    id: number;
+    firstName: string;
+    avatar: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -64,7 +77,13 @@ export default function FeedPage() {
       .then(([feed, currentUser]) => {
         if (!active) return;
         setPosts(feed);
-        setCurrentUserID(currentUser.id);
+        setMe({
+          id: currentUser.id,
+          firstName: currentUser.first_name || currentUser.nickname || "",
+          avatar: currentUser.avatar_path
+            ? profileService.avatarURL(currentUser.avatar_path)
+            : "",
+        });
       })
       .catch(() => undefined)
       .finally(() => {
@@ -76,7 +95,7 @@ export default function FeedPage() {
   }, []);
 
   function profileHref(authorID: number) {
-    return authorID === currentUserID ? "/profile" : `/profile/${authorID}`;
+    return authorID === me?.id ? "/profile" : `/profile/${authorID}`;
   }
 
   function toggleLike(postID: string) {
@@ -107,11 +126,7 @@ export default function FeedPage() {
                   aria-label="Open profile"
                   className="block h-10 w-10 overflow-hidden rounded-full border-2 border-[#C2DCFB]"
                 >
-                  <img
-                    src={SELF.avatar}
-                    alt="Maya Chen"
-                    className="h-full w-full object-cover"
-                  />
+                  <Avatar src={me?.avatar} />
                 </Link>
               </div>
               <div className="text-center leading-tight">
@@ -130,13 +145,11 @@ export default function FeedPage() {
           <div className="mx-auto max-w-3xl">
             <section className="border-b border-zinc-200 bg-white px-4 py-3">
               <Link href="/create-post" className="flex items-center gap-3">
-                <img
-                  src={SELF.avatar}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover"
-                />
+                <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                  <Avatar src={me?.avatar} />
+                </span>
                 <span className="flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm text-zinc-500">
-                  Share a moment, Jordan…
+                  Share a moment{me?.firstName ? `, ${me.firstName}` : ""}!
                 </span>
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-white">
                   <Plus size={20} />
@@ -291,7 +304,7 @@ export default function FeedPage() {
               </Link>
             </div>
             <ul className="mt-4 space-y-4">
-              {stories.slice(1).map((person) => (
+              {suggestedPeople.map((person) => (
                 <li key={person.id} className="flex items-center gap-3">
                   <Link
                     href={`/profile/${person.id}`}

@@ -1,4 +1,4 @@
-import type { PostPrivacy, SocialPost } from "@/src/types/social";
+import type { PostPrivacy } from "@/src/types/social";
 
 const DRAFT_STORAGE_KEY = "Socil Network.social.drafts.v1";
 
@@ -12,14 +12,6 @@ export type SocialDraft = {
   category: string;
   tags: string[];
   updatedAt: string;
-};
-
-export const SELF: SocialPost["author"] = {
-  id: 1,
-  name: "Jordan Carter",
-  handle: "@jordan_Socil Network",
-  avatar:
-    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=85",
 };
 
 export function loadSocialDrafts(): SocialDraft[] {
