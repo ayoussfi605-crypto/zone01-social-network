@@ -31,15 +31,26 @@ func NewPostRepository(db *sql.DB) PostRepository {
 }
 
 // visibilityPredicate is the shared rule for who is allowed to see a post.
-// A viewer sees a post when they are the author, or when the author's profile
-// is visible to them AND the post privacy rule allows it:
-//   - public         -> anyone
-//   - almost_private -> accepted followers of the author
-//   - private        -> users listed in post_permissions
+// A viewer sees a post when:
+//   - they are the author
+//   - OR the post is 'private' and the viewer was granted explicit permission
+//   - OR the author's profile is accessible (public profile OR viewer is accepted follower) AND:
+//       - the post is 'public'
+//       - OR the post is 'almost_private' and viewer is an accepted follower
 //
-// It expects four positional viewer parameters, in order.
+// It expects four positional viewer parameters, in order:
+//   1. p.author_id = ?
+//   2. pp.user_id = ?
+//   3. f.follower_id = ?
+//   4. f2.follower_id = ?
 const visibilityPredicate = `(
 	p.author_id = ?
+	OR (
+		p.privacy = 'private' AND EXISTS (
+			SELECT 1 FROM post_permissions pp
+			WHERE pp.post_id = p.id AND pp.user_id = ?
+		)
+	)
 	OR (
 		(u.is_private = 0 OR EXISTS (
 			SELECT 1 FROM followers f
@@ -50,10 +61,6 @@ const visibilityPredicate = `(
 			OR (p.privacy = 'almost_private' AND EXISTS (
 				SELECT 1 FROM followers f2
 				WHERE f2.follower_id = ? AND f2.followed_id = p.author_id AND f2.status = 'accepted'
-			))
-			OR (p.privacy = 'private' AND EXISTS (
-				SELECT 1 FROM post_permissions pp
-				WHERE pp.post_id = p.id AND pp.user_id = ?
 			))
 		)
 	)
@@ -250,7 +257,7 @@ func (r *postRepository) GetFeed(ctx context.Context, viewerID, limit int) ([]mo
 	if err != nil {
 		return nil, fmt.Errorf("load feed: %w", err)
 	}
-	return r.collectPosts(ctx, rows)
+	return r.collectPosts(ctx, rows, viewerID)
 }
 
 func (r *postRepository) GetPostsByAuthor(ctx context.Context, authorID, viewerID, limit int) ([]models.Post, error) {
@@ -267,7 +274,7 @@ func (r *postRepository) GetPostsByAuthor(ctx context.Context, authorID, viewerI
 	if err != nil {
 		return nil, fmt.Errorf("load author posts: %w", err)
 	}
-	return r.collectPosts(ctx, rows)
+	return r.collectPosts(ctx, rows, viewerID)
 }
 
 func (r *postRepository) CanViewPost(ctx context.Context, postID, viewerID int) (bool, error) {
@@ -314,7 +321,7 @@ func (r *postRepository) ListAllowedUserIDs(ctx context.Context, postID int) ([]
 
 // collectPosts drains rows into posts and attaches comments to each post
 // using batch queries to avoid N+1 database calls.
-func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows) ([]models.Post, error) {
+func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows, viewerID int) ([]models.Post, error) {
 	defer rows.Close()
 
 	posts := make([]models.Post, 0)
@@ -375,7 +382,7 @@ func (r *postRepository) collectPosts(ctx context.Context, rows *sql.Rows) ([]mo
 		}
 		posts[i].Comments = comments
 		posts[i].CommentCount = len(comments)
-		if posts[i].Privacy == "private" {
+		if posts[i].Privacy == "private" && posts[i].AuthorID == viewerID {
 			posts[i].AllowedUserIDs = allowedByPost[posts[i].ID]
 		}
 	}

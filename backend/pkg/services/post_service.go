@@ -114,7 +114,14 @@ func (s *postService) GetPost(ctx context.Context, viewerID, postID int) (*model
 	if !allowed {
 		return nil, ErrPostNotVisible
 	}
-	return s.repository.GetPostByID(ctx, postID)
+	post, err := s.repository.GetPostByID(ctx, postID)
+	if err != nil {
+		return nil, err
+	}
+	if post.AuthorID != viewerID {
+		post.AllowedUserIDs = nil
+	}
+	return post, nil
 }
 
 func (s *postService) GetComments(ctx context.Context, viewerID, postID int) ([]models.Comment, error) {
