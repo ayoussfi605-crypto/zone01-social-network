@@ -59,11 +59,6 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState("");
 
-  // Inline comment state (keyed by post id)
-  const [commentText, setCommentText] = useState<Record<string, string>>({});
-  const [commentBusy, setCommentBusy] = useState<Record<string, boolean>>({});
-  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
-
   // Suggested people (from discover API)
   const [suggestedPeople, setSuggestedPeople] = useState<DiscoverableUser[]>([]);
 
@@ -112,33 +107,6 @@ export default function FeedPage() {
 
   function profileHref(authorID: number) {
     return authorID === me?.id ? "/profile" : `/profile/${authorID}`;
-  }
-
-  async function submitInlineComment(postID: string) {
-    const text = (commentText[postID] ?? "").trim();
-    if (!text || commentBusy[postID]) return;
-    setCommentBusy((prev) => ({ ...prev, [postID]: true }));
-    try {
-      const newComment = await postService.createComment(postID, {
-        content: text,
-      });
-      setPosts((current) =>
-        current.map((post) =>
-          post.id === postID
-            ? {
-                ...post,
-                comments: [...post.comments, newComment],
-                commentCount: post.commentCount + 1,
-              }
-            : post,
-        ),
-      );
-      setCommentText((prev) => ({ ...prev, [postID]: "" }));
-    } catch {
-      // Silently fail for inline comment — user can retry
-    } finally {
-      setCommentBusy((prev) => ({ ...prev, [postID]: false }));
-    }
   }
 
   // Close post menus when clicking outside
@@ -291,125 +259,42 @@ export default function FeedPage() {
                       )}
                     </div>
 
-                    {/* Post image */}
+                    {/* Post content (FB style: text first) */}
+                    {post.caption && (
+                      <div className="px-4 pb-3 pt-1">
+                        <p className="whitespace-pre-line text-sm leading-relaxed text-[#111827]">
+                          {post.caption}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Post image (optional, below text) */}
                     {post.image && (
                       <Link
                         href={`/posts/${post.id}`}
-                        className="block bg-[#E5E7EB]"
+                        className="block overflow-hidden bg-zinc-100"
                       >
                         <img
                           src={post.image}
                           alt={post.caption || "Post image"}
-                          className="aspect-[4/4.4] w-full object-cover"
+                          className="max-h-[550px] w-full object-cover sm:object-contain"
                         />
                       </Link>
                     )}
 
-                    {/* Post body */}
+                    {/* Post comments link (navigates to post details) */}
                     <div className="px-4 pb-4 pt-3">
-                      <div className="flex items-center gap-4">
-                        <Link
-                          href={`/posts/${post.id}#comments`}
-                          aria-label="View comments"
-                          className="text-[#262626]"
-                        >
-                          <MessageCircle size={22} />
-                        </Link>
-                      </div>
-                      {post.caption && (
-                        <p className="mt-2 text-sm leading-5 text-[#262626]">
-                          <span className="mr-1 font-bold">
-                            {post.author.handle}
-                          </span>
-                          {post.caption}
-                        </p>
-                      )}
-
-                      {/* Comments summary + inline */}
-                      {post.commentCount > 0 && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpandedComments((prev) => ({
-                              ...prev,
-                              [post.id]: !prev[post.id],
-                            }))
-                          }
-                          className="mt-2 block text-sm text-zinc-500 hover:text-zinc-700"
-                        >
-                          {expandedComments[post.id]
-                            ? "Hide comments"
-                            : `View all ${post.commentCount} comments`}
-                        </button>
-                      )}
-
-                      {/* Expanded inline comments */}
-                      {expandedComments[post.id] && post.comments.length > 0 && (
-                        <ul className="mt-3 space-y-2.5">
-                          {post.comments.map((item) => (
-                            <li key={item.id} className="flex gap-2">
-                              <Link href={profileHref(item.author.id)}>
-                                <img
-                                  src={item.author.avatar}
-                                  alt=""
-                                  className="h-7 w-7 shrink-0 rounded-full object-cover"
-                                />
-                              </Link>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm leading-5 text-[#262626]">
-                                  <Link
-                                    href={profileHref(item.author.id)}
-                                    className="mr-1.5 font-bold hover:underline"
-                                  >
-                                    {item.author.handle}
-                                  </Link>
-                                  {item.text}
-                                </p>
-                                {item.image && (
-                                  <img
-                                    src={item.image}
-                                    alt="Comment attachment"
-                                    className="mt-1 max-h-32 rounded-lg object-cover"
-                                  />
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      {/* Inline comment input */}
-                      <div className="mt-3 flex items-center gap-2">
-                        <input
-                          value={commentText[post.id] ?? ""}
-                          onChange={(e) =>
-                            setCommentText((prev) => ({
-                              ...prev,
-                              [post.id]: e.target.value,
-                            }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              void submitInlineComment(post.id);
-                            }
-                          }}
-                          placeholder="Add a comment…"
-                          maxLength={1000}
-                          className="min-w-0 flex-1 rounded-full bg-[#F3F4F6] px-3 py-2 text-xs outline-none placeholder:text-zinc-400"
-                        />
-                        <button
-                          type="button"
-                          disabled={
-                            !(commentText[post.id] ?? "").trim() ||
-                            !!commentBusy[post.id]
-                          }
-                          onClick={() => void submitInlineComment(post.id)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white disabled:bg-[#E5E7EB] disabled:text-[#6B7280]"
-                        >
-                          <Send size={14} />
-                        </button>
-                      </div>
+                      <Link
+                        href={`/posts/${post.id}#comments`}
+                        className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-800"
+                      >
+                        <MessageCircle size={18} />
+                        <span>
+                          {post.commentCount === 0
+                            ? "Comment"
+                            : `View all ${post.commentCount} ${post.commentCount === 1 ? "comment" : "comments"}`}
+                        </span>
+                      </Link>
                     </div>
                   </li>
                 ))}

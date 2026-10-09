@@ -202,8 +202,18 @@ export default function PostDetailsPage() {
           )}
         </div>
 
+        {/* Post content (FB style: text first) */}
+        {post.caption && (
+          <div className="px-4 pb-3 pt-1">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#111827]">
+              {post.caption}
+            </p>
+          </div>
+        )}
+
+        {/* Post image (optional, below text) */}
         {post.image && (
-          <div className="flex max-h-[70dvh] items-center justify-center bg-black">
+          <div className="flex max-h-[70dvh] items-center justify-center overflow-hidden bg-zinc-100">
             <img
               src={post.image}
               alt={post.caption || "Post attachment"}
@@ -211,15 +221,6 @@ export default function PostDetailsPage() {
             />
           </div>
         )}
-
-        <div className="px-4 py-4">
-          {post.caption && (
-            <p className="whitespace-pre-wrap text-sm leading-6 text-[#262626]">
-              <span className="mr-1 font-bold">{post.author.handle}</span>
-              {post.caption}
-            </p>
-          )}
-        </div>
 
         <section id="comments" className="border-t border-zinc-200 px-4 py-4">
           <h2 className="mb-4 text-sm font-bold">
