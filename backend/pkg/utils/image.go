@@ -7,9 +7,38 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 )
+
+// ResolveMediaDir returns the configured or resolved media folder path.
+func ResolveMediaDir() string {
+	if dir := os.Getenv("MEDIA_DIR"); dir != "" {
+		return dir
+	}
+	if info, err := os.Stat("./media"); err == nil && info.IsDir() {
+		return "./media"
+	}
+	if info, err := os.Stat("./backend/media"); err == nil && info.IsDir() {
+		return "./backend/media"
+	}
+	return "./media"
+}
+
+// DeleteMediaFile safely removes a media file given its relative URL (e.g. "/media/xyz.jpg").
+func DeleteMediaFile(imagePath string) {
+	if !strings.HasPrefix(imagePath, "/media/") {
+		return
+	}
+	fileName := filepath.Base(imagePath)
+	if fileName == "" || fileName == "." || fileName == ".." {
+		return
+	}
+	mediaDir := ResolveMediaDir()
+	filePath := filepath.Join(mediaDir, fileName)
+	_ = os.Remove(filePath)
+}
 
 // ValidateAndSaveImage checks the file extension and saves the image to the disk
 func ValidateAndSaveImage(file multipart.File, header *multipart.FileHeader, destFolder string) (string, error) {
@@ -20,11 +49,15 @@ func ValidateAndSaveImage(file multipart.File, header *multipart.FileHeader, des
 
 	// 2. Read the file header to detect the actual mime type
 	buffer := make([]byte, 512)
-	if _, err := file.Read(buffer); err != nil {
+	n, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
 		return "", fmt.Errorf("unable to inspect file headers")
 	}
+	if n == 0 {
+		return "", fmt.Errorf("image file is empty")
+	}
 
-	mimeType := http.DetectContentType(buffer)
+	mimeType := http.DetectContentType(buffer[:n])
 
 	// Task 0.2: Validate image types (JPEG, PNG, GIF)
 	allowedMimeTypes := map[string]string{

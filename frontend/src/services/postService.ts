@@ -9,7 +9,6 @@ import { API_URL, profileService } from "./profileService";
 
 type Envelope<T> = { data: T };
 
-// Neutral placeholder for users without an uploaded avatar.
 const FALLBACK_AVATAR =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
@@ -18,15 +17,13 @@ const FALLBACK_AVATAR =
 
 function handleFrom(name: string, nickname: string) {
   const base = (nickname || name).replace(/^@/, "").replace(/\s+/g, "");
-  return `@${base.toLowerCase() || "Socil Network"}`;
+  return `@${base.toLowerCase() || "user"}`;
 }
 
 function avatarURL(path: string) {
   return path ? profileService.avatarURL(path) : FALLBACK_AVATAR;
 }
 
-// image_path may be a stored /media/... path or an absolute remote URL
-// chosen from the composer's quick-pick gallery.
 function imageURL(path: string) {
   if (!path) return "";
   return /^https?:\/\//.test(path) ? path : profileService.avatarURL(path);
@@ -40,7 +37,7 @@ export function toSocialPerson(
 ): SocialPerson {
   return {
     id,
-    name: name || "Socil Network member",
+    name: name || "Member",
     handle: handleFrom(name, nickname),
     avatar: avatarURL(avatarPath),
   };
@@ -53,11 +50,10 @@ export function toSocialComment(comment: ApiComment): SocialComment {
       comment.author_id,
       comment.author_name,
       comment.author_avatar,
+      comment.author_nickname,
     ),
     text: comment.content,
-    image: comment.image_path
-      ? profileService.avatarURL(comment.image_path)
-      : undefined,
+    image: comment.image_path ? imageURL(comment.image_path) : undefined,
     createdAt: comment.created_at,
   };
 }
@@ -72,14 +68,12 @@ export function toSocialPost(post: ApiPost): SocialPost {
       post.author_nickname,
     ),
     caption: post.content,
-    images: post.image_path ? [imageURL(post.image_path)] : [],
-    location: "",
+    image: imageURL(post.image_path),
     privacy: post.privacy,
     audienceIDs: post.allowed_user_ids ?? [],
     createdAt: post.created_at,
-    likes: 0,
-    liked: false,
     comments: (post.comments ?? []).map(toSocialComment),
+    commentCount: post.comment_count ?? 0,
   };
 }
 
@@ -122,7 +116,6 @@ export type NewPostInput = {
   privacy: PostPrivacy;
   allowedUserIDs?: number[];
   image?: File | null;
-  imageUrl?: string;
 };
 
 export const postService = {
@@ -135,13 +128,17 @@ export const postService = {
     postApi<Envelope<ApiPost[]>>(`/api/users/${userID}/posts`).then(
       (response) => (response.data ?? []).map(toSocialPost),
     ),
-  getPost: async (postID: number | string): Promise<SocialPost | null> => {
+  getPost: async (
+    postID: number | string,
+  ): Promise<{ post: SocialPost | null; reason: "ok" | "forbidden" | "not_found" | "error" }> => {
     try {
       const response = await postApi<Envelope<ApiPost>>(`/api/posts/${postID}`);
-      return toSocialPost(response.data);
+      return { post: toSocialPost(response.data), reason: "ok" };
     } catch (error) {
-      if ((error as { status?: number }).status === 403) return null;
-      throw error;
+      const status = (error as { status?: number }).status;
+      if (status === 403) return { post: null, reason: "forbidden" };
+      if (status === 404) return { post: null, reason: "not_found" };
+      return { post: null, reason: "error" };
     }
   },
   createPost: (input: NewPostInput) => {
@@ -153,8 +150,6 @@ export const postService = {
     }
     if (input.image) {
       form.append("image", input.image);
-    } else if (input.imageUrl) {
-      form.append("image_url", input.imageUrl);
     }
     return postApi<Envelope<ApiPost>>("/api/posts", {
       method: "POST",

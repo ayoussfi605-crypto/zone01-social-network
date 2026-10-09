@@ -19,4 +19,5 @@ type CreatePostRequest struct {
 	Content        string `json:"content"`
 	Privacy        string `json:"privacy"`
 	AllowedUserIDs []int  `json:"allowed_user_ids"`
+	ImageURL       string `json:"image_url,omitempty"`
 }

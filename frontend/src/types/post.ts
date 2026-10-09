@@ -6,6 +6,7 @@ export type ApiComment = {
   author_id: number;
   author_name: string;
   author_avatar: string;
+  author_nickname: string;
   content: string;
   image_path: string;
   created_at: string;
