@@ -41,8 +41,6 @@ async function groupApi<T>(
 }
 
 export const groupService = {
-
-
   createGroup: async (
     title: string,
     description: string,
@@ -61,8 +59,6 @@ export const groupService = {
     return respons.data;
   },
 
- 
-
   browseGroups: async () => {
     const respons: any = await api("/api/groups/discover", { method: "GET" });
     if (!respons.success) {
@@ -72,22 +68,87 @@ export const groupService = {
 
     return respons.data ?? [];
   },
-  getMembers: (groupID: number) =>
-    groupApi<GroupMember[]>(`/api/groups/${groupID}/members`),
-  getInviteCandidates: (groupID: number) =>
-    groupApi<GroupMember[]>(`/api/groups/${groupID}/invite-candidates`),
-  inviteMembers: (groupID: number, userIDs: number[]) =>
-    groupApi<void>(`/api/groups/${groupID}/invites`, {
+  // getMembers: (groupID: number) =>
+  //   groupApi<GroupMember[]>(`/api/groups/${groupID}/members`),
+
+  getMembers: async (groupID: number) => {
+    const respons: any = await api(`/api/groups/${groupID}/members`, {
+      method: "GET",
+    });
+    if (!respons.success) {
+      return respons;
+    }
+    console.log("getMembers groups res ", respons.data);
+
+    return respons.data ?? [];
+  },
+
+  // getInviteCandidates: (groupID: number) =>
+  //   groupApi<GroupMember[]>(`/api/groups/${groupID}/invite-candidates`),
+  getInviteCandidates: async (groupID: number) => {
+    const respons: any = await api(`/api/groups/${groupID}/invite-candidates`, {
+      method: "GET",
+    });
+    if (!respons.success) {
+      return respons;
+    }
+    console.log("getMembers groups res ", respons.data);
+
+    return respons.data ?? [];
+  },
+  // inviteMembers: (groupID: number, userIDs: number[]) =>
+  //   groupApi<void>(`/api/groups/${groupID}/invites`, {
+  //     method: "POST",
+  //     body: JSON.stringify({ user_ids: userIDs }),
+  //   }),
+
+  inviteMembers: async (groupID: number, userIDs: number[]) => {
+    const respons: any = await api(`/api/groups/${groupID}/invites`, {
       method: "POST",
       body: JSON.stringify({ user_ids: userIDs }),
-    }),
-  getJoinRequests: (groupID: number) =>
-    groupApi<GroupJoinRequest[]>(`/api/groups/${groupID}/join-requests`),
-  respondToJoinRequest: (groupID: number, userID: number, accept: boolean) =>
-    groupApi<{ status: "accepted" | "declined" }>(
+    });
+    if (!respons.success) {
+      return respons;
+    }
+    console.log("inviteMembers groups res ", respons.data);
+
+    return respons.data ?? [];
+  },
+  // getJoinRequests: (groupID: number) =>
+  //   groupApi<GroupJoinRequest[]>(`/api/groups/${groupID}/join-requests`),
+  getJoinRequests: async (groupID: number) => {
+    const respons: any = await api(`/api/groups/${groupID}/join-requests`, {
+      method: "GET",
+    });
+    if (!respons.success) {
+      return respons;
+    }
+    console.log("getJoinRequests groups res ", respons.data);
+
+    return respons.data ?? [];
+  },
+
+  // respondToJoinRequest: (groupID: number, userID: number, accept: boolean) =>
+  //   groupApi<{ status: "accepted" | "declined" }>(
+  //     `/api/groups/${groupID}/join-requests/${userID}/response`,
+  //     { method: "POST", body: JSON.stringify({ accept }) },
+  //   ),
+  respondToJoinRequest: async (
+    groupID: number,
+    userID: number,
+    accept: boolean,
+  ) => {
+    const respons: any = await api(
       `/api/groups/${groupID}/join-requests/${userID}/response`,
       { method: "POST", body: JSON.stringify({ accept }) },
-    ),
+    );
+    if (!respons.success) {
+      return respons;
+    }
+    console.log("respondToJoinRequest groups res ", respons.data);
+
+    return respons.data ?? [];
+  },
   getPosts: (groupID: number) =>
     groupApi<GroupPost[]>(`/api/groups/${groupID}/posts`),
   createPost: (groupID: number, content: string) =>
