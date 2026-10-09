@@ -506,7 +506,7 @@ export default function NotificationsPage() {
                           ),
                         );
                         void notificationService
-                          .markRead(item.id)
+                          .markRead()
                           .catch(() => undefined);
                       }}
                       className={`flex gap-3 px-4 py-4 sm:px-5 ${item.is_read ? "bg-white" : "bg-[#C2DCFB]/25"}`}
