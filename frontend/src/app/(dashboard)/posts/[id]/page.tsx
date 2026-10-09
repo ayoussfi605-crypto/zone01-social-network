@@ -5,23 +5,28 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Heart,
   ImagePlus,
   Send,
   Trash2,
   UserRound,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { profileService } from "@/src/services/profileService";
 import { postService } from "@/src/services/postService";
 import type { SocialPost } from "@/src/types/social";
 import type { User } from "@/src/types/user";
 import DeletePostDialog from "@/src/components/posts/DeletePostDialog";
 
+/** Parse backend timestamps (YYYY-MM-DD HH:MM:SS) as UTC. */
+function parseUTC(value: string): number {
+  const normalized = /[TZ+\-]/.test(value) ? value : value.replace(" ", "T") + "Z";
+  return Date.parse(normalized);
+}
+
 function formatDate(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  const ts = parseUTC(value);
+  return Number.isNaN(ts) ? value : new Date(ts).toLocaleString();
 }
 
 export default function PostDetailsPage() {
@@ -29,28 +34,51 @@ export default function PostDetailsPage() {
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [post, setPost] = useState<SocialPost | null>(null);
+  const [postReason, setPostReason] = useState<"ok" | "forbidden" | "not_found" | "error">("ok");
   const [comment, setComment] = useState("");
   const [commentFile, setCommentFile] = useState<File | null>(null);
   const [commentPreview, setCommentPreview] = useState("");
+  const commentPreviewRef = useRef("");
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [checkingAccess, setCheckingAccess] = useState(true);
   const [commentError, setCommentError] = useState("");
+
+  // Clean up object URL on unmount or when preview changes
+  useEffect(() => {
+    return () => {
+      if (commentPreviewRef.current) {
+        URL.revokeObjectURL(commentPreviewRef.current);
+      }
+    };
+  }, []);
+
+  function setPreview(url: string) {
+    if (commentPreviewRef.current) {
+      URL.revokeObjectURL(commentPreviewRef.current);
+    }
+    commentPreviewRef.current = url;
+    setCommentPreview(url);
+  }
 
   useEffect(() => {
     let active = true;
     async function load() {
       setCheckingAccess(true);
       try {
-        const [user, candidate] = await Promise.all([
+        const [user, result] = await Promise.all([
           profileService.getCurrentUser().catch(() => null),
           postService.getPost(params.id),
         ]);
         if (!active) return;
         setCurrentUser(user);
-        setPost(candidate);
+        setPost(result.post);
+        setPostReason(result.reason);
       } catch {
-        if (active) setPost(null);
+        if (active) {
+          setPost(null);
+          setPostReason("error");
+        }
       } finally {
         if (active) setCheckingAccess(false);
       }
@@ -61,16 +89,8 @@ export default function PostDetailsPage() {
     };
   }, [params.id]);
 
-  function toggleLike() {
-    setPost((current) =>
-      current
-        ? {
-            ...current,
-            liked: !current.liked,
-            likes: current.likes + (current.liked ? -1 : 1),
-          }
-        : current,
-    );
+  function profileHref(authorID: number) {
+    return authorID === currentUser?.id ? "/profile" : `/profile/${authorID}`;
   }
 
   async function addComment(event: React.FormEvent<HTMLFormElement>) {
@@ -78,15 +98,22 @@ export default function PostDetailsPage() {
     if (!post || (!comment.trim() && !commentFile)) return;
     setCommentError("");
     try {
-      await postService.createComment(post.id, {
+      const newComment = await postService.createComment(post.id, {
         content: comment.trim(),
         image: commentFile,
       });
-      const refreshed = await postService.getPost(post.id);
-      if (refreshed) setPost(refreshed);
+      setPost((current) =>
+        current
+          ? {
+              ...current,
+              comments: [...current.comments, newComment],
+              commentCount: current.commentCount + 1,
+            }
+          : current,
+      );
       setComment("");
       setCommentFile(null);
-      setCommentPreview("");
+      setPreview("");
     } catch (reason: unknown) {
       setCommentError(
         reason instanceof Error ? reason.message : "Could not post comment",
@@ -105,6 +132,12 @@ export default function PostDetailsPage() {
   }
 
   if (!post) {
+    let message = "This post is unavailable.";
+    if (postReason === "forbidden")
+      message = "You don\u2019t have permission to view this post.";
+    else if (postReason === "not_found")
+      message = "This post doesn\u2019t exist or has been deleted.";
+
     return (
       <main className="min-h-screen bg-white px-5 py-8 text-zinc-900">
         <Link
@@ -114,7 +147,7 @@ export default function PostDetailsPage() {
           <ArrowLeft size={17} /> Feed
         </Link>
         <p className="mx-auto mt-16 max-w-sm text-center text-sm text-zinc-500">
-          This post is unavailable.
+          {message}
         </p>
       </main>
     );
@@ -135,15 +168,27 @@ export default function PostDetailsPage() {
 
       <article className="mx-auto max-w-xl">
         <div className="flex items-center gap-3 px-4 py-3">
-          <img
-            src={post.author.avatar}
-            alt=""
-            className="h-10 w-10 rounded-full object-cover"
-          />
+          <Link href={profileHref(post.author.id)}>
+            <img
+              src={post.author.avatar}
+              alt=""
+              className="h-10 w-10 rounded-full object-cover"
+            />
+          </Link>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold">{post.author.name}</p>
+            <Link
+              href={profileHref(post.author.id)}
+              className="truncate text-sm font-bold hover:underline"
+            >
+              {post.author.name}
+            </Link>
             <p className="text-xs text-zinc-500">
               {post.author.handle} · {formatDate(post.createdAt)}
+              {post.privacy !== "public" && (
+                <span className="ml-1 text-zinc-400">
+                  · {post.privacy === "private" ? "🔒 Private" : "👥 Followers"}
+                </span>
+              )}
             </p>
           </div>
           {currentUser?.id === post.author.id && (
@@ -168,21 +213,8 @@ export default function PostDetailsPage() {
         )}
 
         <div className="px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={toggleLike}
-              aria-label={post.liked ? "Unlike post" : "Like post"}
-              className="text-[#262626]"
-            >
-              <Heart size={23} fill={post.liked ? "#000000" : "none"} />
-            </button>
-            <span className="text-sm font-bold">
-              {post.likes.toLocaleString()} likes
-            </span>
-          </div>
           {post.caption && (
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#262626]">
+            <p className="whitespace-pre-wrap text-sm leading-6 text-[#262626]">
               <span className="mr-1 font-bold">{post.author.handle}</span>
               {post.caption}
             </p>
@@ -192,7 +224,7 @@ export default function PostDetailsPage() {
         <section id="comments" className="border-t border-zinc-200 px-4 py-4">
           <h2 className="mb-4 text-sm font-bold">
             Comments{" "}
-            <span className="text-zinc-500">{post.comments.length}</span>
+            <span className="text-zinc-500">{post.commentCount}</span>
           </h2>
           {post.comments.length === 0 ? (
             <p className="py-6 text-center text-sm text-zinc-500">
@@ -202,16 +234,21 @@ export default function PostDetailsPage() {
             <ul className="space-y-5">
               {post.comments.map((item) => (
                 <li key={item.id} className="flex gap-3">
-                  <img
-                    src={item.author.avatar}
-                    alt=""
-                    className="h-9 w-9 shrink-0 rounded-full object-cover"
-                  />
+                  <Link href={profileHref(item.author.id)}>
+                    <img
+                      src={item.author.avatar}
+                      alt=""
+                      className="h-9 w-9 shrink-0 rounded-full object-cover"
+                    />
+                  </Link>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-5 text-[#262626]">
-                      <span className="mr-2 font-bold">
-                        {item.author.name}
-                      </span>
+                      <Link
+                        href={profileHref(item.author.id)}
+                        className="mr-2 font-bold hover:underline"
+                      >
+                        {item.author.handle}
+                      </Link>
                       {item.text}
                     </p>
                     <p className="mt-1 text-[11px] text-zinc-500">
@@ -252,7 +289,7 @@ export default function PostDetailsPage() {
               type="button"
               onClick={() => {
                 setCommentFile(null);
-                setCommentPreview("");
+                setPreview("");
               }}
               aria-label="Remove attachment"
               className="text-[#6B7280]"
@@ -275,30 +312,33 @@ export default function PostDetailsPage() {
           )}
           <input
             value={comment}
-            onChange={(event) => setComment(event.target.value)}
+            onChange={(event) => {
+              setComment(event.target.value);
+              if (commentError) setCommentError("");
+            }}
             placeholder="Add a comment…"
             maxLength={1000}
             className="min-w-0 flex-1 rounded-full bg-[#E5E7EB] px-4 py-2.5 text-sm outline-none placeholder:text-zinc-500"
           />
           <label
-            aria-label="Attach image or GIF"
+            aria-label="Attach image"
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-[#6B7280]"
           >
             <ImagePlus size={18} />
             <input
               type="file"
-              accept="image/*,.gif"
+              accept="image/jpeg,image/png,image/gif,image/webp"
               className="sr-only"
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 if (!file) return;
-                if (file.size > 5_000_000) {
-                  setCommentError("Choose an image under 5MB.");
+                if (file.size > 5 * 1024 * 1024) {
+                  setCommentError("Choose an image under 5 MB.");
                   event.target.value = "";
                   return;
                 }
                 setCommentFile(file);
-                setCommentPreview(URL.createObjectURL(file));
+                setPreview(URL.createObjectURL(file));
                 event.target.value = "";
               }}
             />

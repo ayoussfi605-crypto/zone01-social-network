@@ -67,7 +67,7 @@ export default function UserProfilePage() {
     <main className="min-h-screen bg-white px-4 py-8">
       <div className="mx-auto max-w-4xl space-y-5">
         <Link
-          href="/followers"
+          href="/"
           className="inline-block text-sm font-semibold text-indigo-700 hover:text-indigo-900"
         >
           ← Back to feed

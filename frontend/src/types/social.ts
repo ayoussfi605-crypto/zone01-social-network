@@ -23,7 +23,6 @@ export type SocialPost = {
   privacy: PostPrivacy;
   audienceIDs: number[];
   createdAt: string;
-  likes: number;
-  liked: boolean;
   comments: SocialComment[];
+  commentCount: number;
 };

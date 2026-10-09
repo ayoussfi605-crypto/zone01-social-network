@@ -22,7 +22,7 @@ const privacyOptions = [
   {
     id: "public",
     label: "Public",
-    detail: "Anyone on Socil Network can see this post.",
+    detail: "Anyone on Social Network can see this post.",
     Icon: Globe,
   },
   {
@@ -106,8 +106,8 @@ export default function CreatePostPage() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (file.size > 5_000_000) {
-      setError("Choose an image or GIF under 5MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Choose an image under 5 MB.");
       return;
     }
     setImage({ file, preview: URL.createObjectURL(file) });
@@ -280,7 +280,7 @@ export default function CreatePostPage() {
                 followers.map((follower) => (
                   <label
                     key={follower.id}
-                    className="flex items-center gap-2 text-sm text-[#262626]"
+                    className="flex cursor-pointer items-center gap-2.5 rounded-lg p-1.5 text-sm text-[#262626] hover:bg-[#F3F4F6]"
                   >
                     <input
                       type="checkbox"
@@ -294,7 +294,25 @@ export default function CreatePostPage() {
                       }
                       className="accent-black"
                     />
-                    {follower.first_name} {follower.last_name}
+                    <span className="h-7 w-7 shrink-0 overflow-hidden rounded-full bg-[#C2DCFB]">
+                      {follower.avatar_path ? (
+                        <img
+                          src={profileService.avatarURL(follower.avatar_path)}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-[#4B5563]">
+                          <UserRound size={14} />
+                        </span>
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="font-semibold">{follower.first_name} {follower.last_name}</span>
+                      {follower.nickname && (
+                        <span className="ml-1 text-xs text-[#6B7280]">(@{follower.nickname})</span>
+                      )}
+                    </span>
                   </label>
                 ))
               )}
