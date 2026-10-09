@@ -10,6 +10,7 @@ import type {
   GroupPost,
   GroupSummary,
 } from "../types/group";
+import { api } from "./api";
 
 type GroupResponse<T> = {
   success: boolean;
@@ -40,19 +41,37 @@ async function groupApi<T>(
 }
 
 export const groupService = {
-  createGroup: (title: string, description: string, memberIDs: number[]) =>
-    groupApi<GroupSummary>("/api/groups", {
+
+
+  createGroup: async (
+    title: string,
+    description: string,
+    memberIDs: number[],
+  ) => {
+    const respons: any = await api("/api/groups", {
       method: "POST",
       body: JSON.stringify({ title, description, member_ids: memberIDs }),
-    }),
-  browseGroups: () => groupApi<GroupDiscovery[]>("/api/groups/discover"),
-  requestToJoin: (groupID: number) =>
-    groupApi<{ status: "pending_request" }>(
-      `/api/groups/${groupID}/join-requests`,
-      {
-        method: "POST",
-      },
-    ),
+    });
+    if (!respons.success) {
+      return respons;
+    }
+
+    console.log("creat group res", respons);
+
+    return respons.data;
+  },
+
+ 
+
+  browseGroups: async () => {
+    const respons: any = await api("/api/groups/discover", { method: "GET" });
+    if (!respons.success) {
+      return respons;
+    }
+    console.log("browse groups res ", respons.data);
+
+    return respons.data ?? [];
+  },
   getMembers: (groupID: number) =>
     groupApi<GroupMember[]>(`/api/groups/${groupID}/members`),
   getInviteCandidates: (groupID: number) =>
