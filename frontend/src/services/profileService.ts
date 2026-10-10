@@ -6,8 +6,7 @@ import type {
 } from "../types/profile";
 import type { User } from "../types/user";
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+export const API_URL = "http://localhost:8080";
 
 export type HttpError = Error & { status?: number };
 
