@@ -10,6 +10,7 @@ export default function FollowButton({
   onStatusChange,
 }: {
   userId: number;
+  
   initialStatus: FollowStatus;
   onStatusChange: (status: FollowStatus) => void;
 }) {

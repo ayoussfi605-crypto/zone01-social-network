@@ -10,11 +10,11 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export type HttpError = Error & { status?: number };
-
+//adds that status number to an error.
 function withStatus(error: Error, status: number): HttpError {
   return Object.assign(error, { status });
 }
-
+//checks if the error is an unauthorized error (401)
 export function isUnauthorized(error: unknown) {
   return (error as HttpError | null)?.status === 401;
 }
