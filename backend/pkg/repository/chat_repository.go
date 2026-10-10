@@ -18,6 +18,7 @@ type ChatRepository interface {
 	SaveGroupMessage(senderID, groupID int, message string) error
 	GetGroupMessages(groupID int) ([]models.GroupChatMessage, error)
 	GetGroupMemberIDs(groupID int) ([]int, error)
+	MarkMessagesAsRead(id int, userId int) error
 }
 
 type ChatUsers struct {
@@ -67,48 +68,61 @@ func (r *chatRepository) GetChatUsers(
 	userId int,
 ) ([]ChatUsers, error) {
 	query := `
-    SELECT
-        u.id,
-        COALESCE(u.nickname, '') AS name,
-        COALESCE(u.first_name || ' ' || u.last_name, '') AS full_name,
-        COALESCE('@' || u.nickname, '') AS handle,
-        COALESCE(u.avatar_path, '') AS avatar,
-        
-        COALESCE(last_msg.content, '') AS last_message,
-        COALESCE(strftime('%H:%M', last_msg.created_at), '') AS time,
-        
-        (
-            SELECT COUNT(*)
-            FROM messages
-            WHERE sender_id = u.id
-              AND recipient_id = ?
-              AND read_at IS NULL
-        ) AS unread_count,
-        
-        0 AS online
+SELECT
+    u.id,
+    COALESCE(u.nickname, '') AS name,
+    COALESCE(u.first_name || ' ' || u.last_name, '') AS full_name,
+    COALESCE('@' || u.nickname, '') AS handle,
+    COALESCE(u.avatar_path, '') AS avatar,
 
-    FROM users u
-    INNER JOIN followers f 
-        ON u.id = f.followed_id
+    COALESCE(last_msg.content, '') AS last_message,
+    COALESCE(strftime('%H:%M', last_msg.created_at), '') AS time,
 
+    (
+        SELECT COUNT(*)
+        FROM messages
+        WHERE sender_id = u.id
+          AND recipient_id = ?
+          AND read_at IS NULL
+    ) AS unread_count,
 
-    LEFT JOIN messages last_msg 
-        ON last_msg.id = (
-            SELECT id 
-            FROM messages 
-            WHERE (sender_id = u.id AND recipient_id = ?) 
-               OR (sender_id = ? AND recipient_id = u.id)
-            ORDER BY created_at DESC 
-            LIMIT 1
-        )
+    0 AS online
 
-    WHERE f.follower_id = ?
-      AND f.status = 'accepted';
-    `
+FROM users u
 
-	rows, err := r.db.Query(query, userId, userId, userId, userId)
+INNER JOIN followers f
+    ON (
+        (f.follower_id = ? AND f.followed_id = u.id)
+        OR
+        (f.followed_id = ? AND f.follower_id = u.id)
+    )
+    AND f.status = 'accepted'
+
+LEFT JOIN messages last_msg
+    ON last_msg.id = (
+        SELECT id
+        FROM messages
+        WHERE (sender_id = u.id AND recipient_id = ?)
+           OR (sender_id = ? AND recipient_id = u.id)
+        ORDER BY created_at DESC
+        LIMIT 1
+    )
+
+WHERE u.id != ?
+
+; 
+	`
+	rows, err := r.db.Query(
+		query,
+		userId,
+		userId,
+		userId,
+		userId,
+		userId,
+		userId,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chat users: %w", err)
 	}
 	defer rows.Close()
 
@@ -286,4 +300,19 @@ func (r *chatRepository) GetGroupMemberIDs(groupID int) ([]int, error) {
 		userIDs = append(userIDs, userID)
 	}
 	return userIDs, rows.Err()
+}
+
+func (r *chatRepository) MarkMessagesAsRead(recipient_id int, sender_id int) error {
+	query := `
+UPDATE messages
+SET read_at = CURRENT_DATE
+WHERE sender_id = ?
+AND recipient_id = ?;	
+	`
+	_, err := r.db.Exec(query, sender_id, recipient_id)
+	if err != nil {
+		return errors.New("we can not inster now reat at")
+	}
+	fmt.Println("Messages goood senderID is :", sender_id, "reciverId is :", recipient_id)
+	return nil
 }

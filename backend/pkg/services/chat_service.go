@@ -16,6 +16,7 @@ type ChatServices interface {
 	SaveGroupMessage(senderID, groupID int, message string) error
 	GetGroupMessages(userID, groupID int) ([]models.GroupChatMessage, error)
 	GetGroupMemberIDs(groupID int) ([]int, error)
+	MarkMessagesAsRead(receiver_id int, sender_id int) error
 }
 
 type chatServices struct {
@@ -115,4 +116,19 @@ func (s *chatServices) GetGroupMessages(userID, groupID int) ([]models.GroupChat
 
 func (s *chatServices) GetGroupMemberIDs(groupID int) ([]int, error) {
 	return s.ChatRepo.GetGroupMemberIDs(groupID)
+}
+
+func (s *chatServices) MarkMessagesAsRead(receiver_id int, sender_id int) error {
+	_, err := s.ChatRepo.GetUserById(receiver_id)
+	if err != nil || receiver_id <= 0 {
+		return errors.New("invalid receiver userId")
+	}
+
+	_, err = s.ChatRepo.GetUserById(sender_id)
+
+	if err != nil || receiver_id <= 0 {
+		return errors.New("invalid sender userId")
+	}
+
+	return s.ChatRepo.MarkMessagesAsRead(receiver_id, sender_id)
 }

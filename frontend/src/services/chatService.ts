@@ -17,4 +17,11 @@ export const ChatService = {
       method: "GET",
     })) as APIResponse<ChatMessage[]>;
   },
+  MarkMessagesRed: async (
+    id: string | number,
+  ): Promise<APIResponse<ChatMessage[]>> => {
+    return (await api(`/api/messages/read/${id}`, {
+      method: "GET",
+    })) as APIResponse<ChatMessage[]>;
+  },
 };

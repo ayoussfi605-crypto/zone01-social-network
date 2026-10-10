@@ -2,8 +2,9 @@
 
 import { useWebSocket } from "@/src/context/WebSocketConetext";
 import { authService } from "@/src/services/authService";
-import { ChatEvent, ChatMessage } from "@/src/types/chat";
-import { ArrowLeft, ImagePlus, Paperclip, Send, Smile } from "lucide-react";
+import { ChatService } from "@/src/services/chatService";
+import { ChatEvent, ChatMessage, ChatUsers } from "@/src/types/chat";
+import { ArrowLeft, Send, Smile } from "lucide-react";
 import { useState, useEffect, useRef, SetStateAction } from "react";
 type User = {
   id: number | string;
@@ -16,6 +17,7 @@ interface DiscussionWindowProps {
   UserData: User;
   DiscussionMessages: ChatMessage[];
   setChatMessages: (value: SetStateAction<ChatMessage[]>) => void;
+  setChatUsers: (value: SetStateAction<ChatUsers[]>) => void;
   onBack: () => void;
 }
 
@@ -24,14 +26,14 @@ export default function DiscussionWindow({
   DiscussionMessages,
   setChatMessages,
   onBack,
+  setChatUsers,
 }: DiscussionWindowProps) {
   console.log("DiscussionMessages", DiscussionMessages);
   const [message, setMessage] = useState<string>("");
 
   const [Me, setMe] = useState<User | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const attachmentInputRef = useRef<HTMLInputElement>(null);
-  const [attachmentName, setAttachmentName] = useState("");
+
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +46,11 @@ export default function DiscussionWindow({
   };
 
   useEffect(() => {
+    ChatService.MarkMessagesRed(UserData.id);
+    const GetUserData = async () => {
+      const userList = await ChatService.getChatUserList();
+      setChatUsers(userList.data);
+    };
     scrollToBottom();
     const GetMe = async () => {
       await authService
@@ -58,16 +65,12 @@ export default function DiscussionWindow({
         });
     };
     GetMe();
+    GetUserData();
   }, [DiscussionMessages]);
 
   const handleSend = () => {
-    if ((!message.trim() && !attachmentName) || !Me) return;
-    const messageContent = [
-      message.trim(),
-      attachmentName ? `[Attachment: ${attachmentName}]` : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
+    if (!message.trim() || !Me) return;
+    const messageContent = [message.trim()].filter(Boolean).join(" ");
 
     const payload = {
       type: "message_private",
@@ -89,7 +92,6 @@ export default function DiscussionWindow({
       },
     ]);
     setMessage("");
-    setAttachmentName("");
   };
 
   useEffect(() => {
@@ -151,8 +153,6 @@ export default function DiscussionWindow({
           {DiscussionMessages?.map((msg, index) => {
             const isMe = Number(Me?.id) === Number(msg.sender_id);
 
-            console.log("msg  ", msg);
-
             return (
               <div
                 key={index}
@@ -195,28 +195,8 @@ export default function DiscussionWindow({
               ))}
             </div>
           )}
-          {attachmentName && (
-            <p className="mx-auto mb-2 max-w-3xl text-xs text-[#6B7280]">
-              Attached: {attachmentName}
-            </p>
-          )}
+
           <div className="mx-auto flex max-w-3xl items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2">
-            <button
-              type="button"
-              onClick={() => attachmentInputRef.current?.click()}
-              aria-label="Attach a file"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6B7280]"
-            >
-              <Paperclip size={18} />
-            </button>
-            <button
-              type="button"
-              onClick={() => attachmentInputRef.current?.click()}
-              aria-label="Attach an image"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#6B7280]"
-            >
-              <ImagePlus size={18} />
-            </button>
             <button
               type="button"
               onClick={() => setShowEmojiPicker((current) => !current)}
@@ -225,14 +205,7 @@ export default function DiscussionWindow({
             >
               <Smile size={18} />
             </button>
-            <input
-              ref={attachmentInputRef}
-              type="file"
-              className="hidden"
-              onChange={(event) =>
-                setAttachmentName(event.target.files?.[0]?.name ?? "")
-              }
-            />
+
             <input
               onChange={handleInputChange}
               onKeyDown={(event) => event.key === "Enter" && handleSend()}

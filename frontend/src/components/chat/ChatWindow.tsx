@@ -24,7 +24,9 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
 
   useEffect(
     () =>
-      receiveMessage((event) => {
+      receiveMessage(async (event) => {
+        const chatUsersList = await ChatService.getChatUserList();
+        setChatUsers(chatUsersList.data);
         if (
           event.type !== "presence" ||
           !("user_id" in event) ||
@@ -36,7 +38,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
         const userId = String(event.user_id);
         const isOnline = event.online;
         setChatUsers((currentUsers) =>
-          currentUsers.map((user) =>
+          currentUsers?.map((user) =>
             user.id === userId ? { ...user, online: isOnline } : user,
           ),
         );
@@ -45,11 +47,11 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
   );
 
   const contacts = useMemo<ChatContact[]>(() => {
-    const mappedUsers = chatUsers.map((user) => ({
+    const mappedUsers = chatUsers?.map((user) => ({
       ...user,
       kind: "user" as const,
     }));
-    return [...mappedUsers];
+    return mappedUsers;
   }, [chatUsers]);
   console.log(contacts);
 
@@ -75,7 +77,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
 
       <div className="flex">
         <aside
-          className={`${UsedUser ? "hidden md:flex" : "flex"} h-[calc(100dvh-128px)] w-full shrink-0 flex-col border-r border-slate-200 bg-white md:h-[calc(100dvh-64px)] md:w-[360px]`}
+          className={`${UsedUser ? "hidden md:flex" : "flex"} h-[calc(100dvh-128px)] w-full shrink-0 flex-col border-r border-slate-200 bg-white md:h-[calc(100dvh-64px)] md:w-90`}
         >
           <div className="px-4 pb-2 pt-5">
             <h1 className="text-2xl font-bold text-[#111827]">Messages</h1>
@@ -114,8 +116,8 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
           </div>
 
           <ul className="h-full flex flex-col gap-1 p-3 overflow-y-scroll">
-            {contacts.length ? (
-              contacts.map((el) => (
+            {contacts?.length ? (
+              contacts?.map((el) => (
                 <div
                   key={el.id}
                   onClick={() => {
@@ -160,18 +162,16 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
                       </p>
                     </div>
                   </div>
-               
-                  <div className="flex flex-col gap-1 items-center justify-end min-w-[72px]">
+
+                  <div className="flex flex-col gap-1 items-center justify-end min-w-18">
                     {
                       <div className="flex flex-col justify-center items-end gap-1 ">
-                        <span
-                          className={`inline-flex w-fit items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium border-slate-200 bg-slate-100 text-slate-500`}
-                        >
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full bg-slate-400`}
-                          />
-                          {el.unread}
-                        </span>
+                        {el.unread > 0 && (
+                          <span className="inline-flex w-fit items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                            {el.unread}
+                          </span>
+                        )}
                         <span
                           className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
                             el.online
@@ -208,6 +208,7 @@ export default function ChatWindow(users: { users: ChatUsers[] }) {
             setChatMessages={setChatMessages}
             DiscussionMessages={chatMessages}
             onBack={() => setUsedUser(null)}
+            setChatUsers={setChatUsers}
           />
         ) : (
           <div className="hidden flex-1 items-center justify-center bg-[#F3F4F6] md:flex">

@@ -105,3 +105,22 @@ func (h *ChatHandler) HandleGetGroupMessages(w http.ResponseWriter, r *http.Requ
 	}
 	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: messages})
 }
+
+func (h *ChatHandler) HandleReadAllMessages(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, utils.ResposAPI{Success: false, Eroor: "method not allowed"})
+		return
+	}
+	sender_id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || sender_id <= 0 {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.ResposAPI{Success: false, Eroor: "invalid user id"})
+		return
+	}
+	recipient_id := middleware.GetUser(r).Id
+
+	err = h.ChatServices.MarkMessagesAsRead(recipient_id, sender_id)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusForbidden, utils.ResposAPI{Success: false, Data: err.Error()})
+	}
+	utils.WriteJSON(w, http.StatusOK, utils.ResposAPI{Success: true, Data: "messages set as reded"})
+}
